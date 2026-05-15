@@ -27,21 +27,44 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function DashboardPage() {
   const { projects, departments, risks, kpi } = useData();
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const kpiCards = [
-    { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500' },
-    { label: 'In Progress', value: kpi.inProgress, icon: TrendingUp, iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
-    { label: 'Completed', value: kpi.completed, icon: CheckCircle2, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
-    { label: 'Delayed', value: kpi.delayed, icon: Clock, iconBg: 'bg-red-50', iconColor: 'text-red-500', alert: true },
-    { label: 'Not Started', value: kpi.notStarted, icon: Target, iconBg: 'bg-slate-50', iconColor: 'text-slate-500' },
-    { label: 'Open Risks', value: kpi.openRisks, icon: AlertTriangle, iconBg: 'bg-amber-50', iconColor: 'text-amber-500', alert: true },
+    { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500', filter: 'all' },
+    { label: 'In Progress', value: kpi.inProgress, icon: TrendingUp, iconBg: 'bg-blue-50', iconColor: 'text-blue-500', filter: 'In Progress' },
+    { label: 'Completed', value: kpi.completed, icon: CheckCircle2, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', filter: 'Completed' },
+    { label: 'Delayed', value: kpi.delayed, icon: Clock, iconBg: 'bg-red-50', iconColor: 'text-red-500', alert: true, filter: 'Delayed' },
+    { label: 'Not Started', value: kpi.notStarted, icon: Target, iconBg: 'bg-slate-50', iconColor: 'text-slate-500', filter: 'Not Started' },
+    { label: 'Open Risks', value: kpi.openRisks, icon: AlertTriangle, iconBg: 'bg-amber-50', iconColor: 'text-amber-500', alert: true, filter: 'risks' },
   ];
 
   const ccoCards = [
-    { label: 'Stuck Projects', value: kpi.stuckProjects, desc: 'Critical/High + In Progress + 0%', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100' },
-    { label: 'Needs Escalation', value: kpi.needsEscalation, desc: 'Critical + In Progress + Has Risks', icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-    { label: 'Owner Bottlenecks', value: kpi.ownerBottlenecks, desc: 'Owners with 3+ active projects', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' },
+    { label: 'Stuck Projects', value: kpi.stuckProjects, desc: 'Critical/High + In Progress + 0%', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100', filter: 'stuck' },
+    { label: 'Needs Escalation', value: kpi.needsEscalation, desc: 'Critical + In Progress + Has Risks', icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', filter: 'escalation' },
+    { label: 'Owner Bottlenecks', value: kpi.ownerBottlenecks, desc: 'Owners with 3+ active projects', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100', filter: 'bottlenecks' },
   ];
+
+  const filteredProjects = projects.filter(p => {
+    if (!activeFilter || activeFilter === 'all') return true;
+    if (activeFilter === 'risks') return risks.some(r => r.projectId === p.id && r.status === 'Open');
+    if (activeFilter === 'stuck') return (p.priority === 'Critical' || p.priority === 'High') && p.status === 'In Progress' && p.progress === 0;
+    if (activeFilter === 'escalation') return p.priority === 'Critical' && p.status === 'In Progress' && risks.some(r => r.projectId === p.id && r.status === 'Open');
+    if (activeFilter === 'bottlenecks') return false; // Handled separately if needed
+    return p.status === activeFilter;
+  });
+
+  // Calculate filtered department stats
+  const filteredDepartments = departments.map(d => {
+    const deptProjects = projects.filter(p => p.department === d.name);
+    const matched = deptProjects.filter(p => {
+      if (!activeFilter || activeFilter === 'all') return true;
+      if (activeFilter === 'risks') return risks.some(r => r.projectId === p.id && r.status === 'Open');
+      if (activeFilter === 'stuck') return (p.priority === 'Critical' || p.priority === 'High') && p.status === 'In Progress' && p.progress === 0;
+      if (activeFilter === 'escalation') return p.priority === 'Critical' && p.status === 'In Progress' && risks.some(r => r.projectId === p.id && r.status === 'Open');
+      return p.status === activeFilter;
+    });
+    return { ...d, matchedCount: matched.length };
+  }).filter(d => !activeFilter || activeFilter === 'all' || d.matchedCount > 0);
 
   const pieData = [
     { name: 'In Progress', value: kpi.inProgress, color: '#3b82f6' },
@@ -53,7 +76,7 @@ export default function DashboardPage() {
   const criticalProjects = projects.filter(p => p.priority === 'Critical' && p.status === 'In Progress');
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5 animate-fade-in pb-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -61,6 +84,14 @@ export default function DashboardPage() {
           <p className="text-[13px] text-[#64748b] mt-0.5">BIAL Commercial Department · Portfolio Overview</p>
         </div>
         <div className="flex items-center gap-3">
+          {activeFilter && (
+            <button 
+              onClick={() => setActiveFilter(null)}
+              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100 flex items-center gap-1"
+            >
+              <X className="w-3 h-3" /> Clear Filter: {activeFilter}
+            </button>
+          )}
           <span className="text-[11px] text-[#94a3b8] font-medium">Live · {kpi.totalProjects} projects</span>
           <button className="btn-primary text-[12px] py-2 px-3"><Eye className="w-3.5 h-3.5" /> Generate Report</button>
         </div>
@@ -69,7 +100,12 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-6 gap-3">
         {kpiCards.map((card, i) => (
-          <div key={card.label} className="kpi-card group animate-slide-up" style={{ animationDelay: `${i * 40}ms` }}>
+          <button 
+            key={card.label} 
+            onClick={() => setActiveFilter(card.filter)}
+            className={`kpi-card group animate-slide-up text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${activeFilter === card.filter ? 'ring-2 ring-indigo-500 bg-white shadow-lg' : ''}`} 
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
             <div className="flex items-start justify-between mb-2.5">
               <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center`}>
                 <card.icon className={`w-4 h-4 ${card.iconColor}`} />
@@ -80,7 +116,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-2xl font-bold text-[#0f172a] tracking-tight">{card.value}</p>
             <p className="text-[11px] font-medium text-[#94a3b8] mt-0.5">{card.label}</p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -92,17 +128,53 @@ export default function DashboardPage() {
         </h2>
         <div className="grid grid-cols-3 gap-3">
           {ccoCards.map((card) => (
-            <div key={card.label} className={`${card.bg} rounded-xl p-4 border ${card.border}`}>
+            <button 
+              key={card.label} 
+              onClick={() => setActiveFilter(card.filter)}
+              className={`${card.bg} rounded-xl p-4 border transition-all hover:shadow-md active:scale-[0.98] text-left ${activeFilter === card.filter ? 'ring-2 ring-indigo-500 ' + card.border : card.border}`}
+            >
               <div className="flex items-center gap-2.5 mb-1.5">
                 <card.icon className={`w-4 h-4 ${card.color}`} />
                 <span className="text-2xl font-bold text-[#0f172a]">{card.value}</span>
               </div>
               <p className="text-[12px] font-semibold text-[#334155]">{card.label}</p>
               <p className="text-[10px] text-[#94a3b8] mt-0.5">{card.desc}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>
+
+      {/* Drill-down Results (If filtered) */}
+      {activeFilter && (
+        <div className="glass-card p-4 animate-scale-in border-indigo-200 shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[13px] font-bold text-[#0f172a] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-500" />
+              Showing {filteredProjects.length} Projects matching "{activeFilter}"
+            </h3>
+            <button onClick={() => setActiveFilter(null)} className="text-[11px] text-[#94a3b8] hover:text-[#64748b]">Dismiss</button>
+          </div>
+          <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
+            {filteredProjects.map(p => (
+              <div key={p.id} className="flex items-center justify-between p-3 bg-white border border-[#f1f5f9] rounded-lg hover:border-indigo-200 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`w-1.5 h-10 rounded-full ${p.status === 'Delayed' ? 'bg-red-400' : p.status === 'Completed' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                  <div>
+                    <p className="text-[12px] font-bold text-[#1e293b]">{p.name}</p>
+                    <p className="text-[10px] text-[#64748b]">{p.id} · {p.department} · {p.owner}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[13px] font-bold text-[#0f172a]">{p.progress}%</p>
+                  <p className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block ${
+                    p.priority === 'Critical' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-[#64748b]'
+                  }`}>{p.priority}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-3 gap-3">
@@ -156,11 +228,11 @@ export default function DashboardPage() {
               <th className="text-center">Delayed</th><th className="text-center">Critical</th><th className="text-center">% Done</th>
             </tr></thead>
             <tbody>
-              {departments.map((d) => (
-                <tr key={d.name}>
+              {filteredDepartments.map((d) => (
+                <tr key={d.name} className={activeFilter ? 'bg-indigo-50/30' : ''}>
                   <td><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
                     <span className="font-medium text-[#1e293b] text-[13px]">{d.name}</span></div></td>
-                  <td className="text-center font-semibold text-[#0f172a]">{d.total}</td>
+                  <td className="text-center font-semibold text-[#0f172a]">{activeFilter && activeFilter !== 'all' ? d.matchedCount : d.total}</td>
                   <td className="text-center"><span className="text-blue-600">{d.inProgress}</span></td>
                   <td className="text-center"><span className="text-emerald-600">{d.completed}</span></td>
                   <td className="text-center"><span className="text-[#94a3b8]">{d.notStarted}</span></td>

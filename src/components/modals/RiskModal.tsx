@@ -11,12 +11,16 @@ interface Props {
 }
 
 export default function RiskModal({ isOpen, onClose }: Props) {
-  const { addRisk, projects } = useData();
+  const { addRisk, projects, departments } = useData();
+  const [selectedDept, setSelectedDept] = useState('');
   const [form, setForm] = useState({
     projectId: '', description: '', category: riskCategories[0],
     impact: 'Medium' as 'High' | 'Medium' | 'Low',
     likelihood: 2, owner: '', mitigation: '', targetDate: '',
   });
+
+  // Filter projects by department
+  const filteredProjects = projects.filter(p => !selectedDept || p.department === selectedDept);
 
   // Auto-populate project name preview
   const selectedProject = projects.find(p => p.id === form.projectId);
@@ -32,6 +36,7 @@ export default function RiskModal({ isOpen, onClose }: Props) {
       status: 'Open',
     });
     setForm({ projectId: '', description: '', category: riskCategories[0], impact: 'Medium', likelihood: 2, owner: '', mitigation: '', targetDate: '' });
+    setSelectedDept('');
     onClose();
   };
 
@@ -43,31 +48,56 @@ export default function RiskModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-xl bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in">
-        <div className="border-b border-[#f1f5f9] px-5 py-3.5 flex items-center justify-between">
+      <div className="relative z-10 w-full max-w-2xl bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="border-b border-[#f1f5f9] px-5 py-3.5 flex items-center justify-between bg-white shrink-0">
           <h2 className="text-[15px] font-bold text-[#0f172a]">Add Risk</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-[#94a3b8] hover:bg-[#f1f5f9]"><X className="w-4 h-4" /></button>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Project Selection with auto-populate */}
-          <div>
-            <label className={labelCls}>Linked Project *</label>
-            <select value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))} required className={inputCls}>
-              <option value="">Select a project...</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.id} — {p.name}</option>)}
-            </select>
-            {selectedProject && (
-              <div className="mt-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <p className="text-[11px] text-indigo-600">
-                  <span className="font-semibold">{selectedProject.name}</span>
-                  <span className="text-indigo-400 mx-1.5">·</span>
-                  {selectedProject.department}
-                  <span className="text-indigo-400 mx-1.5">·</span>
-                  {selectedProject.owner}
-                </p>
-              </div>
-            )}
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto overflow-x-hidden">
+          {/* Multi-step Selection */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Step 1: Select Department</label>
+              <select value={selectedDept} onChange={e => { setSelectedDept(e.target.value); setForm(f => ({ ...f, projectId: '' })); }} className={inputCls}>
+                <option value="">All Departments</option>
+                {departments.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Step 2: Select Project *</label>
+              <select value={form.projectId} onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))} required className={inputCls}>
+                <option value="">Select a project...</option>
+                {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.id} — {p.name.substring(0, 40)}...</option>)}
+              </select>
+            </div>
           </div>
+
+          {/* Detailed Project Information View */}
+          {selectedProject && (
+            <div className="px-4 py-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-3">
+              <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-2">
+                <h3 className="text-[13px] font-bold text-[#0f172a]">{selectedProject.name}</h3>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedProject.status === 'Delayed' ? 'bg-red-50 text-red-600' : 
+                  selectedProject.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                }`}>{selectedProject.status}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">Owner</p><p className="text-[11px] font-medium text-[#334155]">{selectedProject.owner}</p></div>
+                <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">Priority</p><p className="text-[11px] font-medium text-[#334155]">{selectedProject.priority}</p></div>
+                <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">Progress</p><p className="text-[11px] font-medium text-[#334155]">{selectedProject.progress}%</p></div>
+              </div>
+              <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">Objective</p><p className="text-[11px] text-[#475569] leading-relaxed line-clamp-2">{selectedProject.objective || 'No objective defined'}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">Dependencies</p><p className="text-[11px] text-[#475569] truncate">{selectedProject.projectDependencies || 'None'}</p></div>
+                <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">Supporting Team</p><p className="text-[11px] text-[#475569] truncate">{selectedProject.supportTeam || 'Not specified'}</p></div>
+              </div>
+              {selectedProject.kpi && (
+                <div><p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-tight">KPI</p><p className="text-[11px] text-[#475569] italic">{selectedProject.kpi}</p></div>
+              )}
+            </div>
+          )}
+
           <div>
             <label className={labelCls}>Risk Description *</label>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} required placeholder="Describe the risk..." className={`${inputCls} resize-none`} />
