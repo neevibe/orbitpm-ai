@@ -1,0 +1,266 @@
+'use client';
+
+import {
+  BarChart3, TrendingUp, AlertTriangle, CheckCircle2,
+  Clock, Zap, Target, Users, AlertCircle, Shield, Eye
+} from 'lucide-react';
+import { useData } from '@/lib/data-context';
+import { monthlyTrend } from '@/lib/mock-data';
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload) return null;
+  return (
+    <div className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-[11px] font-semibold text-[#1e293b] mb-1">{label}</p>
+      {payload.map((p: any, i: number) => (
+        <p key={i} className="text-[11px] text-[#64748b]">
+          <span style={{ color: p.color }}>●</span> {p.name}: <span className="text-[#1e293b] font-medium">{p.value}</span>
+        </p>
+      ))}
+    </div>
+  );
+};
+
+export default function DashboardPage() {
+  const { projects, departments, risks, kpi } = useData();
+
+  const kpiCards = [
+    { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500' },
+    { label: 'In Progress', value: kpi.inProgress, icon: TrendingUp, iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
+    { label: 'Completed', value: kpi.completed, icon: CheckCircle2, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
+    { label: 'Delayed', value: kpi.delayed, icon: Clock, iconBg: 'bg-red-50', iconColor: 'text-red-500', alert: true },
+    { label: 'Not Started', value: kpi.notStarted, icon: Target, iconBg: 'bg-slate-50', iconColor: 'text-slate-500' },
+    { label: 'Open Risks', value: kpi.openRisks, icon: AlertTriangle, iconBg: 'bg-amber-50', iconColor: 'text-amber-500', alert: true },
+  ];
+
+  const ccoCards = [
+    { label: 'Stuck Projects', value: kpi.stuckProjects, desc: 'Critical/High + In Progress + 0%', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100' },
+    { label: 'Needs Escalation', value: kpi.needsEscalation, desc: 'Critical + In Progress + Has Risks', icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+    { label: 'Owner Bottlenecks', value: kpi.ownerBottlenecks, desc: 'Owners with 3+ active projects', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' },
+  ];
+
+  const pieData = [
+    { name: 'In Progress', value: kpi.inProgress, color: '#3b82f6' },
+    { name: 'Not Started', value: kpi.notStarted, color: '#94a3b8' },
+    { name: 'Completed', value: kpi.completed, color: '#10b981' },
+    { name: 'Delayed', value: kpi.delayed, color: '#ef4444' },
+  ].filter(d => d.value > 0);
+
+  const criticalProjects = projects.filter(p => p.priority === 'Critical' && p.status === 'In Progress');
+
+  return (
+    <div className="space-y-5 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">Executive Dashboard</h1>
+          <p className="text-[13px] text-[#64748b] mt-0.5">BIAL Commercial Department · Portfolio Overview</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] text-[#94a3b8] font-medium">Live · {kpi.totalProjects} projects</span>
+          <button className="btn-primary text-[12px] py-2 px-3"><Eye className="w-3.5 h-3.5" /> Generate Report</button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-6 gap-3">
+        {kpiCards.map((card, i) => (
+          <div key={card.label} className="kpi-card group animate-slide-up" style={{ animationDelay: `${i * 40}ms` }}>
+            <div className="flex items-start justify-between mb-2.5">
+              <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center`}>
+                <card.icon className={`w-4 h-4 ${card.iconColor}`} />
+              </div>
+              {card.alert && card.value > 0 && (
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              )}
+            </div>
+            <p className="text-2xl font-bold text-[#0f172a] tracking-tight">{card.value}</p>
+            <p className="text-[11px] font-medium text-[#94a3b8] mt-0.5">{card.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* CCO Decision View */}
+      <div className="glass-card p-4">
+        <h2 className="text-[12px] font-semibold text-[#64748b] mb-3 flex items-center gap-2 uppercase tracking-wider">
+          <Target className="w-3.5 h-3.5 text-indigo-500" />
+          CCO Decision View — Focus Areas
+        </h2>
+        <div className="grid grid-cols-3 gap-3">
+          {ccoCards.map((card) => (
+            <div key={card.label} className={`${card.bg} rounded-xl p-4 border ${card.border}`}>
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <card.icon className={`w-4 h-4 ${card.color}`} />
+                <span className="text-2xl font-bold text-[#0f172a]">{card.value}</span>
+              </div>
+              <p className="text-[12px] font-semibold text-[#334155]">{card.label}</p>
+              <p className="text-[10px] text-[#94a3b8] mt-0.5">{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2 glass-card p-4">
+          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Project Portfolio Trend</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={monthlyTrend}>
+              <defs>
+                <linearGradient id="colorInProgress" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.15} /><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="inProgress" name="In Progress" stroke="#3b82f6" fill="url(#colorInProgress)" strokeWidth={2} />
+              <Area type="monotone" dataKey="newProjects" name="New Projects" stroke="#8b5cf6" fill="url(#colorNew)" strokeWidth={2} />
+              <Area type="monotone" dataKey="delayed" name="Delayed" stroke="#ef4444" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="glass-card p-4">
+          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Status Distribution</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={pieData} cx="50%" cy="42%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value" stroke="none">
+                {pieData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+              </Pie>
+              <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={6}
+                formatter={(value: string) => <span className="text-[11px] text-[#64748b] ml-1">{value}</span>} />
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Department Table */}
+      <div className="glass-card overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#f1f5f9]">
+          <h3 className="text-[12px] font-semibold text-[#334155]">Project Status by Department</h3>
+          <p className="text-[10px] text-[#94a3b8] mt-0.5">Auto-calculated from project data · Updates in real-time</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead><tr>
+              <th>Department</th><th className="text-center">Total</th><th className="text-center">In Progress</th>
+              <th className="text-center">Completed</th><th className="text-center">Not Started</th>
+              <th className="text-center">Delayed</th><th className="text-center">Critical</th><th className="text-center">% Done</th>
+            </tr></thead>
+            <tbody>
+              {departments.map((d) => (
+                <tr key={d.name}>
+                  <td><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
+                    <span className="font-medium text-[#1e293b] text-[13px]">{d.name}</span></div></td>
+                  <td className="text-center font-semibold text-[#0f172a]">{d.total}</td>
+                  <td className="text-center"><span className="text-blue-600">{d.inProgress}</span></td>
+                  <td className="text-center"><span className="text-emerald-600">{d.completed}</span></td>
+                  <td className="text-center"><span className="text-[#94a3b8]">{d.notStarted}</span></td>
+                  <td className="text-center">{d.delayed > 0 ? <span className="text-red-500 font-semibold">{d.delayed}</span> : <span className="text-[#cbd5e1]">0</span>}</td>
+                  <td className="text-center">{d.critical > 0 ? <span className="px-1.5 py-0.5 bg-red-50 text-red-500 rounded text-[10px] font-bold border border-red-100">{d.critical}</span> : <span className="text-[#cbd5e1]">0</span>}</td>
+                  <td className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-14 h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: `${d.pctDone}%` }} /></div>
+                      <span className="text-[10px] text-[#94a3b8] w-7">{d.pctDone}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-[#e2e8f0] bg-[#f8fafc]">
+                <td className="font-bold text-[#0f172a]">Grand Total</td>
+                <td className="text-center font-bold text-[#0f172a] text-[15px]">{kpi.totalProjects}</td>
+                <td className="text-center font-bold text-blue-600">{kpi.inProgress}</td>
+                <td className="text-center font-bold text-emerald-600">{kpi.completed}</td>
+                <td className="text-center font-bold text-[#64748b]">{kpi.notStarted}</td>
+                <td className="text-center font-bold text-red-500">{kpi.delayed}</td>
+                <td className="text-center font-bold text-red-500">{kpi.critical}</td>
+                <td className="text-center text-[10px] text-[#94a3b8]">{kpi.totalProjects > 0 ? Math.round((kpi.completed / kpi.totalProjects) * 100) : 0}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Critical Projects + Risk Summary */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#f1f5f9] flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-red-500" />
+            <h3 className="text-[12px] font-semibold text-[#334155]">Critical In-Progress Projects</h3>
+          </div>
+          <div className="divide-y divide-[#f8fafc]">
+            {criticalProjects.slice(0, 6).map((p) => (
+              <div key={p.id} className="px-4 py-2.5 hover:bg-[#f8fafc] transition-colors flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] font-mono text-[#94a3b8]">{p.id}</span>
+                    <span className="priority-badge critical text-[8px] py-0">CRITICAL</span>
+                  </div>
+                  <p className="text-[12px] font-medium text-[#334155] truncate">{p.name}</p>
+                  <p className="text-[10px] text-[#94a3b8] mt-0.5">{p.owner} · {p.department}</p>
+                </div>
+                <div className="text-right"><p className="text-[15px] font-bold text-[#64748b]">{p.progress}%</p></div>
+              </div>
+            ))}
+            {criticalProjects.length === 0 && (
+              <div className="px-4 py-6 text-center"><p className="text-[12px] text-[#94a3b8]">No critical in-progress projects ✅</p></div>
+            )}
+          </div>
+        </div>
+
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#f1f5f9] flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            <h3 className="text-[12px] font-semibold text-[#334155]">Active Risks Summary</h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              <div className="text-center"><p className="text-xl font-bold text-[#0f172a]">{kpi.totalRisks}</p><p className="text-[10px] text-[#94a3b8] mt-0.5">Total</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-amber-500">{kpi.openRisks}</p><p className="text-[10px] text-[#94a3b8] mt-0.5">Open</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-red-500">{risks.filter(r => r.impact === 'High' && r.status === 'Open').length}</p><p className="text-[10px] text-[#94a3b8] mt-0.5">High</p></div>
+              <div className="text-center"><p className="text-xl font-bold text-emerald-500">{kpi.closedRisks}</p><p className="text-[10px] text-[#94a3b8] mt-0.5">Closed</p></div>
+            </div>
+            <div className="space-y-2">
+              {risks.filter(r => r.status === 'Open').slice(0, 4).map(r => (
+                <div key={r.id} className="flex items-center gap-2.5 p-2 rounded-lg bg-[#f8fafc] border border-[#f1f5f9]">
+                  <div className={`w-1 h-7 rounded-full ${r.impact === 'High' ? 'bg-red-400' : r.impact === 'Medium' ? 'bg-amber-400' : 'bg-green-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-[#334155] truncate">{r.description}</p>
+                    <p className="text-[10px] text-[#94a3b8]">{r.projectId} · {r.category}</p>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#64748b]">{r.impact}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Insight Banner */}
+      <div className="glass-card p-4 border-indigo-100 bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+            <Zap className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="text-[12px] font-semibold text-indigo-700 mb-0.5">AI Executive Summary</h3>
+            <p className="text-[12px] text-[#475569] leading-relaxed">
+              The Commercial Department has <span className="text-[#0f172a] font-semibold">{kpi.totalProjects} active projects</span> across {departments.length} departments.
+              {kpi.delayed > 0 && <><span className="text-red-600 font-semibold"> {kpi.delayed} project{kpi.delayed > 1 ? 's are' : ' is'} delayed</span> and</>}
+              <span className="text-amber-600 font-semibold"> {kpi.critical} are marked critical</span>.
+              {kpi.stuckProjects > 0 && <><span className="text-amber-600 font-semibold"> {kpi.stuckProjects} projects appear stuck</span> (high priority, in-progress, zero movement).</>}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
