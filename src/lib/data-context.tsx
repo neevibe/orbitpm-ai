@@ -109,6 +109,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) return;
     
     async function fetchData() {
+      console.log('Connecting to Supabase...');
       try {
         const { data: dbProjects } = await supabase.from('projects').select('*').neq('archived', true);
         if (dbProjects && dbProjects.length > 0) {
@@ -141,6 +142,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
           }
           setProjects(mappedProjects);
+          console.log('Successfully loaded ' + mappedProjects.length + ' projects from live database!');
         }
 
         const { data: dbRisks } = await supabase.from('risks').select('*').neq('archived', true);
@@ -167,7 +169,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
           setRisks(mappedRisks);
         }
       } catch (err) {
-        console.error('Error fetching Supabase data:', err);
+        console.error('[CRITICAL] Error fetching Supabase data:', err);
+        alert('Error loading live data. Please check browser console.');
       }
     }
     fetchData();
