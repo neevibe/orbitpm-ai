@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { supabase, isSupabaseConfigured } from './supabase';
 import { generateProjectId } from './utils';
 import {
   projects as initialProjects,
@@ -103,6 +104,75 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    
+    async function fetchData() {
+      try {
+        const { data: dbProjects } = await supabase.from('projects').select('*').neq('archived', true);
+        if (dbProjects && dbProjects.length > 0) {
+          const mappedProjects = dbProjects.map(p => ({
+            id: p.project_code,
+            name: p.name,
+            department: p.department_id ? p.department_id : 'Unknown', // we will fetch depts below
+            owner: p.owner_name || '',
+            status: p.status,
+            priority: p.priority,
+            progress: p.progress,
+            startDate: p.start_date,
+            targetDate: p.target_date,
+            objective: p.business_objective || '',
+            kpi: p.kpi || '',
+            projectDependencies: p.dependencies || '',
+            supportTeam: p.support_team || '',
+            notes: p.notes || '',
+            risks: '',
+            archived: p.archived,
+            archivedAt: p.archived_at
+          }));
+          
+          const { data: dbDepts } = await supabase.from('departments').select('*');
+          if (dbDepts) {
+            const deptMap: Record<string, string> = {};
+            dbDepts.forEach(d => deptMap[d.id] = d.name);
+            mappedProjects.forEach(p => {
+              if (deptMap[p.department]) p.department = deptMap[p.department];
+            });
+          }
+          setProjects(mappedProjects);
+        }
+
+        const { data: dbRisks } = await supabase.from('risks').select('*').neq('archived', true);
+        if (dbRisks && dbRisks.length > 0) {
+          // get project mapping
+          const { data: dbProjs } = await supabase.from('projects').select('id, project_code');
+          const projMap: Record<string, string> = {};
+          if (dbProjs) dbProjs.forEach(p => projMap[p.id] = p.project_code);
+          
+          const mappedRisks = dbRisks.map(r => ({
+            id: r.risk_code,
+            projectId: projMap[r.project_id] || '',
+            description: r.description,
+            category: r.category || '',
+            impact: r.impact || 'Low',
+            likelihood: r.likelihood || 1,
+            score: r.score || 1,
+            severity: r.severity || 'Low',
+            owner: r.owner_name || '',
+            mitigation: r.mitigation || '',
+            status: r.status,
+            targetDate: r.target_date || ''
+          }));
+          setRisks(mappedRisks);
+        }
+      } catch (err) {
+        console.error('Error fetching Supabase data:', err);
+      }
+    }
+    fetchData();
+  }, []);
+
 
   // ---- Audit helper ----
   const logAudit = useCallback((entry: Omit<AuditEntry, 'id' | 'timestamp' | 'user'>) => {
@@ -227,6 +297,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
+    
+    if (isSupabaseConfigured()) {
+      supabase.from('departments').select('id').eq('name', newProject.department).single().then(({data: d}) => {
+        const deptId = d?.id;
+        supabase.from('projects').insert({
+          project_code: id,
+          name: newProject.name,
+          department_id: deptId,
+          status: newProject.status,
+          priority: newProject.priority,
+          progress: newProject.progress,
+          owner_name: newProject.owner
+        }).then(({error}) => { if (error) console.error(error); });
+      });
+    }
     return id;
   }, [projects, logAudit, notify]);
 
@@ -247,6 +332,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (updates.status === 'Completed' && p.status !== 'Completed') {
         notify('Project Completed', `${p.name} has been completed! 🎉`, 'success');
       }
+      
+      if (isSupabaseConfigured()) {
+        const dbUpdates: any = {};
+        if (updates.name !== undefined) dbUpdates.name = updates.name;
+        if (updates.status !== undefined) dbUpdates.status = updates.status;
+        if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+        if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
+        if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
+        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate;
+        if (updates.objective !== undefined) dbUpdates.business_objective = updates.objective;
+        if (updates.kpi !== undefined) dbUpdates.kpi = updates.kpi;
+        if (updates.projectDependencies !== undefined) dbUpdates.dependencies = updates.projectDependencies;
+        if (updates.supportTeam !== undefined) dbUpdates.support_team = updates.supportTeam;
+        if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+        if (Object.keys(dbUpdates).length > 0) {
+          supabase.from('projects').update(dbUpdates).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+        }
+      }
+      
       return { ...p, ...updates };
     }));
   }, [logAudit, notify]);
@@ -258,7 +363,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: false, new: true } } });
       notify('Project Archived', `${project.name} moved to history. Can be restored anytime.`, 'info');
     }
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: new Date().toISOString() } : p));
+    const now = new Date().toISOString();
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: now } : p));
+    if (isSupabaseConfigured()) {
+      supabase.from('projects').update({ archived: true, archived_at: now }).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+    }
   }, [projects, logAudit, notify]);
 
   // deleteProject now archives instead of deleting (for safety)
