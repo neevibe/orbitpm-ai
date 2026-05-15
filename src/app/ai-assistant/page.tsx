@@ -69,6 +69,20 @@ export default function AIAssistantPage() {
       return `⚠️ **Stuck Projects (High Priority, 0% Progress): ${stuck.length}**\n\n${stuck.slice(0, 6).map(p => `• **${p.id}** — ${p.name}\n  ${p.department} · ${p.owner || 'Unassigned'} · ${p.priority}`).join('\n\n')}\n\nThese need immediate leadership attention and unblocking.`;
     }
 
+    if (q.includes('owned by') || q.includes('assigned to') || q.includes('projects for')) {
+      const regex = /(?:owned by|assigned to|projects for)\s+([a-zA-Z\s]+)/i;
+      const match = query.match(regex);
+      if (match && match[1]) {
+        const ownerQuery = match[1].trim().toLowerCase();
+        // Skip common stop words that might be accidentally matched
+        if (!['me', 'us', 'the', 'them'].includes(ownerQuery)) {
+          const ownedProjects = projects.filter(p => p.owner && p.owner.toLowerCase().includes(ownerQuery));
+          if (ownedProjects.length === 0) return `✅ I couldn't find any projects currently owned by **${match[1].trim()}**.`;
+          return `👤 **Projects Owned by ${match[1].trim()} (${ownedProjects.length}):**\n\n${ownedProjects.map(p => `• **${p.id}** — ${p.name}\n  Status: ${p.status} · Priority: ${p.priority} · Progress: ${p.progress}%`).join('\n\n')}`;
+        }
+      }
+    }
+
     // Default
     return `I've analyzed the portfolio of **${kpi.totalProjects} projects**. Here's a quick snapshot:\n\n• **${kpi.inProgress}** in progress · **${kpi.delayed}** delayed · **${kpi.critical}** critical\n• **${kpi.openRisks}** open risks · **${kpi.stuckProjects}** stuck projects\n\nTry asking about delayed projects, executive summaries, owner workload, or high-impact risks for detailed analysis.`;
   };
