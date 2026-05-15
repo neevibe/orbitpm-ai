@@ -2482,14 +2482,18 @@ export const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delaye
 export const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
 
 export const monthlyTrend = [
-  { month: 'Oct', completed: 0, delayed: 0, inProgress: 28, newProjects: 12 },
-  { month: 'Nov', completed: 0, delayed: 0, inProgress: 35, newProjects: 8 },
-  { month: 'Dec', completed: 0, delayed: 1, inProgress: 38, newProjects: 5 },
-  { month: 'Jan', completed: 0, delayed: 1, inProgress: 42, newProjects: 15 },
-  { month: 'Feb', completed: 0, delayed: 1, inProgress: 45, newProjects: 10 },
-  { month: 'Mar', completed: 1, delayed: 2, inProgress: 48, newProjects: 20 },
-  { month: 'Apr', completed: 1, delayed: 2, inProgress: 50, newProjects: 18 },
-  { month: 'May', completed: 1, delayed: 2, inProgress: 52, newProjects: 14 },
+  { month: "Apr '26", completed: 1, delayed: 2, inProgress: 40, newProjects: 15 },
+  { month: "May '26", completed: 2, delayed: 2, inProgress: 45, newProjects: 12 },
+  { month: "Jun '26", completed: 4, delayed: 3, inProgress: 52, newProjects: 18 },
+  { month: "Jul '26", completed: 6, delayed: 3, inProgress: 58, newProjects: 10 },
+  { month: "Aug '26", completed: 10, delayed: 4, inProgress: 65, newProjects: 14 },
+  { month: "Sep '26", completed: 15, delayed: 4, inProgress: 70, newProjects: 10 },
+  { month: "Oct '26", completed: 20, delayed: 5, inProgress: 75, newProjects: 12 },
+  { month: "Nov '26", completed: 25, delayed: 5, inProgress: 80, newProjects: 8 },
+  { month: "Dec '26", completed: 32, delayed: 6, inProgress: 85, newProjects: 5 },
+  { month: "Jan '27", completed: 40, delayed: 6, inProgress: 92, newProjects: 15 },
+  { month: "Feb '27", completed: 50, delayed: 7, inProgress: 95, newProjects: 10 },
+  { month: "Mar '27", completed: 65, delayed: 8, inProgress: 100, newProjects: 20 },
 ];
 
 export const notifications = [
