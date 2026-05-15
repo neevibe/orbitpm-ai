@@ -308,7 +308,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
           status: newProject.status,
           priority: newProject.priority,
           progress: newProject.progress,
-          owner_name: newProject.owner
+          owner_name: newProject.owner || null,
+          start_date: newProject.startDate || null,
+          target_date: newProject.targetDate || null,
+          business_objective: newProject.objective || null,
+          kpi: newProject.kpi || null,
+          dependencies: newProject.projectDependencies || null,
+          support_team: newProject.supportTeam || null,
+          notes: newProject.notes || null
         }).then(({error}) => { if (error) console.error(error); });
       });
     }
@@ -340,8 +347,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
         if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
         if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
-        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
-        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate;
+        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
+        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
         if (updates.objective !== undefined) dbUpdates.business_objective = updates.objective;
         if (updates.kpi !== undefined) dbUpdates.kpi = updates.kpi;
         if (updates.projectDependencies !== undefined) dbUpdates.dependencies = updates.projectDependencies;
@@ -462,7 +469,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
         if (updates.mitigation !== undefined) dbUpdates.mitigation = updates.mitigation;
         if (updates.status !== undefined) dbUpdates.status = updates.status;
-        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate;
+        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
         if (Object.keys(dbUpdates).length > 0) {
           supabase.from('risks').update(dbUpdates).eq('risk_code', id).then(({error}) => { if (error) console.error(error); });
         }
