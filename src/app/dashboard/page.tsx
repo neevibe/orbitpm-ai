@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   BarChart3, TrendingUp, AlertTriangle, CheckCircle2,
-  Clock, Zap, Target, Users, AlertCircle, Shield, Eye
+  Clock, Zap, Target, Users, AlertCircle, Shield, Eye, X, Sparkles
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { monthlyTrend } from '@/lib/mock-data';
