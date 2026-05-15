@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import Topbar from "@/components/layout/Topbar";
-import { DataProvider } from "@/lib/data-context";
+import ClientShell from "@/components/layout/ClientShell";
 
 export const metadata: Metadata = {
   title: "OrbitPM AI — Project Governance & Portfolio Intelligence",
@@ -15,15 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="bg-[#f8fafc] text-[#1e293b] min-h-screen">
-        <DataProvider>
-          <Sidebar />
-          <Topbar />
-          <main className="ml-[240px] mt-14 p-6 bg-mesh min-h-[calc(100vh-56px)]">
-            {children}
-          </main>
-        </DataProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-[#f8fafc] text-[#1e293b] min-h-screen" suppressHydrationWarning>
+        <ClientShell>{children}</ClientShell>
       </body>
     </html>
   );
