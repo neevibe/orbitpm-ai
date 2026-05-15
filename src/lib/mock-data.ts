@@ -18,6 +18,7 @@ export interface Project {
   // New fields
   projectDependencies?: string;  // IDs/names of projects this depends on
   supportTeam?: string;          // Support team members
+  kpi?: string;                  // Key Performance Indicators for this project
   archived?: boolean;            // Soft-delete: true = moved to history
   archivedAt?: string;           // ISO timestamp when archived
 }

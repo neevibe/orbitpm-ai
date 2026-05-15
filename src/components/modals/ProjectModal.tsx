@@ -27,7 +27,7 @@ export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
     priority: 'Medium' as Project['priority'],
     startDate: '', targetDate: '',
     risks: '', objective: '', notes: '',
-    projectDependencies: '', supportTeam: '',
+    projectDependencies: '', supportTeam: '', kpi: '',
   });
 
   const [form, setForm] = useState(makeEmpty());
@@ -45,6 +45,7 @@ export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
         objective: editProject.objective || '', notes: editProject.notes || '',
         projectDependencies: editProject.projectDependencies || '',
         supportTeam: editProject.supportTeam || '',
+        kpi: editProject.kpi || '',
       });
       setAutoId('');
     } else {
@@ -181,6 +182,8 @@ export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
 
           <div><label className={labelCls}>Business Objective</label>
             <textarea value={form.objective} onChange={e => setForm(f => ({ ...f, objective: e.target.value }))} rows={2} placeholder="What outcome does this project achieve?" className={`${inputCls} resize-none`} /></div>
+          <div><label className={labelCls}>KPI (Key Performance Indicators)</label>
+            <textarea value={form.kpi || ''} onChange={e => setForm(f => ({ ...f, kpi: e.target.value }))} rows={2} placeholder="e.g. 90% uptime, 15% revenue increase, NPS > 8" className={`${inputCls} resize-none`} /></div>
           <div><label className={labelCls}>Key Risks / Blockers</label>
             <textarea value={form.risks} onChange={e => setForm(f => ({ ...f, risks: e.target.value }))} rows={2} placeholder="Known risks, blockers..." className={`${inputCls} resize-none`} /></div>
           <div><label className={labelCls}>Notes</label>
