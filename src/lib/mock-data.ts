@@ -259,7 +259,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Turnover 50 cr (F&B XX, DF XX, Cab XX, Hotel XX, Lounge XX, CBB XX, PG XX) | • eSPP 20 | • Analytics driven sales XX Cr (DF, Retail, F&B, Adv, Landisde)"
   },
   {
     "id": "PRDIGI_16",
@@ -273,7 +274,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Total PTD - 2 Mn, Active memebrs - 0.7 Mn | • DF - 3.15 L | • F&B - 8.63 L | • LNG - 10 K | • Online - 5.48 L | • Retail - 2.63 L | • All new vendors are on ePOS, rewards, PG, Pulse from day 1"
   },
   {
     "id": "PRDIGI_17",
@@ -287,7 +289,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time\r\n\r\nBLRPAY uptime",
-    "notes": ""
+    "notes": "",
+    "kpi": "• NPS score - 80 (Pulse, F&B, 080, Retail, Landside commercial) | • Coverage - 100% | • Service Recovery < 48 hrs | • BLR Exclusive products in Pulse | • Contactless omni channel loune access | • Unified Landside expereince (Alignment with AC, Commercial) | • Driving Accountability - New goals/ Goals cascading XX% | • 99.98% uptime for valid transction on BLRPAY"
   },
   {
     "id": "PRDIGI_18",
@@ -301,7 +304,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "2 Insipiration trips/conferences"
   },
   {
     "id": "PRDIGI_19",
@@ -315,7 +319,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Auction platform | • Enable 10 F&B and 5 retail stores for collecting KIAF"
   },
   {
     "id": "PROPR_01",
@@ -1029,7 +1034,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Turnover from New Commercial Concepts XX Cr for the Year FY 27 | • (SPP @ XXX, IPP @ XXX) | • New Contract Value (MAG) from Partner Onboarding at BLR Airport - XX Cr in FY27. | • (SPP @ XXX, IPP @ XXX) | • Investment commitment from new Partners | • (SPP @ XXX, IPP @ XXX) | • 2 New Concession Contracts beyond BLR | • CBB Revenue | • (SPP @ XXX, IPP @ XXX)"
   },
   {
     "id": "PRCOMDEV_17",
@@ -1043,7 +1049,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
-    "notes": ""
+    "notes": "",
+    "kpi": "• 100% Onboarding of New Stores to Digital Platforms on Day 0 (Loyalty, PG, KIAF and ePOS Agreement to be live on Day 0 of New Store Opening) | • Introduction of NPS for CBB. Target NPS of 70 | • Onboarding of 7 Anchor Brands | • ( DF-Dior, DF-Tom Ford, DF-Armani, DF-CoTY, DF-Swarovski, DF-Lux Fashion, Gordon Ramsey, MM x Ranveer Brar) | • Launch of 80+7 New Concepts for the Year FY 26-27 | • T1-48, | • T2-12, | • Quad-6, | • MMTH-9, | • ATMS-7. | • Pop-Up - 7 Nos | • Launch of New Products - Water, Home Fragrance, Gifting Solutions, Tea/Coffee, Chocolates ( 25 SKUs)."
   },
   {
     "id": "PRCOMDEV_18",
@@ -1057,7 +1064,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
-    "notes": ""
+    "notes": "",
+    "kpi": "• TAT for Tender Process - 60 Days | • TAT for New Store Fit-outs - 100 Days | • TAT for Design Development- 30 Days | • Launch of Commercial Project Management Tool by Jun-26 | • Hosting 4 Brand Launch Events | • Launch of BLR Contactless Lounge Access Program by Feb-27 | • 2 banks to be onboarded"
   },
   {
     "id": "PRCOMDEV_19",
@@ -1071,7 +1079,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Attending 3 Global Conferences | • Speaking at 3 Global Conferences | • Visting 3 Intl. Airports for Inspiration | • Self Development - 80 Training Hours | • ALP Project Exceution - BIAL Academy. | • Completion of Assigned / Recommended IDP - 360 Feedback / Books | • Upskilling/Development Courses"
   },
   {
     "id": "PRCOMDEV_20",
@@ -1085,7 +1094,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "• 20 Lac Contribution from New Partners for KIAF Trust | • KIAF Contribution - Re1/Water Bottle sold, Rs5/Product (own brand) Sold | • Min. 70% LEED Certified Materials for New Stores / Min. 10% for RRR for New Stores | • Gender Diversity at New Outlets - Females Ratio min. 30% | • 1 PRM Staff for every New Store (Enable India)"
   },
   {
     "id": "PRADV_01",
@@ -1253,7 +1263,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Building 3 marquee properties | • GTM strategy plan to get 6 sponsors on board | • A system where 20 consessionnaire partners are involved in activations across 20 events | • Average time to market - 30 day average for smaller activities, 90 days for Marquee events | • Execution excellence - 95% adherance to TAT"
   },
   {
     "id": "PRADV_13",
@@ -1267,7 +1278,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
-    "notes": ""
+    "notes": "",
+    "kpi": "• Convert 300K temp users to active Pulse Rewards users | • Events customer aquisition - 10% marketing lead conversion to footfall | • Social Media - 30% engagement on an average | • NPS 80 - activations, events, landside, advertising | • Landside guest experience - queue transperancy method"
   },
   {
     "id": "PRADV_15",
@@ -1295,7 +1307,8 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "• 2% of amount billed to Commercial from all vendors/agencies - 12L | • 2 events X fundraisers - 1 Cr | • CO2 saving throught advertsing campaign execution - xxx | • Reducing diesel generator depency xxx"
   },
   {
     "id": "PRDF_01",
@@ -1687,7 +1700,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
-    "notes": ""
+    "notes": "",
+    "kpi": "P&C SPP: from 98 --> XXX | Arrivals SPP: XXXX --> XXX | Departures SPP: XXX --> XXXX | Total SPP : XXX --> | Launch by April 2026"
   },
   {
     "id": "PRDF_29",
@@ -1701,7 +1715,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
-    "notes": ""
+    "notes": "",
+    "kpi": "1. Drive traffic to Pulse & downloads | 2. Drive click & collect through Pulse | 3. Bonus points redemption factor | 4. Attractiveness index | 5. Sales support Team for Promoting Pulse Orders (inside DF, LMS, Lounge, Belt Areas) | 6. Performance marketing of BLR Pulse - Duty Free | 7. Roll-out lucrative Bank / Card Offers | 8. Portable Check-out Machine"
   },
   {
     "id": "PRDF_30",
@@ -1715,7 +1730,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
-    "notes": ""
+    "notes": "",
+    "kpi": "1. Lacoste Pop Up in Intl Departure | 2. Pop - Up in 080 Lounge | 3. Swarovski Store | 4. Fashion stores (Tumi, Ralph Lauren, Coach) | 5. Last minute store (Arrivals) | 6. Commercial Master Plan, Vision Document & Business Case | 7. LOI from destination sports entertainment like TopGolf/ X-Range & padel/pickle | 8. RDE: Retail offerings & pre concept of RDE"
   },
   {
     "id": "PRDF_31",
@@ -1729,7 +1745,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "1. Identify two potential successors for each role directly reporting to the CCO and complete readiness assessments for all identified candidates | 2. Establish baseline of the commercial team’s score on ‘openness to challenge and debate’ as measured through Quarterly Pulse Survey and Half-yealy Check-in and set target improvement rate for FY27 | 3. 100% participation of targeted employees in 12 inspirational learning trips—including airport visits, industry conferences, and global benchmarking experiences—for the commercial team | 4. Gender Diversity in Duty Free | 5. Diversity & Inclusion Hiring (PRM) | 6. Attractive incentive Schemes for the DF team"
   },
   {
     "id": "PRDF_32",
@@ -1743,7 +1760,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "1. Raise funds for KIAF by March '26 | 2. Raise Funds from Donations (5 Rs/bill) | 3. LEED certified, recycled & other sustainable initiatives in development of RDE | 4. Increase the sale of sustainable products Sale | 5. KIA Products sale at Dep Store and Donate X % to KIAF"
   },
   {
     "id": "PRCBB_01",
@@ -1981,7 +1999,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
-    "notes": ""
+    "notes": "",
+    "kpi": "Penetration 22% | ATV INR 2050 | Human capital 69.8 Cr | 40 Crs - 6 non-BLR business (Vision 2030) | EBITDA 25%"
   },
   {
     "id": "PRBASL_12",
@@ -1995,7 +2014,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
-    "notes": ""
+    "notes": "",
+    "kpi": "100,000 active pulse members | Pulse privilege + program by Q1, target 1000 guests | 1 Pulse promotion per quarter | 2000 member guests - Beyond BLR | Implement Associate recognition program by Q1 - Recognise 30 top performers"
   },
   {
     "id": "PRBASL_13",
@@ -2009,7 +2029,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
-    "notes": ""
+    "notes": "",
+    "kpi": "Associate Empower Program - INR 10K guest experience Q1 | Target 5000 guests annually for WOW experience | Institutionalise Ladies & Gentlemen service culture by Q3 in F&B, Duty Free & Retail | Establish Shared services centre for Non- BLR operations by Q1 | Multiskill 5% of human capital through utilization of Ai | Automate B2B & B2C Contract management process turnaorund in 72hrs by Q2"
   },
   {
     "id": "PRBASL_14",
@@ -2023,7 +2044,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "GTPW Certification Q3 | CEO Associate chat sessions -12 per year (32 associates per session) | Global Conferences - 3, Inspirational Trips - 2"
   },
   {
     "id": "PRBASL_15",
@@ -2037,7 +2059,8 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "Achieve 1 community drive per month | Reduce waste from 0.47 gms to 0.40 gms per dpax | Vendor contribution for KIAF - 10,00,000 | 1 BASL KIAF awarness campaign per quarter | LEED Certification for non BLR Lounges by Q2"
   }
 ];
 
