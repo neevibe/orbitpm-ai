@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import type { Project } from '@/lib/mock-data';
@@ -16,16 +16,23 @@ const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
 
 export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
   const { addProject, updateProject, deleteProject, departments } = useData();
-  const deptNames = departments.map(d => d.name);
 
-  const [form, setForm] = useState({
+  // ✅ FIXED: Memoize deptNames so it doesn't get a new reference on every render
+  // Previously this caused the useEffect to re-run on every keystroke, resetting the form
+  const deptNames = useMemo(() => departments.map(d => d.name), [departments]);
+
+  const emptyForm = {
     id: '', name: '', department: deptNames[0] || '', owner: '',
     status: 'Not Started' as Project['status'], progress: 0,
     priority: 'Medium' as Project['priority'],
     startDate: '', targetDate: '', risks: '', objective: '', notes: '',
-  });
+  };
 
+  const [form, setForm] = useState(emptyForm);
+
+  // ✅ FIXED: Only depend on editProject and isOpen — not deptNames
   useEffect(() => {
+    if (!isOpen) return;
     if (editProject) {
       setForm({
         id: editProject.id, name: editProject.name, department: editProject.department,
@@ -35,9 +42,10 @@ export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
         objective: editProject.objective || '', notes: editProject.notes || '',
       });
     } else {
-      setForm({ id: '', name: '', department: deptNames[0] || '', owner: '', status: 'Not Started', progress: 0, priority: 'Medium', startDate: '', targetDate: '', risks: '', objective: '', notes: '' });
+      setForm({ ...emptyForm, department: deptNames[0] || '' });
     }
-  }, [editProject, isOpen, deptNames]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editProject, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +67,10 @@ export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* ✅ Backdrop with pointer-events only for clicks outside the modal */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in">
+      {/* ✅ Modal content gets explicit z-index to sit above backdrop */}
+      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in">
         <div className="sticky top-0 bg-white border-b border-[#f1f5f9] px-5 py-3.5 flex items-center justify-between z-10">
           <h2 className="text-[15px] font-bold text-[#0f172a]">{editProject ? 'Edit Project' : 'Create New Project'}</h2>
           <div className="flex items-center gap-2">
