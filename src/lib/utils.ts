@@ -7,7 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(date: string | null): string {
   if (!date) return '—';
-  return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  try {
+    return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return date;
+  }
 }
 
 export function getStatusColor(status: string): string {
@@ -23,4 +27,36 @@ export function getStatusColor(status: string): string {
 
 export function getPriorityColor(priority: string): string {
   return priority.toLowerCase();
+}
+
+// Department → Project ID prefix mapping
+const DEPT_PREFIX_MAP: Record<string, string> = {
+  'Digital & Data': 'PRDIGI',
+  'Operations': 'PROPR',
+  'Commercial Development': 'PRCOMDEV',
+  'Advertising & Marketing': 'PRADMKT',
+  'Duty Free': 'PRDUTY',
+  'CBB & Lounge': 'PRCBB',
+  'BASL': 'PRBASL',
+};
+
+export function getDeptPrefix(department: string): string {
+  if (DEPT_PREFIX_MAP[department]) return DEPT_PREFIX_MAP[department];
+  // Auto-generate prefix from dept name for unknown departments
+  const clean = department.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  return 'PR' + clean.substring(0, 5);
+}
+
+export function generateProjectId(department: string, existingIds: string[]): string {
+  const prefix = getDeptPrefix(department);
+  // Find the highest sequence number for this prefix
+  const nums = existingIds
+    .filter(id => id.startsWith(prefix + '_') || id.startsWith(prefix))
+    .map(id => {
+      const match = id.match(/(\d+)$/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+  const maxNum = nums.length > 0 ? Math.max(...nums) : 0;
+  const next = maxNum + 1;
+  return `${prefix}_${String(next).padStart(2, '0')}`;
 }

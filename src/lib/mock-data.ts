@@ -15,6 +15,11 @@ export interface Project {
   risks: string;
   objective: string;
   notes: string;
+  // New fields
+  projectDependencies?: string;  // IDs/names of projects this depends on
+  supportTeam?: string;          // Support team members
+  archived?: boolean;            // Soft-delete: true = moved to history
+  archivedAt?: string;           // ISO timestamp when archived
 }
 
 export interface Risk {

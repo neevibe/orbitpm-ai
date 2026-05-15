@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { generateProjectId } from './utils';
 import {
   projects as initialProjects,
   departments as initialDepartments,
@@ -64,9 +65,13 @@ interface DataContextType {
   };
 
   // Project CRUD
-  addProject: (project: Omit<Project, 'id'> & { id?: string }) => void;
+  addProject: (project: Omit<Project, 'id'> & { id?: string }) => string;
   updateProject: (id: string, updates: Partial<Project>) => void;
-  deleteProject: (id: string) => void;
+  deleteProject: (id: string) => void;       // kept for compatibility — now archives
+  archiveProject: (id: string) => void;       // soft-delete: moves to history
+  restoreProject: (id: string) => void;       // restore from history
+  purgeProject: (id: string) => void;         // permanent delete (from history only)
+  generateId: (department: string) => string; // auto-generate next ID for dept
 
   // Department CRUD
   addDepartment: (dept: Omit<Department, 'total' | 'inProgress' | 'completed' | 'notStarted' | 'delayed' | 'critical' | 'pctDone'>) => void;
@@ -212,13 +217,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // ============================================
   // PROJECT CRUD
   // ============================================
-  const addProject = useCallback((project: Omit<Project, 'id'> & { id?: string }) => {
-    const id = project.id || `PR${project.department.substring(0, 4).toUpperCase()}_${String(projects.length + 1).padStart(2, '0')}`;
-    const newProject: Project = { ...project, id } as Project;
+  const generateId = useCallback((department: string): string => {
+    return generateProjectId(department, projects.map(p => p.id));
+  }, [projects]);
+
+  const addProject = useCallback((project: Omit<Project, 'id'> & { id?: string }): string => {
+    const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
+    const newProject: Project = { ...project, id, archived: false } as Project;
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
-  }, [projects.length, logAudit, notify]);
+    return id;
+  }, [projects, logAudit, notify]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     setProjects(prev => prev.map(p => {
@@ -241,11 +251,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
   }, [logAudit, notify]);
 
-  const deleteProject = useCallback((id: string) => {
+  // Soft delete — moves to history (archived = true)
+  const archiveProject = useCallback((id: string) => {
+    const project = projects.find(p => p.id === id);
+    if (project) {
+      logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: false, new: true } } });
+      notify('Project Archived', `${project.name} moved to history. Can be restored anytime.`, 'info');
+    }
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: new Date().toISOString() } : p));
+  }, [projects, logAudit, notify]);
+
+  // deleteProject now archives instead of deleting (for safety)
+  const deleteProject = archiveProject;
+
+  // Restore from history
+  const restoreProject = useCallback((id: string) => {
+    const project = projects.find(p => p.id === id);
+    if (project) {
+      notify('Project Restored', `${project.name} has been restored from history.`, 'success');
+    }
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false, archivedAt: undefined } : p));
+  }, [projects, notify]);
+
+  // Permanent delete — only from archived projects
+  const purgeProject = useCallback((id: string) => {
     const project = projects.find(p => p.id === id);
     if (project) {
       logAudit({ action: 'delete', entityType: 'project', entityId: id, entityName: project.name, changes: {} });
-      notify('Project Deleted', `${project.name} has been removed`, 'warning');
+      notify('Project Permanently Deleted', `${project.name} has been permanently removed.`, 'warning');
     }
     setProjects(prev => prev.filter(p => p.id !== id));
     setRisks(prev => prev.filter(r => r.projectId !== id));
@@ -324,6 +357,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       projects, departments, risks, notifications, auditLog, kpi,
       addProject, updateProject, deleteProject,
+      archiveProject, restoreProject, purgeProject, generateId,
       addDepartment, updateDepartment, deleteDepartment,
       addRisk, updateRisk, deleteRisk,
       importProjects,
