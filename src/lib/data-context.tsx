@@ -380,6 +380,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       notify('Project Restored', `${project.name} has been restored from history.`, 'success');
     }
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false, archivedAt: undefined } : p));
+    if (isSupabaseConfigured()) {
+      supabase.from('projects').update({ archived: false, archived_at: null }).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+    }
   }, [projects, notify]);
 
   // Permanent delete — only from archived projects
@@ -391,6 +394,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     setProjects(prev => prev.filter(p => p.id !== id));
     setRisks(prev => prev.filter(r => r.projectId !== id));
+    if (isSupabaseConfigured()) {
+      supabase.from('projects').delete().eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+    }
   }, [projects, logAudit, notify]);
 
   // ============================================
@@ -419,12 +425,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setRisks(prev => [...prev, { ...risk, id }]);
     logAudit({ action: 'create', entityType: 'risk', entityId: id, entityName: risk.description, changes: {} });
     notify('Risk Added', `New ${risk.impact} impact risk: ${risk.description.substring(0, 50)}...`, risk.impact === 'High' ? 'critical' : 'warning');
+    if (isSupabaseConfigured()) {
+      supabase.from('projects').select('id').eq('project_code', risk.projectId).single().then(({data: p}) => {
+        if (p) {
+          supabase.from('risks').insert({
+            risk_code: id,
+            project_id: p.id,
+            description: risk.description,
+            category: risk.category,
+            impact: risk.impact,
+            likelihood: risk.likelihood,
+            score: risk.score,
+            severity: risk.severity,
+            owner_name: risk.owner,
+            mitigation: risk.mitigation,
+            status: risk.status,
+            target_date: risk.targetDate || null
+          }).then(({error}) => { if (error) console.error(error); });
+        }
+      });
+    }
   }, [risks.length, logAudit, notify]);
 
   const updateRisk = useCallback((id: string, updates: Partial<Risk>) => {
     setRisks(prev => prev.map(r => {
       if (r.id !== id) return r;
       logAudit({ action: 'update', entityType: 'risk', entityId: id, entityName: r.description, changes: {} });
+      if (isSupabaseConfigured()) {
+        const dbUpdates: any = {};
+        if (updates.description !== undefined) dbUpdates.description = updates.description;
+        if (updates.category !== undefined) dbUpdates.category = updates.category;
+        if (updates.impact !== undefined) dbUpdates.impact = updates.impact;
+        if (updates.likelihood !== undefined) dbUpdates.likelihood = updates.likelihood;
+        if (updates.score !== undefined) dbUpdates.score = updates.score;
+        if (updates.severity !== undefined) dbUpdates.severity = updates.severity;
+        if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
+        if (updates.mitigation !== undefined) dbUpdates.mitigation = updates.mitigation;
+        if (updates.status !== undefined) dbUpdates.status = updates.status;
+        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate;
+        if (Object.keys(dbUpdates).length > 0) {
+          supabase.from('risks').update(dbUpdates).eq('risk_code', id).then(({error}) => { if (error) console.error(error); });
+        }
+      }
       return { ...r, ...updates };
     }));
   }, [logAudit]);
@@ -433,6 +475,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const risk = risks.find(r => r.id === id);
     if (risk) logAudit({ action: 'delete', entityType: 'risk', entityId: id, entityName: risk.description, changes: {} });
     setRisks(prev => prev.filter(r => r.id !== id));
+    if (isSupabaseConfigured()) {
+      supabase.from('risks').update({ archived: true }).eq('risk_code', id).then(({error}) => { if (error) console.error(error); });
+    }
   }, [risks, logAudit]);
 
   // ============================================
