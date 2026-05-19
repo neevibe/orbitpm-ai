@@ -112,6 +112,10 @@ export default function ProjectDetailPage() {
               <div className="glass-card p-4"><h3 className="text-[12px] font-semibold text-[#334155] mb-1.5">Business Objective</h3>
                 {isEditing ? <textarea value={editForm.objective || ''} onChange={e => setEditForm(f => ({ ...f, objective: e.target.value }))} rows={2} className={`${inputCls} resize-none text-[12px]`} />
                   : <p className="text-[12px] text-[#64748b] leading-relaxed">{project.objective}</p>}</div>)}
+            {(project.kpi || isEditing) && (
+              <div className="glass-card p-4"><h3 className="text-[12px] font-semibold text-emerald-600 mb-1.5">KPIs</h3>
+                {isEditing ? <textarea value={editForm.kpi || ''} onChange={e => setEditForm(f => ({ ...f, kpi: e.target.value }))} rows={2} className={`${inputCls} resize-none text-[12px]`} />
+                  : <p className="text-[12px] text-[#64748b] leading-relaxed">{project.kpi}</p>}</div>)}
             {(project.risks || isEditing) && (
               <div className="glass-card p-4 border-amber-100"><h3 className="text-[12px] font-semibold text-amber-600 mb-1.5 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Key Risks</h3>
                 {isEditing ? <textarea value={editForm.risks || ''} onChange={e => setEditForm(f => ({ ...f, risks: e.target.value }))} rows={2} className={`${inputCls} resize-none text-[12px]`} />

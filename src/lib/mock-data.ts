@@ -63,7 +63,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "",
     "objective": "Integrate with DBS bank and work on points conversion mechanism. DBS members have 20 Cr worth of points",
-    "notes": ""
+    "notes": "In principal deal is closed and contract closure by 31st May.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_02",
@@ -77,7 +80,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "",
     "objective": "Integrate with ITC hotels on rewards poitns conversion and coaliation partnership",
-    "notes": ""
+    "notes": "Initial discussion done, proposal is shared and waiting for revert from ITC.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_03",
@@ -91,7 +97,10 @@ export const projects: Project[] = [
     "targetDate": "2026-09-30",
     "risks": "",
     "objective": "Seasmless Payment experience by resolve all on going issues/Get new partner onboarded",
-    "notes": ""
+    "notes": "Pilot with new device will be implemented at DutyFree on 15th May.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_04",
@@ -105,7 +114,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "Data can not be shared due to GDPR complinace. This needs new product to scan boarding pass barcode and issue coupons.",
     "objective": "Onboard atleast one Airline to enhance delayed passneger expereince by Integrating Airline with Pulse rewards and replace existing coupon and manual F&B model",
-    "notes": ""
+    "notes": "Deatiled discussion has been done with AOC and this will need a new product to scan borading pass to enable coupon. This can not be integrated with Pulse due to unavailiability of passenger PI data.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_05",
@@ -119,7 +131,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "",
     "objective": "Partner with Airline to enhance customer engagment by curating personalised expereinces and offers to passengers",
-    "notes": ""
+    "notes": "Proposal shared with Singapore Airlines and awaiting for their revert, Indigo discussion are at adnaved stage.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_06",
@@ -133,7 +148,10 @@ export const projects: Project[] = [
     "targetDate": "2026-06-01",
     "risks": "",
     "objective": "Build CRM strategies to enhance customer expereince of every rewards member by Launching multiple higher tier member. All CRM initiatives will be targeting expereinces not transactions.",
-    "notes": ""
+    "notes": "Proposal is ready to be discussed with leadership team in May, 2026 and finalize.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_07",
@@ -147,7 +165,10 @@ export const projects: Project[] = [
     "targetDate": "2026-05-26",
     "risks": "",
     "objective": "Build and launch multiple games on Pulse rewards to engage with Members",
-    "notes": ""
+    "notes": "Launched \"Spin the Wheel\" in Pulse. Working on more games.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_08",
@@ -161,7 +182,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "Attrition, App stability in lownetwork zones",
     "objective": "Duty Free sales target through PULSE for FY26-27 is ₹8.3Cr. In order to drive this 3X growth, we need to drive as many projects as possible to hit this target",
-    "notes": ""
+    "notes": "Programm has started and progress is closely monitored.",
+    "projectDependencies": "Avolta hiring speed",
+    "kpi": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_09",
@@ -175,7 +199,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "META Utility guidelines, META and JIODLTS delivery rates",
     "objective": "Review and revamp the communications architecture flowing our of PULSE to our guest.",
-    "notes": ""
+    "notes": "MoEngagae email warmup activity ahs started and shuld be completed by June end.",
+    "projectDependencies": "Advertising and Performance Marketing team for Creatives (Copy + Art)",
+    "kpi": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_10",
@@ -189,7 +216,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "META Promo msg delivery rates",
     "objective": "Identify cross selling and upselling opportunites based on Guest journey flows, through our CDEP Partner platform (Mo Engage)",
-    "notes": ""
+    "notes": "Trigger campaigns ongoing, currently working on parking triggers by 20th May, 2026",
+    "projectDependencies": "Advertising and Performance Marketing team for Creatives (Copy + Art)",
+    "kpi": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_11",
@@ -203,7 +233,10 @@ export const projects: Project[] = [
     "targetDate": "2026-06-01",
     "risks": "Operations heavy - Chance of manual errors high",
     "objective": "We have identified a large mismatch in reported Transit Hotel sales numbers and Actual Sales on ground.",
-    "notes": ""
+    "notes": "Recon by May end. On ground SOPs to be conveyed and training to be carried out by May 2026.",
+    "projectDependencies": "Elaachi Tech Team",
+    "kpi": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_12",
@@ -217,7 +250,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-27",
     "risks": "",
     "objective": "Creating digital prepaid CBB++ Packages. Base of the package would be CBB and it can be paired with Lounge/Security Slot booking access/Misc other non-CBB products",
-    "notes": ""
+    "notes": "Initial discussion done with GM. Internal meeting to discuss on development of this project.",
+    "projectDependencies": "GM Tech/ Market research",
+    "kpi": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_13",
@@ -231,7 +267,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-27",
     "risks": "Ops not following SOPs",
     "objective": "Automating orders coming from OTAs into the PMS and PULSE DB simultaneously",
-    "notes": ""
+    "notes": "Scheduled for Q4",
+    "projectDependencies": "ICT/Elaachi - integration with OTAs",
+    "kpi": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_14",
@@ -245,7 +284,10 @@ export const projects: Project[] = [
     "targetDate": "2026-09-30",
     "risks": "LLM hallucination risk; need fallback routing",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_15",
@@ -260,7 +302,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
     "notes": "",
-    "kpi": "• Turnover 50 cr (F&B XX, DF XX, Cab XX, Hotel XX, Lounge XX, CBB XX, PG XX) | • eSPP 20 | • Analytics driven sales XX Cr (DF, Retail, F&B, Adv, Landisde)"
+    "kpi": "⦁\tTurnover 50 cr (F&B XX, DF XX, Cab XX, Hotel XX, Lounge XX, CBB XX, PG XX)\r\n⦁\teSPP 20\r\n⦁\tAnalytics driven sales XX Cr (DF, Retail, F&B, Adv, Landisde)",
+    "supportTeam": "⦁\tDevayani (performance marketing, activations)\r\n⦁\tDominic\r\n⦁\tDom, ABD, George",
+    "projectDependencies": ""
   },
   {
     "id": "PRDIGI_16",
@@ -275,7 +319,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
     "notes": "",
-    "kpi": "• Total PTD - 2 Mn, Active memebrs - 0.7 Mn | • DF - 3.15 L | • F&B - 8.63 L | • LNG - 10 K | • Online - 5.48 L | • Retail - 2.63 L | • All new vendors are on ePOS, rewards, PG, Pulse from day 1"
+    "kpi": "⦁\tTotal PTD - 2 Mn, Active memebrs - 0.7 Mn\r\n⦁\tDF - 3.15 L\r\n⦁\tF&B - 8.63 L\r\n⦁\tLNG - 10 K\r\n⦁\tOnline - 5.48 L\r\n⦁\tRetail - 2.63 L\r\n⦁\tAll new vendors are on ePOS, rewards, PG, Pulse from day 1",
+    "supportTeam": "⦁\tAvishek - for ops, Devayani for marketing\r\n⦁\tDominic for ops, Devayani for marketing\r\n⦁\tGeorge for ops, Devayani for marketing\r\n⦁\tDominic ops, Devayani for marketing\r\n⦁\tDominic ops, Devayani for marketing\r\n⦁\tPravat",
+    "projectDependencies": ""
   },
   {
     "id": "PRDIGI_17",
@@ -290,7 +336,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time\r\n\r\nBLRPAY uptime",
     "notes": "",
-    "kpi": "• NPS score - 80 (Pulse, F&B, 080, Retail, Landside commercial) | • Coverage - 100% | • Service Recovery < 48 hrs | • BLR Exclusive products in Pulse | • Contactless omni channel loune access | • Unified Landside expereince (Alignment with AC, Commercial) | • Driving Accountability - New goals/ Goals cascading XX% | • 99.98% uptime for valid transction on BLRPAY"
+    "kpi": "⦁\tNPS score - 80 (Pulse, F&B, 080, Retail, Landside commercial)\r\n⦁\tCoverage - 100%\r\n⦁\tService Recovery < 48 hrs\r\n⦁\tBLR Exclusive products in Pulse\r\n⦁\tContactless omni channel loune access\r\n⦁\tUnified Landside expereince (Alignment with AC, Commercial)\r\n⦁\tDriving Accountability - New goals/ Goals cascading XX%\r\n⦁\t99.98% uptime for valid transction on BLRPAY",
+    "supportTeam": "⦁\tDom, Devayani, George\r\n⦁\tGeorge for ops, Devayani for marketing\r\n⦁\tPravat\r\n⦁\tPravat/George\r\n⦁\tCOO, Pravat, ABD, Rao (BACL), Master planning\r\n⦁\tAll",
+    "projectDependencies": ""
   },
   {
     "id": "PRDIGI_18",
@@ -305,7 +353,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
     "notes": "",
-    "kpi": "2 Insipiration trips/conferences"
+    "kpi": "2 Insipiration trips/conferences",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDIGI_19",
@@ -320,7 +370,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
     "notes": "",
-    "kpi": "• Auction platform | • Enable 10 F&B and 5 retail stores for collecting KIAF"
+    "kpi": "⦁\tAuction platform\r\n⦁\tEnable 10 F&B and 5 retail stores for collecting KIAF",
+    "supportTeam": "Dominic for ops",
+    "projectDependencies": ""
   },
   {
     "id": "PRDIGI_20",
@@ -336,7 +388,8 @@ export const projects: Project[] = [
     "objective": "Walkin, B2B, EC Bookings via Pulse Offline order create webhook",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Noel",
-    "projectDependencies": "CBB Tech / Gray Matter"
+    "projectDependencies": "CBB Tech / Gray Matter",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_21",
@@ -352,7 +405,8 @@ export const projects: Project[] = [
     "objective": "Walkin, B2B, EC Rewards — event based",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Noel / Musthaq",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_22",
@@ -368,7 +422,8 @@ export const projects: Project[] = [
     "objective": "Kiosk and Tablet builds for CBB",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Noel",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_23",
@@ -384,7 +439,8 @@ export const projects: Project[] = [
     "objective": "Parking pre-ordering without status update webhook and without rewards",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Major",
-    "projectDependencies": "Ski Data / Gateway"
+    "projectDependencies": "Ski Data / Gateway",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_24",
@@ -400,7 +456,8 @@ export const projects: Project[] = [
     "objective": "New pre-paid product for Premium Pulse membership — sell bundles combining products and services available on Pulse platform",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Ajay / Vani",
-    "projectDependencies": "Seamless PG + Settlement Engine + Rewards on cart"
+    "projectDependencies": "Seamless PG + Settlement Engine + Rewards on cart",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_25",
@@ -416,7 +473,8 @@ export const projects: Project[] = [
     "objective": "Home Page redesign — App, Mobile, Tablet, Kiosk and Desktop",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_26",
@@ -432,7 +490,8 @@ export const projects: Project[] = [
     "objective": "9 Biz Pages + 72 component pages — App, Mobile, Tablet, Kiosk and Desktop",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_27",
@@ -448,7 +507,8 @@ export const projects: Project[] = [
     "objective": "Enhance payment experience and reduce failure rates",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Musthaq",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_28",
@@ -464,7 +524,8 @@ export const projects: Project[] = [
     "objective": "Unlock rewards coupons and merchant-funded promos",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Musthaq",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_29",
@@ -480,7 +541,8 @@ export const projects: Project[] = [
     "objective": "Simplify merchant settlement and enable merchant-funded promos",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Musthaq",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_30",
@@ -496,7 +558,8 @@ export const projects: Project[] = [
     "objective": "Enable cross-promotions and cart promotions",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Musthaq",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_31",
@@ -512,7 +575,8 @@ export const projects: Project[] = [
     "objective": "Staff portal for offline order creation",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Ajay",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_32",
@@ -528,7 +592,8 @@ export const projects: Project[] = [
     "objective": "Workshop required to scope product-level changes for DPDPA compliance",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh / Musthaq",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_33",
@@ -544,7 +609,8 @@ export const projects: Project[] = [
     "objective": "Upgrade UI and provide all relevant booking information to users",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PRDIGI_34",
@@ -560,7 +626,8 @@ export const projects: Project[] = [
     "objective": "Enable Pulse commerce flows using WhatsApp",
     "notes": "Reporting Manager: Neeraj Manoria",
     "supportTeam": "Saurabh",
-    "projectDependencies": ""
+    "projectDependencies": "",
+    "kpi": ""
   },
   {
     "id": "PROPR_01",
@@ -574,7 +641,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-31",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "RFQ has been rolled out, go live 11th May.\r\nTechnical eval and new aggreemnt by 30th June.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_02",
@@ -588,7 +658,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_03",
@@ -602,7 +675,10 @@ export const projects: Project[] = [
     "targetDate": "2026-09-30",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_04",
@@ -616,7 +692,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_05",
@@ -630,7 +709,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_06",
@@ -644,7 +726,10 @@ export const projects: Project[] = [
     "targetDate": "2026-06-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_07",
@@ -658,7 +743,10 @@ export const projects: Project[] = [
     "targetDate": "2026-05-26",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_08",
@@ -672,7 +760,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "Attrition, App stability in lownetwork zones",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_09",
@@ -686,7 +777,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "META Utility guidelines, META and JIODLTS delivery rates",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_10",
@@ -700,7 +794,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "META Promo msg delivery rates",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_11",
@@ -714,7 +811,10 @@ export const projects: Project[] = [
     "targetDate": "2026-06-01",
     "risks": "Operations heavy - Chance of manual errors high",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_12",
@@ -728,7 +828,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-27",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_13",
@@ -742,7 +845,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-27",
     "risks": "Ops not following SOPs",
     "objective": "",
-    "notes": ""
+    "notes": "WIP and go live on 3rd week of May.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_14",
@@ -756,7 +862,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_15",
@@ -770,7 +879,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_16",
@@ -784,7 +896,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_17",
@@ -798,7 +913,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "24 Stores are active and collection are in progress.",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPR_18",
@@ -812,7 +930,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_19",
@@ -826,7 +947,10 @@ export const projects: Project[] = [
     "targetDate": "2026-12-31",
     "risks": "Hardware procurement delays",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_20",
@@ -840,7 +964,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
-    "notes": ""
+    "notes": "",
+    "kpi": "⦁\tSPP - 1278\r\n⦁\tIPP - 349\r\n⦁\tATV - 1389\r\n⦁\tPent% - 92%",
+    "supportTeam": "⦁\tPravat Dev & Neeraj- Store Opening to be inline with the Business plan.\r\n⦁\tLandside Security: Keep the Terminals Free of Touts / unauthorised operators ( Authorised Partner Feedback- Via Survey of 10 sample days / Month)\r\n⦁\t2 parking campaigns to increase penetration by 1% over the baseline- DV.",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_21",
@@ -854,7 +981,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
-    "notes": ""
+    "notes": "",
+    "kpi": "⦁\tFSTR Revenue Generation - 10% YOY\r\n⦁\tNPS - 100% Coverage Retail & F&B\r\n⦁\tService Recovery less then 48hrs detactors\r\n⦁\tGoogle Rating -4.80\r\n⦁\tASQ - 4.65\r\n⦁\tPartner Feedback > 4.2",
+    "supportTeam": "Neeraj & Team",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_22",
@@ -868,7 +998,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
-    "notes": ""
+    "notes": "",
+    "kpi": "⦁\tTransfer e-vouchers issued to >10% of all transfer passengers with a minimum redemption rate of 2% \r\n⦁\tPULSE Rollout: \r\n⦁\tBial Academy - 100% activation & 80% usage\r\n⦁\t10 new modules\r\n⦁\tParking 2.0 Rollout on Pulse/ Physical\r\n⦁\tISO Survellience Audit",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_23",
@@ -882,7 +1015,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "⦁\tTraining - 5 days\r\n⦁\tGender : 70:30 \r\n⦁\tInspirational Trips - 2",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_24",
@@ -896,7 +1032,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "⦁\t1cr for KIAF\r\n⦁\tCumulative CO₂ savings of 4575 tons achieved by Mar'27\r\n⦁\tFood Waste Reduction - 0.083grm per Dpax\r\n⦁\t30% Reduction in bills printing over LY Baseline\r\n⦁\tDrive Collective event at KIAF Schools / NGOs\r\n⦁\tIncrease Plastic-to-glass bottle sales ratio by ≥ 10%",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_25",
@@ -910,7 +1049,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "Reported on 11th May - NPS is 87.42",
+    "supportTeam": "Akash",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_26",
@@ -924,7 +1066,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "As on date 4.85",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_27",
@@ -938,7 +1083,10 @@ export const projects: Project[] = [
     "targetDate": "31st Mar 2026",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "Schedule in place, approval pending from Procurement",
+    "supportTeam": "Akash / Akshata",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_28",
@@ -952,7 +1100,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "As on date xxxx",
+    "supportTeam": "Musthaq/ Ajay",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_29",
@@ -966,7 +1117,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "To work on the plan for this FY as per CCO's feedback",
+    "supportTeam": "Vaibhav/Prabhu/ Musthaq/Andrew",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_30",
@@ -980,7 +1134,10 @@ export const projects: Project[] = [
     "targetDate": "31st Mar 2027",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "Should start by Jun 2026",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PROPS_31",
@@ -994,7 +1151,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "ACI has asked for -I commercial survey at dep gates",
+    "supportTeam": "Rohan/lounge team",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_32",
@@ -1008,7 +1168,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "Plan to be finalised by Jule 26 end",
+    "supportTeam": "Mktng / Digital team",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_33",
@@ -1022,7 +1185,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "Pending for approval - ?",
+    "supportTeam": "Mktng / Digital team",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_34",
@@ -1036,7 +1202,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "Pending from marketing team",
+    "supportTeam": "Akshata / Devayani / Neeraj",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PROPS_35",
@@ -1050,7 +1219,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "supportTeam": "Akash / Neeraj",
+    "kpi": "",
+    "projectDependencies": ""
   },
   {
     "id": "PRCOMDEV_01",
@@ -1064,7 +1236,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_02",
@@ -1078,7 +1253,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_03",
@@ -1092,7 +1270,10 @@ export const projects: Project[] = [
     "targetDate": "2026-10-15",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_04",
@@ -1106,7 +1287,10 @@ export const projects: Project[] = [
     "targetDate": "2027-07-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_05",
@@ -1120,7 +1304,10 @@ export const projects: Project[] = [
     "targetDate": "2026-06-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_06",
@@ -1134,7 +1321,10 @@ export const projects: Project[] = [
     "targetDate": "2026-09-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_07",
@@ -1148,7 +1338,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_08",
@@ -1162,7 +1355,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_09",
@@ -1176,7 +1372,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_10",
@@ -1190,7 +1389,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_11",
@@ -1204,7 +1406,10 @@ export const projects: Project[] = [
     "targetDate": "2026-06-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_12",
@@ -1218,7 +1423,10 @@ export const projects: Project[] = [
     "targetDate": "2027-01-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_13",
@@ -1232,7 +1440,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_14",
@@ -1246,7 +1457,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_15",
@@ -1260,7 +1474,10 @@ export const projects: Project[] = [
     "targetDate": "2026-07-31",
     "risks": "Legal review pending",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCOMDEV_16",
@@ -1275,7 +1492,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
     "notes": "",
-    "kpi": "• Turnover from New Commercial Concepts XX Cr for the Year FY 27 | • (SPP @ XXX, IPP @ XXX) | • New Contract Value (MAG) from Partner Onboarding at BLR Airport - XX Cr in FY27. | • (SPP @ XXX, IPP @ XXX) | • Investment commitment from new Partners | • (SPP @ XXX, IPP @ XXX) | • 2 New Concession Contracts beyond BLR | • CBB Revenue | • (SPP @ XXX, IPP @ XXX)"
+    "kpi": "⦁\tTurnover from New Commercial Concepts XX Cr for the Year FY 27 \r\n⦁\t(SPP @ XXX, IPP @ XXX)\r\n⦁\tNew Contract Value (MAG) from Partner Onboarding at BLR Airport - XX Cr  in FY27.  \r\n⦁\t(SPP @ XXX, IPP @ XXX)\r\n⦁\tInvestment commitment from new Partners\r\n⦁\t (SPP @ XXX, IPP @ XXX)\r\n⦁\t2 New Concession Contracts beyond BLR\r\n⦁\tCBB Revenue \r\n⦁\t(SPP @ XXX, IPP @ XXX)",
+    "supportTeam": "Project Department (CPO Ravi)\r\n-\r\n-\r\nGeorge & Ashish\r\nCOO, Dedicated M&A access",
+    "projectDependencies": ""
   },
   {
     "id": "PRCOMDEV_17",
@@ -1290,7 +1509,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
     "notes": "",
-    "kpi": "• 100% Onboarding of New Stores to Digital Platforms on Day 0 (Loyalty, PG, KIAF and ePOS Agreement to be live on Day 0 of New Store Opening) | • Introduction of NPS for CBB. Target NPS of 70 | • Onboarding of 7 Anchor Brands | • ( DF-Dior, DF-Tom Ford, DF-Armani, DF-CoTY, DF-Swarovski, DF-Lux Fashion, Gordon Ramsey, MM x Ranveer Brar) | • Launch of 80+7 New Concepts for the Year FY 26-27 | • T1-48, | • T2-12, | • Quad-6, | • MMTH-9, | • ATMS-7. | • Pop-Up - 7 Nos | • Launch of New Products - Water, Home Fragrance, Gifting Solutions, Tea/Coffee, Chocolates ( 25 SKUs)."
+    "kpi": "⦁\t100% Onboarding of New Stores to Digital Platforms on Day 0 (Loyalty, PG, KIAF and ePOS Agreement to be live on Day 0 of New Store Opening)\r\n⦁\tIntroduction of NPS for CBB. Target NPS of 70\r\n⦁\tOnboarding of 7 Anchor Brands \r\n⦁\t( DF-Dior, DF-Tom Ford, DF-Armani, DF-CoTY, DF-Swarovski, DF-Lux Fashion, Gordon Ramsey, MM x Ranveer Brar) \r\n⦁\tLaunch of 80+7 New Concepts for the Year FY 26-27\r\n⦁\tT1-48,\r\n⦁\tT2-12,\r\n⦁\tQuad-6,\r\n⦁\tMMTH-9,\r\n⦁\tATMS-7.\r\n⦁\tPop-Up - 7 Nos\r\n⦁\tLaunch of New Products - Water, Home Fragrance, Gifting Solutions, Tea/Coffee, Chocolates ( 25 SKUs).",
+    "supportTeam": "Neeraj\r\nNeeraj\r\nAvishek\r\nProject Department (CPO Ravi)\r\nGeorge, Dominic",
+    "projectDependencies": ""
   },
   {
     "id": "PRCOMDEV_18",
@@ -1305,7 +1526,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
     "notes": "",
-    "kpi": "• TAT for Tender Process - 60 Days | • TAT for New Store Fit-outs - 100 Days | • TAT for Design Development- 30 Days | • Launch of Commercial Project Management Tool by Jun-26 | • Hosting 4 Brand Launch Events | • Launch of BLR Contactless Lounge Access Program by Feb-27 | • 2 banks to be onboarded"
+    "kpi": "⦁\tTAT for Tender Process - 60 Days\r\n⦁\tTAT for New Store Fit-outs - 100 Days\r\n⦁\tTAT for Design Development- 30 Days\r\n⦁\tLaunch of Commercial Project Management Tool by Jun-26\r\n⦁\tHosting 4 Brand Launch Events\r\n⦁\tLaunch of BLR Contactless Lounge Access Program by Feb-27\r\n⦁\t2 banks to be onboarded",
+    "supportTeam": "Devyani, Avishek, Ilora, Anu\r\n                                                                                                                                                                                                                                                              \r\nNeeraj, Jeune, Ashish, George",
+    "projectDependencies": ""
   },
   {
     "id": "PRCOMDEV_19",
@@ -1320,7 +1543,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
     "notes": "",
-    "kpi": "• Attending 3 Global Conferences | • Speaking at 3 Global Conferences | • Visting 3 Intl. Airports for Inspiration | • Self Development - 80 Training Hours | • ALP Project Exceution - BIAL Academy. | • Completion of Assigned / Recommended IDP - 360 Feedback / Books | • Upskilling/Development Courses"
+    "kpi": "⦁\tAttending 3 Global Conferences\r\n⦁\tSpeaking at 3 Global Conferences\r\n⦁\tVisting 3 Intl. Airports for Inspiration\r\n⦁\tSelf Development - 80 Training Hours \r\n⦁\tALP Project Exceution - BIAL Academy.\r\n⦁\tCompletion of Assigned / Recommended IDP - 360 Feedback / Books \r\n⦁\tUpskilling/Development Courses",
+    "supportTeam": "Dr. Devasia & Gp. Capt. Srinivas",
+    "projectDependencies": ""
   },
   {
     "id": "PRCOMDEV_20",
@@ -1335,7 +1560,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
     "notes": "",
-    "kpi": "• 20 Lac Contribution from New Partners for KIAF Trust | • KIAF Contribution - Re1/Water Bottle sold, Rs5/Product (own brand) Sold | • Min. 70% LEED Certified Materials for New Stores / Min. 10% for RRR for New Stores | • Gender Diversity at New Outlets - Females Ratio min. 30% | • 1 PRM Staff for every New Store (Enable India)"
+    "kpi": "⦁\t20 Lac Contribution from New Partners for KIAF Trust\r\n⦁\tKIAF Contribution - Re1/Water Bottle sold, Rs5/Product (own brand) Sold\r\n⦁\tMin. 70% LEED Certified Materials for New Stores / Min. 10% for RRR for New Stores\r\n⦁\tGender Diversity at New Outlets - Females Ratio min. 30%\r\n⦁\t1 PRM Staff for every New Store (Enable India)",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_01",
@@ -1349,7 +1576,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_02",
@@ -1363,7 +1593,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_03",
@@ -1377,7 +1610,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_04",
@@ -1391,7 +1627,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_05",
@@ -1405,7 +1644,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_06",
@@ -1419,7 +1661,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_07",
@@ -1433,7 +1678,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_08",
@@ -1447,7 +1695,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_09",
@@ -1461,7 +1712,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_10",
@@ -1475,7 +1729,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_11",
@@ -1489,7 +1746,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_14",
@@ -1504,7 +1764,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
     "notes": "",
-    "kpi": "• Building 3 marquee properties | • GTM strategy plan to get 6 sponsors on board | • A system where 20 consessionnaire partners are involved in activations across 20 events | • Average time to market - 30 day average for smaller activities, 90 days for Marquee events | • Execution excellence - 95% adherance to TAT"
+    "kpi": "⦁\tBuilding 3 marquee properties\r\n⦁\tGTM strategy plan to get 6 sponsors on board\r\n⦁\tA system where 20 consessionnaire partners are involved in activations across 20  events \r\n⦁\tAverage time to market - 30 day average for smaller activities, 90 days for Marquee events\r\n⦁\tExecution excellence - 95% adherance to TAT",
+    "supportTeam": "⦁\tBACL, Avishek, Corp Marketing- Apurva, ICT - Jeune\r\n⦁\tAvishek\r\n⦁\tJaveed, Rohan\r\n⦁\tProcurement-Gopi K\r\n⦁\tProcurement-Gopi K",
+    "projectDependencies": ""
   },
   {
     "id": "PRADV_13",
@@ -1519,7 +1781,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
     "notes": "",
-    "kpi": "• Convert 300K temp users to active Pulse Rewards users | • Events customer aquisition - 10% marketing lead conversion to footfall | • Social Media - 30% engagement on an average | • NPS 80 - activations, events, landside, advertising | • Landside guest experience - queue transperancy method"
+    "kpi": "⦁\tConvert 300K temp users to active  Pulse Rewards users\r\n⦁\tEvents customer aquisition - 10% marketing lead conversion to footfall \r\n⦁\tSocial Media -  30% engagement on an average\r\n⦁\t NPS 80 - activations,  events, landside, advertising\r\n⦁\tLandside guest experience - queue transperancy method",
+    "supportTeam": "⦁\tNeeraj, Jeune\r\n⦁\tF&B - Rohan, Neeraj\r\n⦁\tAkash\r\n⦁\tDom",
+    "projectDependencies": ""
   },
   {
     "id": "PRADV_15",
@@ -1533,7 +1797,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRADV_16",
@@ -1548,7 +1815,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
     "notes": "",
-    "kpi": "• 2% of amount billed to Commercial from all vendors/agencies - 12L | • 2 events X fundraisers - 1 Cr | • CO2 saving throught advertsing campaign execution - xxx | • Reducing diesel generator depency xxx"
+    "kpi": "⦁\t2% of amount billed to Commercial from all vendors/agencies - 12L\r\n⦁\t2  events X  fundraisers - 1 Cr\r\n⦁\tCO2 saving throught advertsing campaign execution - xxx\r\n⦁\tReducing diesel generator depency xxx",
+    "supportTeam": "080-George",
+    "projectDependencies": ""
   },
   {
     "id": "PRDF_01",
@@ -1562,7 +1831,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_02",
@@ -1576,7 +1848,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_03",
@@ -1590,7 +1865,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_04",
@@ -1604,7 +1882,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_05",
@@ -1618,7 +1899,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_06",
@@ -1632,7 +1916,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_07",
@@ -1646,7 +1933,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_08",
@@ -1660,7 +1950,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_09",
@@ -1674,7 +1967,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_10",
@@ -1688,7 +1984,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_11",
@@ -1702,7 +2001,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_12",
@@ -1716,7 +2018,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_13",
@@ -1730,7 +2035,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_14",
@@ -1744,7 +2052,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_15",
@@ -1758,7 +2069,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_16",
@@ -1772,7 +2086,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_17",
@@ -1786,7 +2103,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_18",
@@ -1800,7 +2120,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_19",
@@ -1814,7 +2137,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_20",
@@ -1828,7 +2154,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_21",
@@ -1842,7 +2171,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_22",
@@ -1856,7 +2188,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_23",
@@ -1870,7 +2205,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_24",
@@ -1884,7 +2222,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_25",
@@ -1898,7 +2239,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_26",
@@ -1912,7 +2256,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_27",
@@ -1926,7 +2273,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRDF_28",
@@ -1941,7 +2291,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
     "notes": "",
-    "kpi": "P&C SPP: from 98 --> XXX | Arrivals SPP: XXXX --> XXX | Departures SPP: XXX --> XXXX | Total SPP : XXX --> | Launch by April 2026"
+    "kpi": "P&C SPP: from 98 --> XXX\r\nArrivals SPP: XXXX --> XXX\r\nDepartures SPP: XXX --> XXXX\r\nTotal SPP : XXX -->\r\nLaunch by April 2026",
+    "supportTeam": "Devayani/ Dilpreet\r\nJuene / Samson\r\nSamson\r\nSamson\r\nManoj Swamonathan/ George",
+    "projectDependencies": ""
   },
   {
     "id": "PRDF_29",
@@ -1956,7 +2308,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
     "notes": "",
-    "kpi": "1. Drive traffic to Pulse & downloads | 2. Drive click & collect through Pulse | 3. Bonus points redemption factor | 4. Attractiveness index | 5. Sales support Team for Promoting Pulse Orders (inside DF, LMS, Lounge, Belt Areas) | 6. Performance marketing of BLR Pulse - Duty Free | 7. Roll-out lucrative Bank / Card Offers | 8. Portable Check-out Machine"
+    "kpi": "1. Drive traffic to Pulse & downloads\r\n2. Drive click & collect through Pulse\r\n3. Bonus points redemption factor\r\n4. Attractiveness index\r\n5. Sales support Team for Promoting Pulse Orders (inside DF, LMS, Lounge, Belt Areas)\r\n6. Performance marketing of BLR Pulse - Duty Free\r\n7. Roll-out lucrative Bank / Card Offers \r\n8. Portable Check-out Machine",
+    "supportTeam": "Neeraj/ Samson\r\nNeeraj/ Devayani/ Samson\r\nNeeraj\r\nAkash Awasthi\r\nNeeraj\r\nJeune / Neeraj\r\nNeeraj\r\nJeune",
+    "projectDependencies": ""
   },
   {
     "id": "PRDF_30",
@@ -1971,7 +2325,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
     "notes": "",
-    "kpi": "1. Lacoste Pop Up in Intl Departure | 2. Pop - Up in 080 Lounge | 3. Swarovski Store | 4. Fashion stores (Tumi, Ralph Lauren, Coach) | 5. Last minute store (Arrivals) | 6. Commercial Master Plan, Vision Document & Business Case | 7. LOI from destination sports entertainment like TopGolf/ X-Range & padel/pickle | 8. RDE: Retail offerings & pre concept of RDE"
+    "kpi": "1. Lacoste Pop Up in Intl Departure \r\n2. Pop - Up in 080 Lounge\r\n3. Swarovski Store\r\n4. Fashion stores (Tumi, Ralph Lauren, Coach)\r\n5. Last minute store (Arrivals)\r\n6. Commercial Master Plan, Vision Document & Business Case\r\n7. LOI from destination sports entertainment like TopGolf/ X-Range & padel/pickle\r\n8. RDE: Retail offerings & pre concept of RDE",
+    "supportTeam": "⦁\tDeep/ Deepika\r\n⦁\tGeorge/ Pravat/ Deep\r\n⦁\tPravat/ Deep\r\n⦁\tPravat/ Deep\r\n⦁\tPravat\r\n⦁\tAkash Awasthi\r\n⦁\tSelf\r\n⦁\tRachana",
+    "projectDependencies": ""
   },
   {
     "id": "PRDF_31",
@@ -1986,7 +2342,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
     "notes": "",
-    "kpi": "1. Identify two potential successors for each role directly reporting to the CCO and complete readiness assessments for all identified candidates | 2. Establish baseline of the commercial team’s score on ‘openness to challenge and debate’ as measured through Quarterly Pulse Survey and Half-yealy Check-in and set target improvement rate for FY27 | 3. 100% participation of targeted employees in 12 inspirational learning trips—including airport visits, industry conferences, and global benchmarking experiences—for the commercial team | 4. Gender Diversity in Duty Free | 5. Diversity & Inclusion Hiring (PRM) | 6. Attractive incentive Schemes for the DF team"
+    "kpi": "1. Identify two potential successors for each role directly reporting to the CCO and complete readiness assessments for all identified candidates\r\n2. Establish baseline of the commercial team’s score on ‘openness to challenge and debate’ as measured through Quarterly Pulse Survey and Half-yealy Check-in and set target improvement rate for FY27\r\n3. 100% participation of targeted employees in 12 inspirational learning trips—including airport visits, industry conferences, and global benchmarking experiences—for the commercial team\r\n4. Gender Diversity in Duty Free\r\n5. Diversity & Inclusion Hiring (PRM)\r\n6. Attractive incentive Schemes for the DF team",
+    "supportTeam": "⦁\tAll 5 direct reports\r\n⦁\tPeople Partner at Commercial \r\n⦁\t5 direct reports\r\n⦁\tDavid\r\n⦁\tDevayani\r\n⦁\tDavid",
+    "projectDependencies": ""
   },
   {
     "id": "PRDF_32",
@@ -2001,7 +2359,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
     "notes": "",
-    "kpi": "1. Raise funds for KIAF by March '26 | 2. Raise Funds from Donations (5 Rs/bill) | 3. LEED certified, recycled & other sustainable initiatives in development of RDE | 4. Increase the sale of sustainable products Sale | 5. KIA Products sale at Dep Store and Donate X % to KIAF"
+    "kpi": "1. Raise funds for KIAF by March '26\r\n2. Raise Funds from Donations (5 Rs/bill)\r\n3. LEED certified, recycled & other sustainable initiatives in development of RDE\r\n4. Increase the sale of sustainable products Sale\r\n5. KIA Products sale at Dep Store and Donate X % to KIAF",
+    "supportTeam": "David\r\nRachana\r\nRachana\r\nDavid / Samson",
+    "projectDependencies": ""
   },
   {
     "id": "PRCBB_01",
@@ -2015,7 +2375,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCBB_02",
@@ -2029,7 +2392,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCBB_03",
@@ -2043,7 +2409,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCBB_04",
@@ -2057,7 +2426,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCBB_05",
@@ -2071,7 +2443,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRCBB_06",
@@ -2085,7 +2460,10 @@ export const projects: Project[] = [
     "targetDate": null,
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_01",
@@ -2099,7 +2477,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_02",
@@ -2113,7 +2494,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_03",
@@ -2127,7 +2511,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_04",
@@ -2141,7 +2528,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_05",
@@ -2155,7 +2545,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_06",
@@ -2169,7 +2562,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_07",
@@ -2183,7 +2579,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_08",
@@ -2197,7 +2596,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_09",
@@ -2211,7 +2613,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_10",
@@ -2225,7 +2630,10 @@ export const projects: Project[] = [
     "targetDate": "2027-03-01",
     "risks": "",
     "objective": "",
-    "notes": ""
+    "notes": "",
+    "kpi": "",
+    "projectDependencies": "",
+    "supportTeam": ""
   },
   {
     "id": "PRBASL_11",
@@ -2240,7 +2648,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Drive growth in experience economy by enhancing per capita sales",
     "notes": "",
-    "kpi": "Penetration 22% | ATV INR 2050 | Human capital 69.8 Cr | 40 Crs - 6 non-BLR business (Vision 2030) | EBITDA 25%"
+    "kpi": "Penetration 22%\r\nATV INR 2050\r\nHuman capital 69.8 Cr\r\n 40 Crs - 6 non-BLR business (Vision 2030)\r\nEBITDA 25%",
+    "supportTeam": "Commercial  BASL / Devayani\r\nRaj Kadamuturu / Darshana BASL Marketing \r\nJoseph Roy\r\nAshish Bakshi/ Pravat Paikray\r\nMuralikrishna Alapati / Chef Pradeep",
+    "projectDependencies": ""
   },
   {
     "id": "PRBASL_12",
@@ -2255,7 +2665,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Elevate end-to-end guest experience across touchpoints",
     "notes": "",
-    "kpi": "100,000 active pulse members | Pulse privilege + program by Q1, target 1000 guests | 1 Pulse promotion per quarter | 2000 member guests - Beyond BLR | Implement Associate recognition program by Q1 - Recognise 30 top performers"
+    "kpi": "100,000 active pulse members\r\nPulse privilege + program by Q1, target 1000 guests\r\n1 Pulse promotion per quarter\r\n2000 member guests - Beyond BLR\r\nImplement Associate recognition program by Q1 - Recognise 30 top performers",
+    "supportTeam": "Commercial BASL / Muralikrishna Alapati\r\nRaj Kadamuturu\r\nDarshana BASL Marketing with Devayani & team\r\nAshish Bakshi/ Neeraj Manoria\r\nJoseph Roy/ Muralikrishna Alapati",
+    "projectDependencies": ""
   },
   {
     "id": "PRBASL_13",
@@ -2270,7 +2682,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Achieve process excellence by streamlining key operational workflows to improve turnaround time",
     "notes": "",
-    "kpi": "Associate Empower Program - INR 10K guest experience Q1 | Target 5000 guests annually for WOW experience | Institutionalise Ladies & Gentlemen service culture by Q3 in F&B, Duty Free & Retail | Establish Shared services centre for Non- BLR operations by Q1 | Multiskill 5% of human capital through utilization of Ai | Automate B2B & B2C Contract management process turnaorund in 72hrs by Q2"
+    "kpi": "Associate Empower Program - INR 10K guest experience Q1\r\nTarget 5000 guests annually for WOW experience \r\nInstitutionalise Ladies & Gentlemen service culture by Q3  in F&B, Duty Free & Retail \r\nEstablish Shared services centre for Non- BLR operations by Q1\r\nMultiskill 5% of human capital through utilization of Ai\r\nAutomate B2B & B2C Contract management process turnaorund in  72hrs by Q2",
+    "supportTeam": "Joseph Roy/ Muralikrishna Alapati\r\nRaj Kadamuturu\r\nRohan Chaudhury / Joseph Roy / Aarti Naik \r\nMuralikrishna Alapati / Joseph Roy\r\nJoseph Roy / Raj Kadamuturu\r\nBASL Commercial / Ashish / Legal delpartment",
+    "projectDependencies": ""
   },
   {
     "id": "PRBASL_14",
@@ -2285,7 +2699,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a High-Performance culture in a Future-Ready, Organization",
     "notes": "",
-    "kpi": "GTPW Certification Q3 | CEO Associate chat sessions -12 per year (32 associates per session) | Global Conferences - 3, Inspirational Trips - 2"
+    "kpi": "GTPW Certification Q3\r\nCEO Associate chat sessions -12 per year (32 associates per session)\r\nGlobal Conferences - 3, Inspirational Trips - 2",
+    "supportTeam": "Joseph Roy \r\nRaj Kadamuturu\r\nAshish Bakshi/ Commercial BASL",
+    "projectDependencies": ""
   },
   {
     "id": "PRBASL_15",
@@ -2300,7 +2716,9 @@ export const projects: Project[] = [
     "risks": "",
     "objective": "Build a Responsible, Sustainable Organization",
     "notes": "",
-    "kpi": "Achieve 1 community drive per month | Reduce waste from 0.47 gms to 0.40 gms per dpax | Vendor contribution for KIAF - 10,00,000 | 1 BASL KIAF awarness campaign per quarter | LEED Certification for non BLR Lounges by Q2"
+    "kpi": "Achieve 1 community  drive per month \r\nReduce waste from 0.47 gms to 0.40 gms per dpax\r\nVendor contribution for KIAF - 10,00,000\r\n1 BASL KIAF awarness campaign per quarter\r\nLEED Certification for non BLR Lounges by Q2",
+    "supportTeam": "Joseph Roy\r\nRaj Kadamuturu\r\nMuralikrishna Alapati\r\nCommercial BASL / Devayani\r\nAshish / Kiran Kumar Reddy BASL",
+    "projectDependencies": ""
   }
 ];
 
