@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Building2, ChevronRight, X, Save, AlertTriangle, Zap, ArrowLeft, Edit3 } from 'lucide-react';
+import { Building2, ChevronRight, X, Save, AlertTriangle, Zap, ArrowLeft, Edit3, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import ProjectModal from '@/components/modals/ProjectModal';
 import { getStatusColor, getPriorityColor } from '@/lib/utils';
 import type { Project } from '@/lib/mock-data';
 
@@ -37,6 +38,13 @@ export default function DepartmentsPage() {
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [deptSearch, setDeptSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [showModal, setShowModal] = useState(false);
+  const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
+
+  const openNew = (dept?: string) => {
+    setNewProjectDept(dept || null);
+    setShowModal(true);
+  };
 
   const chartData = departments.filter(d => d.total > 0).map(d => ({
     name: d.name.length > 14 ? d.name.slice(0, 13) + '…' : d.name,
@@ -116,7 +124,10 @@ export default function DepartmentsPage() {
             <div className="w-3 h-3 rounded-full" style={{ background: selectedDeptData.color }} />
             <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">{selectedDept}</h1>
           </div>
-          <span className="ml-auto text-[12px] text-[#94a3b8]">{filteredProjects.length} of {deptProjects.length} shown</span>
+          <span className="ml-2 text-[12px] text-[#94a3b8]">{filteredProjects.length} of {deptProjects.length} shown</span>
+          <button onClick={() => openNew(selectedDept)} className="ml-auto btn-primary text-[12px] px-3 py-1.5 flex items-center gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Add Project
+          </button>
         </div>
 
         {/* KPI Cards */}
@@ -310,6 +321,11 @@ export default function DepartmentsPage() {
             );
           })}
         </div>
+        <ProjectModal
+          isOpen={showModal}
+          onClose={() => { setShowModal(false); setNewProjectDept(null); }}
+          defaultDepartment={newProjectDept || undefined}
+        />
       </div>
     );
   }
@@ -319,9 +335,14 @@ export default function DepartmentsPage() {
   // ══════════════════════════════════════════════
   return (
     <div className="space-y-5 animate-fade-in">
-      <div>
-        <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">Departments</h1>
-        <p className="text-[13px] text-[#64748b] mt-0.5">Click any department to view and edit all project fields</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">Departments</h1>
+          <p className="text-[13px] text-[#64748b] mt-0.5">Click any department to view and edit all project fields</p>
+        </div>
+        <button onClick={() => openNew()} className="btn-primary text-[12px] px-3 py-1.5 flex items-center gap-1.5">
+          <Plus className="w-3.5 h-3.5" /> Add Project
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -389,6 +410,11 @@ export default function DepartmentsPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <ProjectModal
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); setNewProjectDept(null); }}
+        defaultDepartment={newProjectDept || undefined}
+      />
     </div>
   );
 }

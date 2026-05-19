@@ -254,7 +254,7 @@ export default function ProjectsPage() {
                               </div>
                               <span className="text-[10px] text-[#64748b] w-7 text-right">{p.progress}%</span>
                             </div>
-                            <div className="col-span-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className={`col-span-1 flex items-center gap-1 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                               <button
                                 onClick={e => { e.stopPropagation(); openEdit(p); }}
                                 className="p-1 rounded text-[#64748b] hover:bg-white hover:text-[#0a46e5] transition-colors"
