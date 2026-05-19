@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, ChevronDown } from 'lucide-react';
+import { Plus, Search, Filter, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, ChevronDown, BarChartHorizontal } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import ProjectModal from '@/components/modals/ProjectModal';
@@ -16,7 +16,7 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [deptFilter, setDeptFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
-  const [view, setView] = useState<'table' | 'kanban'>('table');
+  const [view, setView] = useState<'table' | 'kanban' | 'gantt'>('table');
   const [tab, setTab] = useState<'active' | 'history'>('active');
   const [showModal, setShowModal] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
@@ -95,6 +95,7 @@ export default function ProjectsPage() {
           <div className="flex items-center gap-1 ml-auto bg-[#f1f5f9] rounded-lg p-1">
             <button onClick={() => setView('table')} className={`p-1.5 rounded ${view === 'table' ? 'bg-white shadow-sm text-[#1e293b]' : 'text-[#94a3b8]'}`}><Table2 className="w-3.5 h-3.5" /></button>
             <button onClick={() => setView('kanban')} className={`p-1.5 rounded ${view === 'kanban' ? 'bg-white shadow-sm text-[#1e293b]' : 'text-[#94a3b8]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setView('gantt')} className={`p-1.5 rounded ${view === 'gantt' ? 'bg-white shadow-sm text-[#1e293b]' : 'text-[#94a3b8]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
           </div>
         )}
       </div>
@@ -187,6 +188,7 @@ export default function ProjectsPage() {
                       <div className="flex items-center gap-1.5">
                         <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="text-[11px] px-2 py-1 rounded text-[#64748b] hover:bg-[#f1f5f9] transition-all">Edit</button>
                         <button onClick={e => { e.stopPropagation(); archiveProject(p.id); }} className="text-[11px] px-2 py-1 rounded text-amber-500 hover:bg-amber-50 transition-all">Archive</button>
+                        <button onClick={e => { e.stopPropagation(); if(confirm(`Are you sure you want to permanently delete project ${p.id}?`)) purgeProject(p.id); }} className="text-[11px] px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-all">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -258,6 +260,68 @@ export default function ProjectsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ========== ACTIVE: GANTT VIEW ========== */}
+      {tab === 'active' && view === 'gantt' && (
+        <div className="glass-card overflow-hidden overflow-x-auto p-4">
+          <div className="min-w-[800px]">
+            <div className="flex border-b border-[#e2e8f0] pb-2 mb-2">
+              <div className="w-64 flex-shrink-0 text-[11px] font-semibold text-[#64748b] uppercase">Project</div>
+              <div className="flex-1 flex">
+                {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
+                  <div key={m} className="flex-1 text-center text-[10px] font-semibold text-[#64748b] border-l border-[#f1f5f9]">{m}</div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+              {filtered.map(p => {
+                const currentYear = new Date().getFullYear();
+                const sDate = p.startDate ? new Date(p.startDate) : new Date();
+                const tDate = p.targetDate ? new Date(p.targetDate) : new Date(new Date().setMonth(sDate.getMonth() + 1));
+                
+                // Only plot if the dates are within the current year or close
+                let sMonth = sDate.getFullYear() < currentYear ? 0 : sDate.getFullYear() > currentYear ? 11 : sDate.getMonth();
+                let tMonth = tDate.getFullYear() < currentYear ? 0 : tDate.getFullYear() > currentYear ? 11 : tDate.getMonth();
+                
+                if (sMonth > tMonth) tMonth = sMonth;
+                
+                const startPercent = (sMonth / 12) * 100;
+                const widthPercent = (Math.max(1, (tMonth - sMonth + 1)) / 12) * 100;
+                
+                return (
+                  <div key={p.id} className="flex items-center group cursor-pointer hover:bg-[#f8f9fa] rounded p-1" onClick={() => openEdit(p)}>
+                    <div className="w-64 flex-shrink-0 pr-4 truncate">
+                      <p className="text-[12px] font-semibold text-[#1e293b] truncate">{p.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`status-badge px-1 py-0 border ${getStatusColor(p.status)}`} style={{ fontSize: '9px', transform: 'scale(0.9)', transformOrigin: 'left' }}>{p.status}</span>
+                        <p className="text-[10px] text-[#94a3b8]">{p.owner}</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 relative h-6 bg-[#f1f5f9] rounded overflow-hidden">
+                      {/* Grid lines */}
+                      <div className="absolute inset-0 flex">
+                        {Array.from({length: 12}).map((_, i) => <div key={i} className="flex-1 border-l border-white/40" />)}
+                      </div>
+                      
+                      {/* Bar */}
+                      <div className="absolute top-1 bottom-1 rounded shadow-sm transition-all group-hover:brightness-110 overflow-hidden border border-black/10" 
+                        style={{ 
+                          left: `${startPercent}%`, 
+                          width: `${Math.min(100 - startPercent, widthPercent)}%`,
+                          background: p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#2d65ff'
+                        }}>
+                        <div className="absolute top-0 bottom-0 left-0 bg-white/20 border-r border-white/50" style={{ width: `${p.progress}%` }} />
+                        <span className="absolute inset-0 flex items-center px-2 text-[9px] font-bold text-white drop-shadow-md z-10">{p.progress}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {filtered.length === 0 && <p className="text-center text-[12px] text-[#94a3b8] py-10">No projects to display on timeline.</p>}
+            </div>
+          </div>
         </div>
       )}
 

@@ -16,7 +16,7 @@ const statusOptions = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'] as const;
 
 export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
-  const { addProject, updateProject, archiveProject, departments, projects } = useData();
+  const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
 
   const deptNames = useMemo(() => departments.map(d => d.name), [departments]);
   const allProjectIds = useMemo(() => projects.map(p => p.id), [projects]);
@@ -189,11 +189,20 @@ export default function ProjectModal({ isOpen, onClose, editProject }: Props) {
           <div><label className={labelCls}>Notes</label>
             <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Additional notes..." className={`${inputCls} resize-none`} /></div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-1 border-t border-[#f1f5f9]">
-            <button type="button" onClick={onClose} className="btn-secondary text-[12px]">Cancel</button>
-            <button type="submit" className="btn-primary text-[12px]">
-              <Save className="w-3.5 h-3.5" /> {editProject ? 'Save Changes' : 'Create Project'}
-            </button>
+          <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">
+            <div>
+              {editProject && (
+                <button type="button" onClick={() => { if(confirm(`Permanently delete project ${editProject.id}?`)) { purgeProject(editProject.id); onClose(); } }} className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold border border-transparent hover:border-red-100">
+                  <Trash2 className="w-3.5 h-3.5" /> Delete Project
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2.5">
+              <button type="button" onClick={onClose} className="btn-secondary text-[12px]">Cancel</button>
+              <button type="submit" className="btn-primary text-[12px]">
+                <Save className="w-3.5 h-3.5" /> {editProject ? 'Save Changes' : 'Create Project'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

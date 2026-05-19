@@ -16,8 +16,9 @@ export default function TeamPage() {
     ownerMap[p.owner].department = p.department;
   });
   const owners = Object.values(ownerMap).sort((a, b) => b.active - a.active);
-  const overloaded = owners.filter(o => o.active >= 5);
-  const atCapacity = owners.filter(o => o.active >= 3 && o.active < 5);
+  const overloaded = owners.filter(o => o.active >= 20);
+  const atCapacity = owners.filter(o => o.active >= 15 && o.active < 20);
+  const healthy = owners.filter(o => o.active < 15);
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -28,9 +29,9 @@ export default function TeamPage() {
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: 'Total Owners', value: owners.length, icon: Users, bg: 'bg-indigo-50', border: 'border-indigo-100', color: 'text-indigo-500' },
-          { label: 'Overloaded (5+)', value: overloaded.length, icon: AlertTriangle, bg: 'bg-red-50', border: 'border-red-100', color: 'text-red-500' },
-          { label: 'At Capacity (3-4)', value: atCapacity.length, icon: FolderKanban, bg: 'bg-amber-50', border: 'border-amber-100', color: 'text-amber-500' },
-          { label: 'Healthy', value: owners.filter(o => o.active < 3).length, icon: Users, bg: 'bg-emerald-50', border: 'border-emerald-100', color: 'text-emerald-500' },
+          { label: 'Overloaded (20+)', value: overloaded.length, icon: AlertTriangle, bg: 'bg-red-50', border: 'border-red-100', color: 'text-red-500' },
+          { label: 'At Capacity (15-19)', value: atCapacity.length, icon: FolderKanban, bg: 'bg-amber-50', border: 'border-amber-100', color: 'text-amber-500' },
+          { label: 'Healthy (< 15)', value: healthy.length, icon: Users, bg: 'bg-emerald-50', border: 'border-emerald-100', color: 'text-emerald-500' },
         ].map(k => (
           <div key={k.label} className={`glass-card p-4 ${k.bg} border ${k.border}`}>
             <k.icon className={`w-4 h-4 ${k.color} mb-2`} />
@@ -41,8 +42,8 @@ export default function TeamPage() {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {owners.map(o => {
-          const isOverloaded = o.active >= 5;
-          const isAtCapacity = o.active >= 3;
+          const isOverloaded = o.active >= 20;
+          const isAtCapacity = o.active >= 15 && o.active < 20;
           return (
             <div key={o.name} className={`glass-card p-4 ${isOverloaded ? 'border-red-200' : isAtCapacity ? 'border-amber-200' : ''}`}>
               <div className="flex items-start gap-2.5 mb-2.5">

@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import {
   BarChart3, TrendingUp, AlertTriangle, CheckCircle2,
   Clock, Zap, Target, Users, AlertCircle, Shield, Eye, X, Sparkles
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
-import { monthlyTrend } from '@/lib/mock-data';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -30,6 +29,38 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function DashboardPage() {
   const { projects, departments, risks, kpi } = useData();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
+  const dynamicTrend = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const trend = [];
+    
+    for (let i = 0; i < 6; i++) {
+      let dMonth = currentMonth + i;
+      let dYear = currentYear;
+      if (dMonth > 11) {
+        dMonth -= 12;
+        dYear += 1;
+      }
+      const mName = months[dMonth] + " '" + dYear.toString().substring(2);
+      
+      const dueThisMonth = projects.filter(p => {
+        if (!p.targetDate) return false;
+        const pt = new Date(p.targetDate);
+        return pt.getMonth() === dMonth && pt.getFullYear() === dYear;
+      });
+      
+      const delayedThisMonth = dueThisMonth.filter(p => p.status === 'Delayed').length;
+      
+      trend.push({
+        month: mName,
+        projectsDue: dueThisMonth.length,
+        delayed: delayedThisMonth
+      });
+    }
+    return trend;
+  }, [projects]);
 
   const kpiCards = [
     { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500', filter: 'all' },
@@ -181,23 +212,19 @@ export default function DashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-2 glass-card p-4">
-          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Project Portfolio Trend</h3>
+          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Upcoming Project Deadlines (Live)</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={monthlyTrend}>
+            <AreaChart data={dynamicTrend}>
               <defs>
-                <linearGradient id="colorInProgress" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.15} /><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                <linearGradient id="colorDue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2d65ff" stopOpacity={0.15} /><stop offset="95%" stopColor="#2d65ff" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="inProgress" name="In Progress" stroke="#3b82f6" fill="url(#colorInProgress)" strokeWidth={2} />
-              <Area type="monotone" dataKey="newProjects" name="New Projects" stroke="#8b5cf6" fill="url(#colorNew)" strokeWidth={2} />
-              <Area type="monotone" dataKey="delayed" name="Delayed" stroke="#ef4444" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
+              <Area type="monotone" dataKey="projectsDue" name="Projects Due" stroke="#2d65ff" fill="url(#colorDue)" strokeWidth={2} />
+              <Area type="monotone" dataKey="delayed" name="Delayed Projects" stroke="#ef4444" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
