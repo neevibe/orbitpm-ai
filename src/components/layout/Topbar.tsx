@@ -10,7 +10,7 @@ export default function Topbar() {
   const unread = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="fixed top-0 left-[240px] right-0 h-14 bg-white/80 backdrop-blur-xl border-b border-[#e2e8f0] flex items-center justify-between px-6 z-30">
+    <header className="fixed top-0 left-[220px] right-0 h-14 bg-white border-b border-[#e4e4e4] flex items-center justify-between px-5 z-30">
       {/* Search */}
       <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
@@ -29,9 +29,9 @@ export default function Topbar() {
       {/* Right Actions */}
       <div className="flex items-center gap-2 ml-4">
         {/* AI Assistant Trigger */}
-        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all group">
-          <Bot className="w-3.5 h-3.5 text-indigo-500" />
-          <span className="text-[12px] font-semibold text-indigo-600">Ask AI</span>
+        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#fff3ed] border border-[#f5c9a8] hover:bg-[#ffe4cf] transition-all group">
+          <Bot className="w-3.5 h-3.5" style={{ color: '#e86c2d' }} />
+          <span className="text-[12px] font-semibold" style={{ color: '#e86c2d' }}>Ask AI</span>
         </button>
 
         {/* Notifications */}
@@ -57,7 +57,7 @@ export default function Topbar() {
                   <h3 className="text-[13px] font-semibold text-[#1e293b]">Notifications ({unread} new)</h3>
                   <div className="flex items-center gap-2">
                     {unread > 0 && (
-                      <button onClick={() => markAllNotificationsRead()} className="text-[11px] text-indigo-500 hover:text-indigo-600 flex items-center gap-1 font-medium">
+                      <button onClick={() => markAllNotificationsRead()} className="text-[11px] hover:opacity-80 flex items-center gap-1 font-medium" style={{ color: '#e86c2d' }}>
                         <CheckCheck className="w-3 h-3" /> Read all
                       </button>
                     )}
