@@ -125,14 +125,32 @@ export default function ProjectDetailPage() {
                 {isEditing ? <textarea value={editForm.notes || ''} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={2} className={`${inputCls} resize-none text-[12px]`} />
                   : <p className="text-[12px] text-[#64748b] leading-relaxed">{project.notes}</p>}</div>)}
           </div>
-          <div className="glass-card p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border-indigo-100 self-start">
-            <div className="flex items-center gap-1.5 mb-1.5"><Zap className="w-3.5 h-3.5 text-indigo-500" /><h3 className="text-[12px] font-semibold text-indigo-700">AI Health Assessment</h3></div>
-            <p className="text-[12px] text-[#475569] leading-relaxed">
-              {project.progress === 0 && project.priority === 'Critical' ? `⚠️ Critical project with 0% progress. Immediate action needed.`
-                : project.status === 'Delayed' ? `🚨 This project is delayed. Review blockers and consider timeline adjustment.`
-                : project.progress > 50 ? `✅ Good progress at ${project.progress}%. On track for delivery.`
-                : `📊 Early stages. Monitor progress velocity to ensure target date feasibility.`}
-            </p>
+          <div className="space-y-3">
+            <div className="glass-card p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border-indigo-100">
+              <div className="flex items-center gap-1.5 mb-1.5"><Zap className="w-3.5 h-3.5 text-indigo-500" /><h3 className="text-[12px] font-semibold text-indigo-700">AI Health Assessment</h3></div>
+              <p className="text-[12px] text-[#475569] leading-relaxed">
+                {project.progress === 0 && project.priority === 'Critical' ? `⚠️ Critical project with 0% progress. Immediate action needed.`
+                  : project.status === 'Delayed' ? `🚨 This project is delayed. Review blockers and consider timeline adjustment.`
+                  : project.progress > 50 ? `✅ Good progress at ${project.progress}%. On track for delivery.`
+                  : `📊 Early stages. Monitor progress velocity to ensure target date feasibility.`}
+              </p>
+            </div>
+            
+            {(project.supportTeam || isEditing) && (
+              <div className="glass-card p-4">
+                <h3 className="text-[12px] font-semibold text-[#334155] mb-1.5">Supporting Team</h3>
+                {isEditing ? <input value={editForm.supportTeam || ''} onChange={e => setEditForm(f => ({ ...f, supportTeam: e.target.value }))} className={inputCls} placeholder="e.g. IT, Vendors..." />
+                  : <p className="text-[12px] text-[#64748b]">{project.supportTeam}</p>}
+              </div>
+            )}
+            
+            {(project.projectDependencies || isEditing) && (
+              <div className="glass-card p-4">
+                <h3 className="text-[12px] font-semibold text-[#334155] mb-1.5">Dependencies</h3>
+                {isEditing ? <input value={editForm.projectDependencies || ''} onChange={e => setEditForm(f => ({ ...f, projectDependencies: e.target.value }))} className={inputCls} placeholder="e.g. PRDIGI_03..." />
+                  : <p className="text-[12px] text-indigo-600 font-medium">{project.projectDependencies}</p>}
+              </div>
+            )}
           </div>
         </div>
       )}
