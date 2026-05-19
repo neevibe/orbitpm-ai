@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   BarChart3, TrendingUp, AlertTriangle, CheckCircle2,
@@ -27,6 +28,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { projects, departments, risks, kpi } = useData();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
@@ -189,11 +191,15 @@ export default function DashboardPage() {
           </div>
           <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
             {filteredProjects.map(p => (
-              <div key={p.id} className="flex items-center justify-between p-3 bg-white border border-[#f1f5f9] rounded-lg hover:border-indigo-200 transition-colors">
+              <div
+                key={p.id}
+                onClick={() => router.push(`/projects/${p.id}`)}
+                className="flex items-center justify-between p-3 bg-white border border-[#f1f5f9] rounded-lg hover:border-[#0a46e5] hover:bg-[#f0f4ff] transition-colors cursor-pointer group"
+              >
                 <div className="flex items-center gap-3">
                   <div className={`w-1.5 h-10 rounded-full ${p.status === 'Delayed' ? 'bg-red-400' : p.status === 'Completed' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
                   <div>
-                    <p className="text-[12px] font-bold text-[#1e293b]">{p.name}</p>
+                    <p className="text-[12px] font-bold text-[#1e293b] group-hover:text-[#0a46e5] transition-colors">{p.name}</p>
                     <p className="text-[10px] text-[#64748b]">{p.id} · {p.department} · {p.owner}</p>
                   </div>
                 </div>

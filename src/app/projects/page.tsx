@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, ChevronDown, BarChartHorizontal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import ProjectModal from '@/components/modals/ProjectModal';
@@ -10,19 +11,28 @@ import type { Project } from '@/lib/mock-data';
 const STATUS_OPTIONS = ['All', 'In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const PRIORITY_OPTIONS = ['All', 'Critical', 'High', 'Medium', 'Low'];
 
+function statusDot(status: string) {
+  if (status === 'In Progress') return 'bg-blue-500';
+  if (status === 'Completed') return 'bg-emerald-500';
+  if (status === 'Delayed') return 'bg-red-500';
+  if (status === 'On Hold') return 'bg-amber-400';
+  return 'bg-gray-300';
+}
+
 export default function ProjectsPage() {
+  const router = useRouter();
   const { projects, departments, archiveProject, restoreProject, purgeProject, updateProject } = useData();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [deptFilter, setDeptFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
-  const [view, setView] = useState<'table' | 'kanban' | 'gantt'>('table');
+  const [view, setView] = useState<'list' | 'kanban' | 'gantt'>('list');
   const [tab, setTab] = useState<'active' | 'history'>('active');
   const [showModal, setShowModal] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
-
-  const deptNames = useMemo(() => ['All', ...departments.map(d => d.name)], [departments]);
+  const [selectedDept, setSelectedDept] = useState<string>('All');
+  const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
 
   const activeProjects = useMemo(() => projects.filter(p => !p.archived), [projects]);
   const archivedProjects = useMemo(() => projects.filter(p => p.archived), [projects]);
@@ -33,299 +43,348 @@ export default function ProjectsPage() {
       const q = search.toLowerCase();
       const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q);
       const matchStatus = statusFilter === 'All' || p.status === statusFilter;
-      const matchDept = deptFilter === 'All' || p.department === deptFilter;
+      const matchDept = selectedDept === 'All' || p.department === selectedDept;
       const matchPriority = priorityFilter === 'All' || p.priority === priorityFilter;
       return matchSearch && matchStatus && matchDept && matchPriority;
     });
-  }, [activeProjects, archivedProjects, tab, search, statusFilter, deptFilter, priorityFilter]);
+  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter]);
 
-  const kanbanGroups = useMemo(() => {
-    if (view !== 'kanban' || tab !== 'active') return {};
-    const groups: Record<string, Project[]> = { 'Not Started': [], 'In Progress': [], 'Delayed': [], 'Completed': [], 'On Hold': [] };
-    filtered.forEach(p => { groups[p.status]?.push(p); });
+  const deptGroups = useMemo(() => {
+    const groups: Record<string, Project[]> = {};
+    filtered.forEach(p => {
+      if (!groups[p.department]) groups[p.department] = [];
+      groups[p.department].push(p);
+    });
     return groups;
-  }, [filtered, view, tab]);
+  }, [filtered]);
+
+  const deptList = useMemo(() => departments.map(d => d.name).sort(), [departments]);
+
+  const toggleCollapse = (dept: string) => {
+    setCollapsedDepts(prev => {
+      const n = new Set(prev);
+      if (n.has(dept)) n.delete(dept); else n.add(dept);
+      return n;
+    });
+  };
+
+  const openNew = (dept?: string) => {
+    setEditProject(null);
+    setNewProjectDept(dept || null);
+    setShowModal(true);
+  };
 
   const openEdit = (p: Project) => { setEditProject(p); setShowModal(true); };
-  const openNew = () => { setEditProject(null); setShowModal(true); };
+  const goToDetail = (id: string) => router.push(`/projects/${id}`);
 
-  const inputCls = "bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-indigo-400";
+  const inputCls = "bg-white border border-[#e4e4e4] rounded px-3 py-1.5 text-[13px] text-[#334155] outline-none focus:border-[#0a46e5] transition-colors";
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">Projects</h1>
-          <p className="text-[13px] text-[#64748b] mt-0.5">
-            {activeProjects.length} active · {archivedProjects.length} archived
-          </p>
-        </div>
-        <button onClick={openNew} className="btn-primary text-[12px]">
-          <Plus className="w-3.5 h-3.5" /> New Project
-        </button>
-      </div>
+    <div className="flex h-full animate-fade-in" style={{ minHeight: 'calc(100vh - 56px)' }}>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 bg-[#f1f5f9] rounded-xl p-1 w-fit">
-        <button onClick={() => setTab('active')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${tab === 'active' ? 'bg-white text-[#1e293b] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'}`}>
-          <Table2 className="w-3.5 h-3.5" /> Active Projects <span className="ml-1 text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">{activeProjects.length}</span>
-        </button>
-        <button onClick={() => setTab('history')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${tab === 'history' ? 'bg-white text-[#1e293b] shadow-sm' : 'text-[#64748b] hover:text-[#334155]'}`}>
-          <History className="w-3.5 h-3.5" /> History {archivedProjects.length > 0 && <span className="ml-1 text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full">{archivedProjects.length}</span>}
-        </button>
-      </div>
-
-      {/* Filters + View Toggle */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-48 max-w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94a3b8]" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects..." className={`${inputCls} pl-8 w-full`} />
+      {/* ── LEFT SIDEBAR ── */}
+      <aside className="w-56 flex-shrink-0 bg-white border-r border-[#e4e4e4] flex flex-col" style={{ minHeight: '100%' }}>
+        <div className="px-4 py-3 border-b border-[#e4e4e4]">
+          <p className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">Departments</p>
         </div>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={inputCls}>
-          {STATUS_OPTIONS.map(s => <option key={s}>{s === 'All' ? 'All Status' : s}</option>)}
-        </select>
-        <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} className={inputCls}>
-          {deptNames.map(d => <option key={d}>{d === 'All' ? 'All Departments' : d}</option>)}
-        </select>
-        <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className={inputCls}>
-          {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
-        </select>
-        {tab === 'active' && (
-          <div className="flex items-center gap-1 ml-auto bg-[#f1f5f9] rounded-lg p-1">
-            <button onClick={() => setView('table')} className={`p-1.5 rounded ${view === 'table' ? 'bg-white shadow-sm text-[#1e293b]' : 'text-[#94a3b8]'}`}><Table2 className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setView('kanban')} className={`p-1.5 rounded ${view === 'kanban' ? 'bg-white shadow-sm text-[#1e293b]' : 'text-[#94a3b8]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setView('gantt')} className={`p-1.5 rounded ${view === 'gantt' ? 'bg-white shadow-sm text-[#1e293b]' : 'text-[#94a3b8]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
+        <div className="flex-1 overflow-y-auto py-2">
+          <button
+            onClick={() => setSelectedDept('All')}
+            className={`w-full text-left px-4 py-2 text-[13px] flex items-center gap-2 transition-colors ${selectedDept === 'All' ? 'bg-[#e8f0fe] text-[#0a46e5] font-semibold' : 'text-[#475569] hover:bg-[#f8f9fa]'}`}
+          >
+            <FolderOpen className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">All Departments</span>
+            <span className="ml-auto text-[11px] font-mono">{activeProjects.length}</span>
+          </button>
+          {deptList.map(dept => {
+            const count = activeProjects.filter(p => p.department === dept).length;
+            return (
+              <button
+                key={dept}
+                onClick={() => setSelectedDept(dept)}
+                className={`w-full text-left px-4 py-2 text-[13px] flex items-center gap-2 transition-colors ${selectedDept === dept ? 'bg-[#e8f0fe] text-[#0a46e5] font-semibold' : 'text-[#475569] hover:bg-[#f8f9fa]'}`}
+              >
+                <span className="w-2 h-2 rounded-full bg-[#0a46e5] flex-shrink-0" style={{ opacity: selectedDept === dept ? 1 : 0.4 }} />
+                <span className="truncate flex-1">{dept}</span>
+                <span className="ml-auto text-[11px] font-mono text-[#94a3b8]">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="p-3 border-t border-[#e4e4e4]">
+          <button onClick={() => setTab(tab === 'history' ? 'active' : 'history')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded text-[12px] font-medium transition-colors ${tab === 'history' ? 'bg-amber-50 text-amber-600' : 'text-[#64748b] hover:bg-[#f1f5f9]'}`}>
+            <History className="w-3.5 h-3.5" />
+            Archive {archivedProjects.length > 0 && <span className="ml-auto bg-amber-100 text-amber-600 text-[10px] px-1.5 py-0.5 rounded-full">{archivedProjects.length}</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MAIN CONTENT ── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Top Bar */}
+        <div className="bg-white border-b border-[#e4e4e4] px-5 py-3 flex items-center gap-3 flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94a3b8]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" className={`${inputCls} pl-8 w-52`} />
           </div>
-        )}
-      </div>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={inputCls}>
+            {STATUS_OPTIONS.map(s => <option key={s}>{s === 'All' ? 'All Status' : s}</option>)}
+          </select>
+          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className={inputCls}>
+            {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
+          </select>
 
-      {/* ========== HISTORY TAB ========== */}
-      {tab === 'history' && (
-        <div className="space-y-2">
-          {filtered.length === 0 ? (
-            <div className="glass-card p-10 text-center">
-              <History className="w-8 h-8 text-[#cbd5e1] mx-auto mb-3" />
-              <p className="text-[13px] text-[#94a3b8]">No archived projects yet.</p>
-              <p className="text-[11px] text-[#cbd5e1] mt-1">When you archive a project, it appears here for safekeeping.</p>
-            </div>
-          ) : filtered.map(p => (
-            <div key={p.id} className="glass-card p-4 opacity-75 hover:opacity-100 transition-all">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Archive className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-[#94a3b8]">{p.id}</span>
-                      <span className={`status-badge ${getStatusColor(p.status)}`}>{p.status}</span>
+          <div className="flex items-center gap-1 ml-auto bg-[#f1f5f9] rounded p-0.5">
+            <button onClick={() => setView('list')} title="List" className={`p-1.5 rounded transition-colors ${view === 'list' ? 'bg-white shadow-sm text-[#0a46e5]' : 'text-[#94a3b8] hover:text-[#475569]'}`}><Table2 className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setView('kanban')} title="Kanban" className={`p-1.5 rounded transition-colors ${view === 'kanban' ? 'bg-white shadow-sm text-[#0a46e5]' : 'text-[#94a3b8] hover:text-[#475569]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setView('gantt')} title="Gantt" className={`p-1.5 rounded transition-colors ${view === 'gantt' ? 'bg-white shadow-sm text-[#0a46e5]' : 'text-[#94a3b8] hover:text-[#475569]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
+          </div>
+          <button onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)} className="btn-primary text-[12px] flex items-center gap-1.5 px-3 py-1.5">
+            <Plus className="w-3.5 h-3.5" /> New Project
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+
+          {/* ── HISTORY TAB ── */}
+          {tab === 'history' && (
+            <div className="space-y-2">
+              <div className="glass-card p-4 border-amber-100 bg-amber-50/30">
+                <p className="text-[12px] font-semibold text-amber-700 mb-1">Archived Projects</p>
+                <p className="text-[11px] text-amber-600">Projects here have been archived and removed from active tracking. You can restore or permanently delete them.</p>
+              </div>
+              {archivedProjects.length === 0 ? (
+                <div className="glass-card p-12 text-center">
+                  <Archive className="w-8 h-8 text-[#cbd5e1] mx-auto mb-3" />
+                  <p className="text-[13px] text-[#94a3b8]">No archived projects.</p>
+                </div>
+              ) : archivedProjects.map(p => (
+                <div key={p.id} className="glass-card p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Archive className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[10px] font-mono text-[#94a3b8]">{p.id}</span>
+                        <span className={`status-badge ${getStatusColor(p.status)}`}>{p.status}</span>
+                      </div>
+                      <p className="text-[13px] font-semibold text-[#334155] truncate">{p.name}</p>
+                      <p className="text-[11px] text-[#94a3b8]">{p.department} · {p.owner}</p>
                     </div>
-                    <p className="text-[13px] font-semibold text-[#334155] truncate">{p.name}</p>
-                    <p className="text-[11px] text-[#94a3b8]">{p.department} · {p.owner} · Archived {p.archivedAt ? new Date(p.archivedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={() => restoreProject(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-[11px] font-semibold">
+                      <RotateCcw className="w-3 h-3" /> Restore
+                    </button>
+                    <button onClick={() => confirm(`Permanently delete "${p.name}"?`) && purgeProject(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded text-red-500 bg-red-50 border border-red-200 hover:bg-red-100 text-[11px] font-semibold">
+                      <Trash2 className="w-3 h-3" /> Delete Forever
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => restoreProject(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-all text-[11px] font-semibold">
-                    <RotateCcw className="w-3 h-3" /> Restore
-                  </button>
-                  <button onClick={() => confirm(`Permanently delete "${p.name}"? This cannot be undone.`) && purgeProject(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100 transition-all text-[11px] font-semibold">
-                    <Trash2 className="w-3 h-3" /> Delete Forever
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ========== ACTIVE: TABLE VIEW ========== */}
-      {tab === 'active' && view === 'table' && (
-        <div className="glass-card overflow-hidden">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Project ID</th>
-                <th>Project Name</th>
-                <th>Department</th>
-                <th>Owner</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Progress</th>
-                <th>Target Date</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={9} className="text-center py-10 text-[#94a3b8] text-[13px]">No projects match your filters</td></tr>
-              )}
-              {filtered.map(p => (
-                <>
-                  <tr key={p.id} className="hover:bg-[#f8fafc] cursor-pointer" onClick={() => setExpandedRow(expandedRow === p.id ? null : p.id)}>
-                    <td className="font-mono text-[11px] text-[#94a3b8]">{p.id}</td>
-                    <td className="font-semibold text-[#1e293b] max-w-[280px]">
-                      <div className="truncate">{p.name}</div>
-                      {(p.supportTeam || p.projectDependencies) && (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {p.supportTeam && <span className="text-[9px] text-[#94a3b8]">🤝 {p.supportTeam.split(',')[0].trim()}{p.supportTeam.includes(',') ? '…' : ''}</span>}
-                          {p.projectDependencies && <span className="text-[9px] text-indigo-400">🔗 {p.projectDependencies.split(',')[0].trim()}</span>}
-                        </div>
-                      )}
-                    </td>
-                    <td className="text-[#475569] text-[12px]">{p.department}</td>
-                    <td className="text-[#475569] text-[12px]">{p.owner}</td>
-                    <td><span className={`status-badge ${getStatusColor(p.status)}`}>{p.status}</span></td>
-                    <td><span className={`priority-badge ${getPriorityColor(p.priority)}`}>{p.priority}</span></td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
-                          <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${p.progress}%` }} />
-                        </div>
-                        <span className="text-[11px] text-[#64748b]">{p.progress}%</span>
-                      </div>
-                    </td>
-                    <td className="text-[11px] text-[#94a3b8]">{formatDate(p.targetDate)}</td>
-                    <td>
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="text-[11px] px-2 py-1 rounded text-[#64748b] hover:bg-[#f1f5f9] transition-all">Edit</button>
-                        <button onClick={e => { e.stopPropagation(); archiveProject(p.id); }} className="text-[11px] px-2 py-1 rounded text-amber-500 hover:bg-amber-50 transition-all">Archive</button>
-                        <button onClick={e => { e.stopPropagation(); if(confirm(`Are you sure you want to permanently delete project ${p.id}?`)) purgeProject(p.id); }} className="text-[11px] px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-all">Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                  {/* Expanded row with quick inline status/priority edit */}
-                  {expandedRow === p.id && (
-                    <tr key={`${p.id}-expanded`} className="bg-indigo-50/40">
-                      <td colSpan={9} className="px-4 py-3">
-                        <div className="flex items-center gap-4 flex-wrap">
-                          <p className="text-[11px] font-semibold text-[#475569]">Quick Update:</p>
-                          <div className="flex items-center gap-1.5">
-                            <label className="text-[10px] text-[#94a3b8] uppercase font-semibold">Status</label>
-                            <select defaultValue={p.status} onChange={e => updateProject(p.id, { status: e.target.value as any })}
-                              className="text-[12px] bg-white border border-[#e2e8f0] rounded px-2 py-1 text-[#334155] outline-none focus:border-indigo-400">
-                              {STATUS_OPTIONS.filter(s => s !== 'All').map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <label className="text-[10px] text-[#94a3b8] uppercase font-semibold">Priority</label>
-                            <select defaultValue={p.priority} onChange={e => updateProject(p.id, { priority: e.target.value as any })}
-                              className="text-[12px] bg-white border border-[#e2e8f0] rounded px-2 py-1 text-[#334155] outline-none focus:border-indigo-400">
-                              {PRIORITY_OPTIONS.filter(s => s !== 'All').map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <label className="text-[10px] text-[#94a3b8] uppercase font-semibold">Progress %</label>
-                            <input type="number" min={0} max={100} defaultValue={p.progress} onBlur={e => updateProject(p.id, { progress: Number(e.target.value) })}
-                              className="text-[12px] bg-white border border-[#e2e8f0] rounded px-2 py-1 text-[#334155] outline-none focus:border-indigo-400 w-20" />
-                          </div>
-                          {p.supportTeam && <p className="text-[11px] text-[#64748b]">🤝 <span className="font-medium">{p.supportTeam}</span></p>}
-                          {p.projectDependencies && <p className="text-[11px] text-[#64748b]">🔗 Depends on: <span className="font-mono text-indigo-500">{p.projectDependencies}</span></p>}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* ========== ACTIVE: KANBAN VIEW ========== */}
-      {tab === 'active' && view === 'kanban' && (
-        <div className="grid grid-cols-5 gap-3">
-          {Object.entries(kanbanGroups).map(([status, cols]) => (
-            <div key={status} className="glass-card p-3">
-              <div className="flex items-center justify-between mb-3">
-                <span className={`status-badge ${getStatusColor(status)} text-[10px]`}>{status}</span>
-                <span className="text-[10px] text-[#94a3b8] font-mono">{cols.length}</span>
-              </div>
-              <div className="space-y-2">
-                {cols.map(p => (
-                  <div key={p.id} onClick={() => openEdit(p)} className="p-2.5 bg-white rounded-lg border border-[#f1f5f9] hover:border-indigo-200 hover:shadow-sm cursor-pointer transition-all">
-                    <p className="text-[10px] font-mono text-[#94a3b8] mb-0.5">{p.id}</p>
-                    <p className="text-[12px] font-semibold text-[#1e293b] leading-snug line-clamp-2">{p.name}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className={`priority-badge ${getPriorityColor(p.priority)} text-[9px] py-0`}>{p.priority}</span>
-                      <div className="flex items-center gap-1">
-                        <div className="w-10 h-1 bg-[#f1f5f9] rounded-full overflow-hidden">
-                          <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${p.progress}%` }} />
-                        </div>
-                        <span className="text-[9px] text-[#94a3b8]">{p.progress}%</span>
-                      </div>
-                    </div>
-                    {p.projectDependencies && <p className="text-[9px] text-indigo-400 mt-1 truncate">🔗 {p.projectDependencies}</p>}
-                  </div>
-                ))}
-                {cols.length === 0 && <p className="text-center text-[11px] text-[#e2e8f0] py-4">—</p>}
-              </div>
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* ========== ACTIVE: GANTT VIEW ========== */}
-      {tab === 'active' && view === 'gantt' && (
-        <div className="glass-card overflow-hidden overflow-x-auto p-4">
-          <div className="min-w-[800px]">
-            <div className="flex border-b border-[#e2e8f0] pb-2 mb-2">
-              <div className="w-64 flex-shrink-0 text-[11px] font-semibold text-[#64748b] uppercase">Project</div>
-              <div className="flex-1 flex">
-                {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
-                  <div key={m} className="flex-1 text-center text-[10px] font-semibold text-[#64748b] border-l border-[#f1f5f9]">{m}</div>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-              {filtered.map(p => {
-                const currentYear = new Date().getFullYear();
-                const sDate = p.startDate ? new Date(p.startDate) : new Date();
-                const tDate = p.targetDate ? new Date(p.targetDate) : new Date(new Date().setMonth(sDate.getMonth() + 1));
-                
-                // Only plot if the dates are within the current year or close
-                let sMonth = sDate.getFullYear() < currentYear ? 0 : sDate.getFullYear() > currentYear ? 11 : sDate.getMonth();
-                let tMonth = tDate.getFullYear() < currentYear ? 0 : tDate.getFullYear() > currentYear ? 11 : tDate.getMonth();
-                
-                if (sMonth > tMonth) tMonth = sMonth;
-                
-                const startPercent = (sMonth / 12) * 100;
-                const widthPercent = (Math.max(1, (tMonth - sMonth + 1)) / 12) * 100;
-                
+          {/* ── LIST VIEW: grouped by department ── */}
+          {tab === 'active' && view === 'list' && (
+            <div className="space-y-3">
+              {Object.keys(deptGroups).length === 0 && (
+                <div className="glass-card p-12 text-center">
+                  <FolderOpen className="w-8 h-8 text-[#cbd5e1] mx-auto mb-3" />
+                  <p className="text-[13px] text-[#94a3b8]">No projects match your filters.</p>
+                </div>
+              )}
+              {Object.entries(deptGroups).map(([dept, deptProjects]) => {
+                const isCollapsed = collapsedDepts.has(dept);
+                const deptColor = departments.find(d => d.name === dept)?.color || '#64748b';
                 return (
-                  <div key={p.id} className="flex items-center group cursor-pointer hover:bg-[#f8f9fa] rounded p-1" onClick={() => openEdit(p)}>
-                    <div className="w-64 flex-shrink-0 pr-4 truncate">
-                      <p className="text-[12px] font-semibold text-[#1e293b] truncate">{p.name}</p>
-                      <div className="flex items-center gap-2">
-                        <span className={`status-badge px-1 py-0 border ${getStatusColor(p.status)}`} style={{ fontSize: '9px', transform: 'scale(0.9)', transformOrigin: 'left' }}>{p.status}</span>
-                        <p className="text-[10px] text-[#94a3b8]">{p.owner}</p>
-                      </div>
+                  <div key={dept} className="glass-card overflow-hidden">
+                    {/* Department Header */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-[#f8f9fa] border-b border-[#e4e4e4]">
+                      <button onClick={() => toggleCollapse(dept)} className="text-[#64748b] hover:text-[#1e293b] transition-colors">
+                        {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: deptColor }} />
+                      <span className="text-[13px] font-bold text-[#1e293b]">{dept}</span>
+                      <span className="text-[11px] text-[#94a3b8] ml-1">{deptProjects.length} project{deptProjects.length !== 1 ? 's' : ''}</span>
+                      <button
+                        onClick={() => openNew(dept)}
+                        className="ml-auto flex items-center gap-1 text-[11px] text-[#0a46e5] hover:bg-[#e8f0fe] px-2.5 py-1 rounded font-semibold transition-colors"
+                      >
+                        <Plus className="w-3 h-3" /> Add Project
+                      </button>
                     </div>
-                    <div className="flex-1 relative h-6 bg-[#f1f5f9] rounded overflow-hidden">
-                      {/* Grid lines */}
-                      <div className="absolute inset-0 flex">
-                        {Array.from({length: 12}).map((_, i) => <div key={i} className="flex-1 border-l border-white/40" />)}
+
+                    {/* Project Rows */}
+                    {!isCollapsed && (
+                      <div>
+                        {/* Table header */}
+                        <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-white border-b border-[#f1f5f9] text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider">
+                          <div className="col-span-1">ID</div>
+                          <div className="col-span-4">Project Name</div>
+                          <div className="col-span-2">Owner</div>
+                          <div className="col-span-1">Status</div>
+                          <div className="col-span-1">Priority</div>
+                          <div className="col-span-2">Progress</div>
+                          <div className="col-span-1">Actions</div>
+                        </div>
+                        {deptProjects.map(p => (
+                          <div
+                            key={p.id}
+                            className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-[#f8f9fa] hover:bg-[#f8f9fa] group transition-colors cursor-pointer items-center"
+                            onClick={() => goToDetail(p.id)}
+                          >
+                            <div className="col-span-1 font-mono text-[10px] text-[#94a3b8]">{p.id}</div>
+                            <div className="col-span-4 flex items-center gap-2 min-w-0">
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
+                              <span className="text-[13px] font-medium text-[#1e293b] truncate group-hover:text-[#0a46e5] transition-colors">{p.name}</span>
+                            </div>
+                            <div className="col-span-2 text-[12px] text-[#475569] truncate">{p.owner}</div>
+                            <div className="col-span-1">
+                              <span className={`status-badge text-[10px] py-0.5 px-1.5 ${getStatusColor(p.status)}`}>{p.status}</span>
+                            </div>
+                            <div className="col-span-1">
+                              <span className={`priority-badge text-[9px] ${getPriorityColor(p.priority)}`}>{p.priority}</span>
+                            </div>
+                            <div className="col-span-2 flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#0a46e5] rounded-full" style={{ width: `${p.progress}%` }} />
+                              </div>
+                              <span className="text-[10px] text-[#64748b] w-7 text-right">{p.progress}%</span>
+                            </div>
+                            <div className="col-span-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={e => { e.stopPropagation(); openEdit(p); }}
+                                className="p-1 rounded text-[#64748b] hover:bg-white hover:text-[#0a46e5] transition-colors"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <div className="relative" onClick={e => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
+                                  className="p-1 rounded text-[#64748b] hover:bg-white hover:text-[#334155] transition-colors"
+                                >
+                                  <MoreVertical className="w-3 h-3" />
+                                </button>
+                                {openMenuId === p.id && (
+                                  <div className="absolute right-0 top-6 z-50 bg-white border border-[#e4e4e4] rounded shadow-lg py-1 w-36">
+                                    <button onClick={() => { goToDetail(p.id); setOpenMenuId(null); }} className="w-full text-left px-3 py-1.5 text-[12px] text-[#334155] hover:bg-[#f8f9fa]">View Details</button>
+                                    <button onClick={() => { openEdit(p); setOpenMenuId(null); }} className="w-full text-left px-3 py-1.5 text-[12px] text-[#334155] hover:bg-[#f8f9fa]">Edit Project</button>
+                                    <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-3 py-1.5 text-[12px] text-amber-600 hover:bg-amber-50">Archive</button>
+                                    <div className="border-t border-[#f1f5f9] my-1" />
+                                    <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-3 py-1.5 text-[12px] text-red-500 hover:bg-red-50">Delete</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      
-                      {/* Bar */}
-                      <div className="absolute top-1 bottom-1 rounded shadow-sm transition-all group-hover:brightness-110 overflow-hidden border border-black/10" 
-                        style={{ 
-                          left: `${startPercent}%`, 
-                          width: `${Math.min(100 - startPercent, widthPercent)}%`,
-                          background: p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#2d65ff'
-                        }}>
-                        <div className="absolute top-0 bottom-0 left-0 bg-white/20 border-r border-white/50" style={{ width: `${p.progress}%` }} />
-                        <span className="absolute inset-0 flex items-center px-2 text-[9px] font-bold text-white drop-shadow-md z-10">{p.progress}%</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
-              {filtered.length === 0 && <p className="text-center text-[12px] text-[#94a3b8] py-10">No projects to display on timeline.</p>}
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      <ProjectModal isOpen={showModal} onClose={() => { setShowModal(false); setEditProject(null); }} editProject={editProject} />
+          {/* ── KANBAN VIEW ── */}
+          {tab === 'active' && view === 'kanban' && (() => {
+            const groups: Record<string, Project[]> = { 'Not Started': [], 'In Progress': [], 'Delayed': [], 'On Hold': [], 'Completed': [] };
+            filtered.forEach(p => groups[p.status]?.push(p));
+            return (
+              <div className="flex gap-3 overflow-x-auto pb-4">
+                {Object.entries(groups).map(([status, cols]) => (
+                  <div key={status} className="flex-shrink-0 w-64 glass-card p-3 flex flex-col">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`status-badge text-[10px] ${getStatusColor(status)}`}>{status}</span>
+                      <span className="text-[10px] text-[#94a3b8] font-mono">{cols.length}</span>
+                    </div>
+                    <div className="space-y-2 flex-1 overflow-y-auto max-h-[70vh]">
+                      {cols.map(p => (
+                        <div key={p.id} onClick={() => goToDetail(p.id)} className="p-2.5 bg-white rounded border border-[#f1f5f9] hover:border-[#0a46e5] hover:shadow-sm cursor-pointer transition-all group">
+                          <p className="text-[10px] font-mono text-[#94a3b8] mb-0.5">{p.id}</p>
+                          <p className="text-[12px] font-semibold text-[#1e293b] leading-snug line-clamp-2 group-hover:text-[#0a46e5] transition-colors">{p.name}</p>
+                          <p className="text-[10px] text-[#94a3b8] mt-1">{p.owner}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className={`priority-badge ${getPriorityColor(p.priority)} text-[9px] py-0`}>{p.priority}</span>
+                            <div className="flex items-center gap-1">
+                              <div className="w-10 h-1 bg-[#f1f5f9] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#0a46e5] rounded-full" style={{ width: `${p.progress}%` }} />
+                              </div>
+                              <span className="text-[9px] text-[#94a3b8]">{p.progress}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {cols.length === 0 && <p className="text-center text-[11px] text-[#e2e8f0] py-6">—</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* ── GANTT VIEW ── */}
+          {tab === 'active' && view === 'gantt' && (
+            <div className="glass-card overflow-x-auto p-4">
+              <div className="min-w-[900px]">
+                <div className="flex border-b border-[#e4e4e4] pb-2 mb-3">
+                  <div className="w-72 flex-shrink-0 text-[10px] font-bold text-[#64748b] uppercase">Project</div>
+                  <div className="flex-1 flex">
+                    {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => (
+                      <div key={m} className="flex-1 text-center text-[10px] font-semibold text-[#64748b] border-l border-[#f1f5f9]">{m}</div>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5 max-h-[65vh] overflow-y-auto">
+                  {filtered.map(p => {
+                    const cy = new Date().getFullYear();
+                    const sd = p.startDate ? new Date(p.startDate) : new Date();
+                    const td = p.targetDate ? new Date(p.targetDate) : new Date(sd.getTime() + 86400000 * 30);
+                    let sm = sd.getFullYear() < cy ? 0 : sd.getFullYear() > cy ? 11 : sd.getMonth();
+                    let em = td.getFullYear() < cy ? 0 : td.getFullYear() > cy ? 11 : td.getMonth();
+                    if (em < sm) em = sm;
+                    const sp = (sm / 12) * 100;
+                    const wp = (Math.max(1, em - sm + 1) / 12) * 100;
+                    const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#0a46e5';
+                    return (
+                      <div key={p.id} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[#f8f9fa] rounded px-1 py-1 transition-colors">
+                        <div className="w-72 flex-shrink-0 pr-4 truncate">
+                          <p className="text-[12px] font-medium text-[#1e293b] truncate group-hover:text-[#0a46e5] transition-colors">{p.name}</p>
+                          <p className="text-[10px] text-[#94a3b8]">{p.owner} · {p.department}</p>
+                        </div>
+                        <div className="flex-1 relative h-6 bg-[#f1f5f9] rounded overflow-hidden">
+                          <div className="absolute inset-0 flex">{Array.from({length:12}).map((_,i) => <div key={i} className="flex-1 border-l border-white/40"/>)}</div>
+                          <div className="absolute top-1 bottom-1 rounded overflow-hidden border border-black/10"
+                            style={{ left: `${sp}%`, width: `${Math.min(100-sp, wp)}%`, background: barColor }}>
+                            <div className="absolute top-0 bottom-0 left-0 bg-white/25" style={{ width: `${p.progress}%` }} />
+                            <span className="absolute inset-0 flex items-center px-1.5 text-[9px] font-bold text-white z-10">{p.progress}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {filtered.length === 0 && <p className="text-center text-[12px] text-[#94a3b8] py-10">No projects to show.</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* Click-away for dropdown */}
+      {openMenuId && <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />}
+
+      <ProjectModal
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); setEditProject(null); setNewProjectDept(null); }}
+        editProject={editProject}
+        defaultDepartment={newProjectDept || undefined}
+      />
     </div>
   );
 }
