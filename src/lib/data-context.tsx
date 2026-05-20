@@ -497,8 +497,64 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setProjects(prev => {
       const existingIds = new Set(prev.map(p => p.id));
       const toAdd = newProjects.filter(p => !existingIds.has(p.id));
-      notify('Import Complete', `${toAdd.length} new projects imported`, 'success');
-      return [...prev, ...toAdd];
+      
+      // For existing projects, update them instead of ignoring
+      const updatedMap = new Map(newProjects.filter(p => existingIds.has(p.id)).map(p => [p.id, p]));
+      
+      const newPrev = prev.map(p => {
+        if (updatedMap.has(p.id)) {
+          const updates = updatedMap.get(p.id)!;
+          
+          if (isSupabaseConfigured()) {
+            const dbUpdates: any = {};
+            if (updates.name !== undefined) dbUpdates.name = updates.name;
+            if (updates.status !== undefined) dbUpdates.status = updates.status;
+            if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+            if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
+            if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
+            if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
+            if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
+            if (updates.objective !== undefined) dbUpdates.business_objective = updates.objective;
+            if (updates.kpi !== undefined) dbUpdates.kpi = updates.kpi;
+            if (updates.projectDependencies !== undefined) dbUpdates.dependencies = updates.projectDependencies;
+            if (updates.supportTeam !== undefined) dbUpdates.support_team = updates.supportTeam;
+            if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+            if (Object.keys(dbUpdates).length > 0) {
+              supabase.from('projects').update(dbUpdates).eq('project_code', p.id).then(({error}) => { if (error) console.error(error); });
+            }
+          }
+          return { ...p, ...updates };
+        }
+        return p;
+      });
+
+      // Handle completely new projects
+      toAdd.forEach(newProject => {
+        if (isSupabaseConfigured()) {
+          supabase.from('departments').select('id').eq('name', newProject.department).single().then(({data: d}) => {
+            const deptId = d?.id;
+            supabase.from('projects').insert({
+              project_code: newProject.id,
+              name: newProject.name,
+              department_id: deptId,
+              status: newProject.status,
+              priority: newProject.priority,
+              progress: newProject.progress,
+              owner_name: newProject.owner || null,
+              start_date: newProject.startDate || null,
+              target_date: newProject.targetDate || null,
+              business_objective: newProject.objective || null,
+              kpi: newProject.kpi || null,
+              dependencies: newProject.projectDependencies || null,
+              support_team: newProject.supportTeam || null,
+              notes: newProject.notes || null
+            }).then(({error}) => { if (error) console.error(error); });
+          });
+        }
+      });
+
+      notify('Import Complete', `Updated ${updatedMap.size} existing projects, added ${toAdd.length} new projects`, 'success');
+      return [...newPrev, ...toAdd];
     });
   }, [notify]);
 
