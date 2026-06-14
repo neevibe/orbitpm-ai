@@ -14,29 +14,26 @@ async function sync() {
     return;
   }
 
+  // 1b. Clear existing risks, projects, and departments to ensure BIAL is completely removed
+  console.log('Clearing existing sample projects, risks, and departments...');
+  await supabase.from('risks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('projects').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('departments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
   // 2. Sync Departments
   console.log('Syncing departments...');
-  const { data: existingDepts } = await supabase.from('departments').select('name');
-  const existingDeptNames = existingDepts?.map(d => d.name) || [];
-  
   for (const dept of departments) {
-    if (!existingDeptNames.includes(dept.name)) {
-      await supabase.from('departments').insert({
-        org_id: orgId,
-        name: dept.name,
-        color: dept.color
-      });
-    }
+    await supabase.from('departments').insert({
+      org_id: orgId,
+      name: dept.name,
+      color: dept.color
+    });
   }
 
   // Reload departments to get UUIDs
   const { data: dbDepts } = await supabase.from('departments').select('id, name');
   const deptMap: Record<string, string> = {};
   dbDepts?.forEach(d => deptMap[d.name] = d.id);
-
-  // 3. Clear existing projects/risks to avoid duplicates
-  console.log('Clearing existing sample projects...');
-  await supabase.from('projects').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
   // Date helper
   const parseDate = (d: string | null | undefined) => {

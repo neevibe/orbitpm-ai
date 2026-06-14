@@ -7,7 +7,7 @@ import { DataProvider } from '@/lib/data-context';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
-const FULL_BLEED_PAGES = ['/projects', '/airport-ops'];
+const FULL_BLEED_PAGES = ['/projects'];
 // Pages that render standalone (no sidebar/topbar) and don't require auth.
 const STANDALONE_PATHS = ['/', '/login', '/change-password'];
 // Auth pages a logged-in user should be bounced away from (landing `/` is NOT one).

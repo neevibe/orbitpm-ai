@@ -190,7 +190,7 @@ function MiniVisual({ kind }: { kind: 'kanban' | 'chart' | 'ai' | 'team' }) {
         </div>
         {[
           { t: '3 projects are trending toward delay in Digital & Data', c: '#fef2f2', b: '#fecaca' },
-          { t: 'Duty Free Expansion is 12% ahead — reallocate 2 FTE?', c: '#f0fdf4', b: '#bbf7d0' },
+          { t: 'Retail & Commerce Expansion is 12% ahead — reallocate 2 FTE?', c: '#f0fdf4', b: '#bbf7d0' },
           { t: 'Summary ready: Q2 portfolio review (8 risks flagged)', c: '#eff6ff', b: '#bfdbfe' },
         ].map((m, i) => (
           <div key={i} className="rise" style={{ background: m.c, border: `1px solid ${m.b}`, borderRadius: 9, padding: '9px 11px', marginBottom: 8, fontSize: 10.5, color: '#334155', lineHeight: 1.4, animationDelay: `${i * 0.14}s` }}>{m.t}</div>

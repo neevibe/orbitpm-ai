@@ -16,7 +16,6 @@ const workspaces = [
   {
     items: [
       { name: 'Dashboard', href: '/command-center', icon: LayoutDashboard, accent: '#6366f1' },
-      { name: 'Command Center 3D', href: '/airport-ops', icon: Plane, accent: '#6366f1' },
     ]
   },
   {
