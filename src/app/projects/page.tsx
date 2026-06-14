@@ -125,24 +125,24 @@ export default function ProjectsPage() {
       <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-x-bg)]">
 
         {/* Top Bar */}
-        <div className="bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] px-6 py-4 flex items-center gap-4 flex-shrink-0 z-10 shadow-sm">
-          <div className="relative">
+        <div className="bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] px-6 py-3 flex items-center gap-3 flex-shrink-0 z-10 shadow-sm">
+          <div className="relative flex-1 min-w-[180px] max-w-[320px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-x-text-muted)]" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" className="x-input pl-9 w-64" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" className="x-input pl-9 w-full" />
           </div>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="x-input w-40">
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="x-input w-36 flex-shrink-0">
             {STATUS_OPTIONS.map(s => <option key={s}>{s === 'All' ? 'All Status' : s}</option>)}
           </select>
-          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="x-input w-40">
+          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="x-input w-36 flex-shrink-0">
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
           </select>
 
-          <div className="flex items-center gap-1 ml-auto bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-1">
+          <div className="flex items-center gap-1 ml-auto flex-shrink-0 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-1">
             <button onClick={() => setView('list')} title="List" className={`p-2 rounded-md transition-all ${view === 'list' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><Table2 className="w-4 h-4" /></button>
             <button onClick={() => setView('kanban')} title="Kanban" className={`p-2 rounded-md transition-all ${view === 'kanban' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><LayoutGrid className="w-4 h-4" /></button>
             <button onClick={() => setView('gantt')} title="Gantt" className={`p-2 rounded-md transition-all ${view === 'gantt' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><BarChartHorizontal className="w-4 h-4" /></button>
           </div>
-          <button onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)} className="x-btn x-btn-primary ml-2">
+          <button onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)} className="x-btn x-btn-primary flex-shrink-0">
             <Plus className="w-4 h-4" /> New Project
           </button>
         </div>
