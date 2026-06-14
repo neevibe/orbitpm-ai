@@ -76,7 +76,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <Topbar />
       <main
-        className="ml-[248px] mt-[52px] min-h-[calc(100vh-52px)]"
+        className={`ml-[248px] mt-[52px] min-h-[calc(100vh-52px)] ${isFullBleed ? 'overflow-hidden flex flex-col' : ''}`}
         style={{ background: '#f8f9fa', padding: isFullBleed ? 0 : '24px' }}
       >
         {children}

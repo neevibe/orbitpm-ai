@@ -78,7 +78,7 @@ export default function ProjectsPage() {
   const goToDetail = (id: string) => router.push(`/projects/${id}`);
 
   return (
-    <div className="flex h-full animate-fade-in -mx-6 -mt-6 -mb-6 bg-[var(--color-x-bg)]" style={{ minHeight: 'calc(100vh - 52px)' }}>
+    <div className="flex flex-1 animate-fade-in bg-[var(--color-x-bg)]" style={{ height: 'calc(100vh - 52px)' }}>
 
       {/* ── LEFT SIDEBAR ── */}
       <aside className="w-64 flex-shrink-0 bg-[var(--color-x-surface)] border-r border-[var(--color-x-border)] flex flex-col z-10" style={{ minHeight: '100%' }}>
