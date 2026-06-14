@@ -197,17 +197,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-[12px] font-semibold" style={{ color: '#8ca4c0' }}>Password</label>
-                  <button
-                    type="button"
-                    onClick={() => { setTab('forgot'); setForgotSuccess(false); setForgotError(null); }}
-                    className="text-[11.5px] font-semibold hover:underline cursor-pointer"
-                    style={{ color: '#e86c2d' }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Password</label>
                 <div className="relative">
                   <input
                     type={showSiPassword ? "text" : "password"}
@@ -229,9 +219,19 @@ export default function LoginPage() {
                     {showSiPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="mt-1 text-[11px]" style={{ color: '#4a6280' }}>
-                  First-time users: your default password is your Employee ID
-                </p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="text-[11px]" style={{ color: '#4a6280' }}>
+                    First-time users: default password is Employee ID
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setTab('forgot'); setForgotSuccess(false); setForgotError(null); }}
+                    className="text-[11.5px] font-semibold hover:underline cursor-pointer"
+                    style={{ color: '#e86c2d' }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </div>
               {siError && (
                 <div className="px-3.5 py-2.5 rounded-lg text-[12px] font-medium" style={{ background: '#3a1a1a', color: '#f87171', border: '1px solid #5a2a2a' }}>
