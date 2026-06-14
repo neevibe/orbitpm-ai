@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClientShell from "@/components/layout/ClientShell";
+import AuthShell from "@/components/layout/AuthShell";
 
 export const metadata: Metadata = {
-  title: "OrbitPM AI — Project Governance & Portfolio Intelligence",
-  description: "AI-Powered Project Governance & Portfolio Intelligence Platform for Airports and Enterprises",
+  title: "Xyrenis — Enterprise Work Operating System",
+  description: "AI-Powered Enterprise Work Operating System. Project Governance, Portfolio Intelligence, Workforce Management, and Knowledge Collaboration.",
+  keywords: ["project management", "portfolio", "enterprise", "AI", "workforce"],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-[#f8fafc] text-[#1e293b] min-h-screen" suppressHydrationWarning>
-        <ClientShell>{children}</ClientShell>
+    <html lang="en" data-theme="light">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="min-h-screen">
+        <AuthShell>{children}</AuthShell>
       </body>
     </html>
   );

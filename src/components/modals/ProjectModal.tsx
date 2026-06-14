@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { X, Save, Trash2, Wand2 } from 'lucide-react';
+import { X, Save, Trash2, Wand2, Lock } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import { generateProjectId } from '@/lib/utils';
 import type { Project } from '@/lib/mock-data';
 
@@ -18,12 +19,19 @@ const priorityOptions = ['Critical', 'High', 'Medium', 'Low'] as const;
 
 export default function ProjectModal({ isOpen, onClose, editProject, defaultDepartment }: Props) {
   const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
+  const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
 
-  const deptNames = useMemo(() => departments.map(d => d.name), [departments]);
+  // Non-super-admins may only pick their own department when creating.
+  const deptNames = useMemo(() => {
+    const all = departments.map(d => d.name);
+    if (isSuperAdmin) return all;
+    return all.filter(d => canModifyDepartment(d));
+  }, [departments, isSuperAdmin, canModifyDepartment]);
+
   const allProjectIds = useMemo(() => projects.map(p => p.id), [projects]);
 
   const makeEmpty = (dept?: string) => ({
-    id: '', name: '', department: dept || deptNames[0] || '',
+    id: '', name: '', department: dept || (isSuperAdmin ? deptNames[0] : userDepartment) || deptNames[0] || '',
     owner: '', status: 'Not Started' as Project['status'], progress: 0,
     priority: 'Medium' as Project['priority'],
     startDate: '', targetDate: '',
@@ -66,8 +74,16 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.department, editProject]);
 
+  // Permission: can the current user modify this project / target department?
+  const canModify = editProject
+    ? canModifyDepartment(editProject.department)
+    : canModifyDepartment(form.department);
+  const readOnly = !canModify;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return; // defense-in-depth: block writes outside the user's department
+    if (!canModifyDepartment(form.department)) return;
     if (!form.name || !form.department || !form.owner) return;
     const payload = {
       ...form,
@@ -100,9 +116,9 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in">
         <div className="sticky top-0 bg-white border-b border-[#f1f5f9] px-5 py-3.5 flex items-center justify-between z-10">
-          <h2 className="text-[15px] font-bold text-[#0f172a]">{editProject ? 'Edit Project' : 'Create New Project'}</h2>
+          <h2 className="text-[15px] font-bold text-[#0f172a]">{editProject ? (readOnly ? 'View Project' : 'Edit Project') : 'Create New Project'}</h2>
           <div className="flex items-center gap-2">
-            {editProject && (
+            {editProject && !readOnly && (
               <button onClick={handleArchive} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-all text-[11px] font-semibold">
                 <Trash2 className="w-3.5 h-3.5" /> Archive
               </button>
@@ -112,6 +128,21 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {/* Read-only banner — user cannot modify this department */}
+          {readOnly && (
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <Lock className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[12px] font-semibold text-slate-600">View-only</p>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  You can view projects across all departments, but you can only add or edit projects in
+                  {userDepartment ? <> your department (<strong>{userDepartment}</strong>)</> : ' your assigned department'}.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <fieldset disabled={readOnly} className="space-y-4 m-0 p-0 border-0 disabled:opacity-95">
           {/* Auto-generated ID preview */}
           {!editProject && (
             <div className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50 border border-indigo-100">
@@ -136,9 +167,11 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>Department *</label>
-              <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} required className={inputCls}>
+              <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} required disabled={!isSuperAdmin} className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`}>
                 {deptNames.map(d => <option key={d} value={d}>{d}</option>)}
-              </select></div>
+              </select>
+              {!isSuperAdmin && <p className="text-[10px] text-[#94a3b8] mt-1">Locked to your department</p>}
+            </div>
             <div><label className={labelCls}>Project Owner *</label>
               <input type="text" value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))} placeholder="Owner name" required className={inputCls} /></div>
           </div>
@@ -190,20 +223,23 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
             <textarea value={form.risks} onChange={e => setForm(f => ({ ...f, risks: e.target.value }))} rows={2} placeholder="Known risks, blockers..." className={`${inputCls} resize-none`} /></div>
           <div><label className={labelCls}>Notes</label>
             <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Additional notes..." className={`${inputCls} resize-none`} /></div>
+          </fieldset>
 
           <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">
             <div>
-              {editProject && (
+              {editProject && !readOnly && (
                 <button type="button" onClick={() => { if(confirm(`Permanently delete project ${editProject.id}?`)) { purgeProject(editProject.id); onClose(); } }} className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold border border-transparent hover:border-red-100">
                   <Trash2 className="w-3.5 h-3.5" /> Delete Project
                 </button>
               )}
             </div>
             <div className="flex items-center gap-2.5">
-              <button type="button" onClick={onClose} className="btn-secondary text-[12px]">Cancel</button>
-              <button type="submit" className="btn-primary text-[12px]">
-                <Save className="w-3.5 h-3.5" /> {editProject ? 'Save Changes' : 'Create Project'}
-              </button>
+              <button type="button" onClick={onClose} className="btn-secondary text-[12px]">{readOnly ? 'Close' : 'Cancel'}</button>
+              {!readOnly && (
+                <button type="submit" className="btn-primary text-[12px]">
+                  <Save className="w-3.5 h-3.5" /> {editProject ? 'Save Changes' : 'Create Project'}
+                </button>
+              )}
             </div>
           </div>
         </form>

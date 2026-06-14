@@ -32,12 +32,12 @@ export function getPriorityColor(priority: string): string {
 // Department → Project ID prefix mapping
 const DEPT_PREFIX_MAP: Record<string, string> = {
   'Digital & Data': 'PRDIGI',
-  'Operations': 'PROPR',
+  'Operations': 'PROPS',
   'Commercial Development': 'PRCOMDEV',
   'Advertising & Marketing': 'PRADMKT',
-  'Duty Free': 'PRDUTY',
-  'CBB & Lounge': 'PRCBB',
-  'BASL': 'PRBASL',
+  'Retail & Commerce': 'PRRETAIL',
+  'Amenities & Hospitality': 'PRAMEN',
+  'Strategic Support': 'PRSTRAT',
 };
 
 export function getDeptPrefix(department: string): string {
@@ -58,5 +58,20 @@ export function generateProjectId(department: string, existingIds: string[]): st
     });
   const maxNum = nums.length > 0 ? Math.max(...nums) : 0;
   const next = maxNum + 1;
-  return `${prefix}_${String(next).padStart(2, '0')}`;
+  return `${prefix}_${next}`;
 }
+
+export function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  try {
+    const target = new Date(dateStr);
+    const now = new Date();
+    const targetStart = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+    const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diff = Math.ceil((targetStart.getTime() - nowStart.getTime()) / (1000 * 60 * 60 * 24));
+    return diff;
+  } catch {
+    return null;
+  }
+}
+

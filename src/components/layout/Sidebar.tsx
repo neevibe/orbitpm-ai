@@ -1,106 +1,156 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, FolderKanban, Building2, AlertTriangle,
-  FileText, Settings, Bot, ChevronDown,
-  Activity, Users, BarChart3, Link2
+  LayoutDashboard, FolderKanban, Briefcase, Users2,
+  BookOpen, Sparkles, BarChart3, Zap, Puzzle,
+  ShieldCheck, ChevronDown, AlertTriangle, Link2,
+  Settings, Search, Plane, UserCog
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { useData } from '@/lib/data-context';
 
-const navSections = [
+const workspaces = [
   {
-    label: 'Overview',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Projects', href: '/projects', icon: FolderKanban },
-      { name: 'Departments', href: '/departments', icon: Building2 },
+      { name: 'Dashboard', href: '/command-center', icon: LayoutDashboard, accent: '#6366f1' },
+      { name: 'Command Center 3D', href: '/airport-ops', icon: Plane, accent: '#6366f1' },
     ]
   },
   {
-    label: 'Intelligence',
+    section: 'Execution',
     items: [
-      { name: 'Risk Register', href: '/risks', icon: AlertTriangle },
-      { name: 'Dependencies', href: '/dependencies', icon: Link2 },
-      { name: 'AI Insights', href: '/ai-insights', icon: Activity },
-      { name: 'AI Assistant', href: '/ai-assistant', icon: Bot },
+      { name: 'Projects', href: '/projects', icon: FolderKanban, accent: '#3b82f6' },
+      { name: 'Portfolio', href: '/portfolio', icon: Briefcase, accent: '#8b5cf6' },
+      { name: 'Dependencies', href: '/dependencies', icon: Link2, accent: '#f59e0b' },
     ]
   },
   {
-    label: 'Management',
+    section: 'People',
     items: [
-      { name: 'Reports', href: '/reports', icon: FileText },
-      { name: 'Team', href: '/team', icon: Users },
-      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-      { name: 'Settings', href: '/settings', icon: Settings },
+      { name: 'Workforce', href: '/workforce', icon: Users2, accent: '#10b981' },
+      { name: 'Departments', href: '/departments', icon: Users2, accent: '#06b6d4' },
+    ]
+  },
+  {
+    section: 'Intelligence',
+    items: [
+      { name: 'AI Copilot', href: '/ai', icon: Sparkles, accent: '#a855f7' },
+      { name: 'Analytics', href: '/analytics', icon: BarChart3, accent: '#f97316' },
+      { name: 'Risk Register', href: '/risks', icon: AlertTriangle, accent: '#ef4444' },
+    ]
+  },
+  {
+    section: 'Platform',
+    items: [
+      { name: 'Knowledge', href: '/knowledge', icon: BookOpen, accent: '#14b8a6' },
+      { name: 'Automations', href: '/automations', icon: Zap, accent: '#eab308' },
+      { name: 'Integrations', href: '/integrations', icon: Puzzle, accent: '#6366f1' },
+    ]
+  },
+  {
+    section: null,
+    items: [
+      { name: 'Administration', href: '/admin', icon: ShieldCheck, accent: '#64748b' },
     ]
   }
 ];
 
+// Admin-only items, appended to the Administration group for CCO / admins.
+const adminOnlyItem = { name: 'User Management', href: '/admin/users', icon: UserCog, accent: '#e86c2d' };
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { kpi } = useData();
+  const { isSuperAdmin } = useAuth();
+
+  const [companyName, setCompanyName] = useState('Xyrenis Enterprise');
+  const [initials, setInitials] = useState('XY');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('xyrenis_user_company');
+      if (saved && saved.trim() !== '') {
+        const name = saved === 'BIAL Commercial' ? 'Xyrenis Enterprise' : saved;
+        setCompanyName(name);
+        setInitials(name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase());
+      }
+    }
+  }, []);
+
+  const nav = isSuperAdmin
+    ? workspaces.map(ws => (ws.items.some(i => i.href === '/admin') ? { ...ws, items: [...ws.items, adminOnlyItem] } : ws))
+    : workspaces;
+
+  const isActive = (href: string) => {
+    if (href === '/command-center') return pathname === '/' || pathname === '/command-center' || pathname === '/dashboard';
+    return pathname.startsWith(href);
+  };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[220px] flex flex-col z-40" style={{ background: '#1a2233' }}>
+    <aside className="fixed left-0 top-0 bottom-0 w-[248px] bg-[var(--color-x-surface)] border-r border-[var(--color-x-border)] flex flex-col z-40 select-none">
       {/* Logo */}
-      <div className="h-14 flex items-center gap-2.5 px-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: '#e86c2d' }}>
-          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+      <div className="h-[52px] flex items-center gap-2.5 px-5 border-b border-[var(--color-x-border)]">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-sm">
+          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
           </svg>
         </div>
         <div>
-          <h1 className="text-[14px] font-bold leading-none" style={{ color: '#ffffff' }}>OrbitPM</h1>
-          <p className="text-[10px] font-medium tracking-wider uppercase mt-0.5" style={{ color: '#e86c2d' }}>AI Platform</p>
+          <h1 className="text-[14px] font-extrabold tracking-tight text-[var(--color-x-text)] leading-none">Xyrenis</h1>
+          <p className="text-[9px] font-semibold text-[var(--color-x-text-muted)] tracking-[0.12em] uppercase mt-px">Work OS</p>
         </div>
       </div>
 
-      {/* Org Selector */}
-      <div className="px-3 py-2.5">
-        <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded transition-colors" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white" style={{ background: '#e86c2d' }}>
-            BL
-          </div>
+      {/* Workspace Selector */}
+      <div className="px-3 pt-3 pb-1">
+        <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-[var(--color-x-border)] hover:border-[var(--color-x-border-hover)] hover:bg-[var(--color-x-bg)] transition-all group">
+          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[9px] font-bold text-white shadow-sm">{initials}</div>
           <div className="flex-1 text-left min-w-0">
-            <p className="text-[12px] font-semibold leading-tight truncate" style={{ color: '#e8eaf0' }}>BIAL Commercial</p>
-            <p className="text-[10px]" style={{ color: '#7a8499' }}>Bangalore Airport</p>
+            <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight truncate">{companyName}</p>
+            <p className="text-[10px] text-[var(--color-x-text-muted)] leading-tight">{kpi.totalProjects} projects</p>
           </div>
-          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#7a8499' }} />
+          <ChevronDown className="w-3.5 h-3.5 text-[var(--color-x-text-muted)] group-hover:text-[var(--color-x-text-secondary)] transition-colors flex-shrink-0" />
         </button>
+      </div>
+
+      {/* Quick Search */}
+      <div className="px-3 py-1.5">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
+          <input type="text" placeholder="Search..." className="w-full bg-[var(--color-x-bg)] border border-transparent rounded-md py-1.5 pl-8 pr-3 text-[12px] text-[var(--color-x-text)] placeholder:text-[var(--color-x-text-muted)] outline-none focus:border-[var(--color-x-accent)] transition-colors" />
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-1 space-y-4">
-        {navSections.map((section) => (
-          <div key={section.label}>
-            <p className="px-2 mb-1 text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: '#5a6478' }}>
-              {section.label}
-            </p>
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+        {nav.map((ws, wi) => (
+          <div key={wi}>
+            {ws.section && (
+              <p className="px-2.5 mb-1 text-[10px] font-semibold text-[var(--color-x-text-muted)] uppercase tracking-[0.08em]">
+                {ws.section}
+              </p>
+            )}
+            <div className="space-y-px">
+              {ws.items.map((item) => {
+                const active = isActive(item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="relative flex items-center gap-2.5 px-2.5 py-[7px] rounded text-[13px] font-medium transition-all duration-150"
-                    style={{
-                      color: isActive ? '#ffffff' : '#9aa3b5',
-                      background: isActive ? 'rgba(232, 108, 45, 0.18)' : 'transparent',
-                    }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#ffffff'; }}
-                    onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#9aa3b5'; } }}
+                    className={`relative flex items-center gap-2.5 px-2.5 py-[6px] rounded-lg text-[13px] font-medium transition-all duration-150
+                      ${active
+                        ? 'text-[var(--color-x-accent)] bg-[var(--color-x-accent-light)]'
+                        : 'text-[var(--color-x-text-secondary)] hover:text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]'
+                      }`}
                   >
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: '#e86c2d' }} />
-                    )}
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    <span>{item.name}</span>
+                    {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] h-4 rounded-r-full" style={{ background: item.accent }} />}
+                    <item.icon className="w-[15px] h-[15px] flex-shrink-0" style={active ? { color: item.accent } : undefined} />
+                    <span className="flex-1">{item.name}</span>
                     {item.name === 'Risk Register' && kpi.openRisks > 0 && (
-                      <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold rounded" style={{ background: '#dc2626', color: '#fff' }}>{kpi.openRisks}</span>
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold bg-red-50 text-red-500 rounded-full border border-red-100 min-w-[18px] text-center">{kpi.openRisks}</span>
                     )}
                   </Link>
                 );
@@ -110,17 +160,16 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom */}
-      <div className="p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded cursor-pointer" style={{ color: '#9aa3b5' }}>
-          <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: '#e86c2d' }}>
-            NP
-          </div>
+      {/* User */}
+      <div className="p-3 border-t border-[var(--color-x-border)]">
+        <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white">NP</div>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold" style={{ color: '#e8eaf0' }}>Neeraj Prakash</p>
-            <p className="text-[10px]" style={{ color: '#7a8499' }}>Admin</p>
+            <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight">Neeraj Prakash</p>
+            <p className="text-[10px] text-[var(--color-x-text-muted)]">Super Admin</p>
           </div>
-        </div>
+          <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
+        </Link>
       </div>
     </aside>
   );

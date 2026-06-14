@@ -2,18 +2,18 @@ const XLSX = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 
-const filePath = path.resolve(__dirname, '../../BIAL_Dashboard_Final_V_Final.xlsx');
+const filePath = '/Users/neerajprakash/Downloads/OrbitPM_Full_Export_2026-05-30.xlsx';
 const workbook = XLSX.readFile(filePath);
 
 // ============================================
 // EXTRACT ALL PROJECTS FROM MASTER INDEX
 // ============================================
-const masterSheet = workbook.Sheets['🔗 Master Index'];
-const masterRaw = XLSX.utils.sheet_to_json(masterSheet, { defval: '' });
+const masterSheet = workbook.Sheets['Master Index'] || workbook.Sheets['🔗 Master Index'];
+const masterRaw = XLSX.utils.sheet_to_json(masterSheet, { header: 1, defval: '' });
 
 // Find header row (row with "Project ID")
 const headerRowIdx = masterRaw.findIndex(row => 
-  Object.values(row).some(v => String(v).includes('Project ID'))
+  row.some(v => String(v).includes('Project ID'))
 );
 
 if (headerRowIdx === -1) {
@@ -22,25 +22,24 @@ if (headerRowIdx === -1) {
 }
 
 const headerRow = masterRaw[headerRowIdx];
-const colKeys = Object.keys(headerRow);
 const colMap = {};
-colKeys.forEach(key => {
-  const val = String(headerRow[key]).trim();
-  if (val.includes('Source')) colMap.source = key;
-  if (val.includes('Project ID')) colMap.id = key;
-  if (val.includes('Project Name')) colMap.name = key;
-  if (val.includes('Department')) colMap.department = key;
-  if (val.includes('Project Owner') || val.includes('Owner')) colMap.owner = key;
-  if (val.includes('Current Status') || val.includes('Status')) colMap.status = key;
-  if (val.includes('Progress')) colMap.progress = key;
-  if (val.includes('Priority')) colMap.priority = key;
-  if (val.includes('Start')) colMap.startDate = key;
-  if (val.includes('Target') || val.includes('End')) colMap.targetDate = key;
-  if (val.includes('Risk') || val.includes('Blocker')) colMap.risks = key;
-  if (val.includes('Objective') || val.includes('Business')) colMap.objective = key;
-  if (val.includes('Note') || val.includes('Update') || val.includes('Remark')) colMap.notes = key;
-  if (val.includes('KPI')) colMap.kpi = key;
-  if (val.includes('Supporting')) colMap.supportingTeam = key;
+headerRow.forEach((val, idx) => {
+  const v = String(val).trim();
+  if (v.includes('Source')) colMap.source = idx;
+  if (v.includes('Project ID')) colMap.id = idx;
+  if (v.includes('Project Name')) colMap.name = idx;
+  if (v.includes('Department')) colMap.department = idx;
+  if (v.includes('Project Owner') || v.includes('Owner')) colMap.owner = idx;
+  if (v.includes('Current Status') || v.includes('Status')) colMap.status = idx;
+  if (v.includes('Progress')) colMap.progress = idx;
+  if (v.includes('Priority')) colMap.priority = idx;
+  if (v.includes('Start')) colMap.startDate = idx;
+  if (v.includes('Target') || v.includes('End')) colMap.targetDate = idx;
+  if (v.includes('Risk') || v.includes('Blocker')) colMap.risks = idx;
+  if (v.includes('Objective') || v.includes('Business')) colMap.objective = idx;
+  if (v.includes('Note') || v.includes('Update') || v.includes('Remark')) colMap.notes = idx;
+  if (v.includes('KPI')) colMap.kpi = idx;
+  if (v.includes('Supporting')) colMap.supportingTeam = idx;
 });
 
 console.log('Column mapping:', colMap);
@@ -102,8 +101,8 @@ console.log('');
 // ============================================
 // EXTRACT RISKS
 // ============================================
-const riskSheet = workbook.Sheets['🚨 Risk Register'];
-const riskRaw = XLSX.utils.sheet_to_json(riskSheet, { defval: '' });
+const riskSheet = workbook.Sheets['Risk Register'] || workbook.Sheets['🚨 Risk Register'];
+const riskRaw = riskSheet ? XLSX.utils.sheet_to_json(riskSheet, { defval: '' }) : [];
 
 const riskHeaderIdx = riskRaw.findIndex(row =>
   Object.values(row).some(v => String(v).includes('Risk ID'))

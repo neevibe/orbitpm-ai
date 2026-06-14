@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Building2, ChevronRight, X, Save, AlertTriangle, Zap, ArrowLeft, Edit3, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import ProjectModal from '@/components/modals/ProjectModal';
 import { getStatusColor, getPriorityColor } from '@/lib/utils';
 import type { Project } from '@/lib/mock-data';
@@ -33,6 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function DepartmentsPage() {
   const { projects, departments, updateProject } = useData();
+  const { canModifyDepartment } = useAuth();
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
@@ -125,9 +127,11 @@ export default function DepartmentsPage() {
             <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">{selectedDept}</h1>
           </div>
           <span className="ml-2 text-[12px] text-[#94a3b8]">{filteredProjects.length} of {deptProjects.length} shown</span>
-          <button onClick={() => openNew(selectedDept)} className="ml-auto btn-primary text-[12px] px-3 py-1.5 flex items-center gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Add Project
-          </button>
+          {canModifyDepartment(selectedDept) && (
+            <button onClick={() => openNew(selectedDept)} className="ml-auto btn-primary text-[12px] px-3 py-1.5 flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Add Project
+            </button>
+          )}
         </div>
 
         {/* KPI Cards */}
@@ -194,10 +198,12 @@ export default function DepartmentsPage() {
                       </div>
                       {p.objective && <p className="text-[11px] text-[#94a3b8] mt-1 italic line-clamp-1">{p.objective}</p>}
                     </div>
-                    <button onClick={() => startEdit(p)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#e2e8f0] text-[12px] font-semibold text-[#475569] hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0">
-                      <Edit3 className="w-3.5 h-3.5" /> Edit All Fields
-                    </button>
+                    {canModifyDepartment(p.department) && (
+                      <button onClick={() => startEdit(p)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#e2e8f0] text-[12px] font-semibold text-[#475569] hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0">
+                        <Edit3 className="w-3.5 h-3.5" /> Edit All Fields
+                      </button>
+                    )}
                   </div>
                 )}
 

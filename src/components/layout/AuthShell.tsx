@@ -1,0 +1,94 @@
+'use client';
+
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { DataProvider } from '@/lib/data-context';
+import Sidebar from './Sidebar';
+import Topbar from './Topbar';
+
+const FULL_BLEED_PAGES = ['/projects', '/airport-ops'];
+// Pages that render standalone (no sidebar/topbar) and don't require auth.
+const STANDALONE_PATHS = ['/', '/login', '/change-password'];
+// Auth pages a logged-in user should be bounced away from (landing `/` is NOT one).
+const AUTH_PATHS = ['/login', '/change-password'];
+const HOME = '/command-center';
+
+function Shell({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const isStandalone = STANDALONE_PATHS.includes(pathname);
+  const isAuthPath = AUTH_PATHS.includes(pathname);
+  const isLanding = pathname === '/';
+  const mustChangePassword = user?.user_metadata?.must_change_password === true;
+
+  useEffect(() => {
+    if (loading) return;
+
+    // Unauthenticated visitors may see standalone pages (landing/login); everything else → login
+    if (!user && !isStandalone) {
+      router.replace('/login');
+      return;
+    }
+    // First-time users must set a password before entering the app (landing still allowed)
+    if (user && mustChangePassword && pathname !== '/change-password' && !isLanding) {
+      router.replace('/change-password');
+      return;
+    }
+    // Logged-in users shouldn't sit on login/change-password (once password is set)
+    if (user && !mustChangePassword && isAuthPath) {
+      router.replace(HOME);
+    }
+  }, [user, loading, isStandalone, isAuthPath, isLanding, mustChangePassword, pathname, router]);
+
+  // Loading splash
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#0f1623' }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#e86c2d' }}>
+            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+            </svg>
+          </div>
+          <p className="text-[13px] font-medium" style={{ color: '#8ca4c0' }}>Loading Xyrenis…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Standalone pages (landing, login, change-password) — no sidebar/topbar chrome
+  if (isStandalone) return <>{children}</>;
+
+  // Unauthenticated — blank while redirect fires
+  if (!user) return null;
+
+  // Force password change — blank while redirect to /change-password fires
+  if (mustChangePassword) return null;
+
+  const isFullBleed = FULL_BLEED_PAGES.some(p => pathname === p || pathname.startsWith(p + '/'));
+
+  return (
+    <DataProvider>
+      <Sidebar />
+      <Topbar />
+      <main
+        className="ml-[248px] mt-[52px] min-h-[calc(100vh-52px)]"
+        style={{ background: '#f8f9fa', padding: isFullBleed ? 0 : '24px' }}
+      >
+        {children}
+      </main>
+    </DataProvider>
+  );
+}
+
+export default function AuthShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <Shell>{children}</Shell>
+    </AuthProvider>
+  );
+}

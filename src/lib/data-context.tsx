@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
-import { generateProjectId } from './utils';
+import { useAuth } from './auth-context';
+import { generateProjectId, daysUntil } from './utils';
 import {
   projects as initialProjects,
   departments as initialDepartments,
@@ -68,6 +69,7 @@ interface DataContextType {
   // Project CRUD
   addProject: (project: Omit<Project, 'id'> & { id?: string }) => string;
   updateProject: (id: string, updates: Partial<Project>) => void;
+  splitProject: (originalId: string, splits: { department: string, percentage: number }[]) => void;
   deleteProject: (id: string) => void;       // kept for compatibility — now archives
   archiveProject: (id: string) => void;       // soft-delete: moves to history
   restoreProject: (id: string) => void;       // restore from history
@@ -100,6 +102,8 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // ============================================
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  // Department-scoped write permissions (super admins / CCO can modify everything).
+  const { canModifyDepartment } = useAuth();
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
@@ -207,9 +211,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     'Operations': '#f59e0b',
     'Commercial Development': '#10b981',
     'Advertising & Marketing': '#8b5cf6',
-    'Duty Free': '#f97316',
-    'CBB & Lounge': '#ec4899',
-    'BASL': '#06b6d4',
+    'Retail & Commerce': '#f97316',
+    'Amenities & Hospitality': '#ec4899',
+    'Strategic Support': '#06b6d4',
   };
 
   // Merge any custom departments added by user
@@ -258,12 +262,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const openRisks = risks.filter(r => r.status === 'Open').length;
     const closedRisks = risks.filter(r => r.status === 'Closed').length;
 
-    // Stuck: Critical/High + In Progress + 0% progress
-    const stuckProjects = projects.filter(p =>
-      (p.priority === 'Critical' || p.priority === 'High') &&
-      p.status === 'In Progress' &&
-      p.progress === 0
-    ).length;
+    // Stuck: targetDate <= 7 days, any priority, status !== Completed, not dismissedFromStuck
+    const stuckProjects = projects.filter(p => {
+      if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
+      const days = daysUntil(p.targetDate);
+      return days !== null && days <= 7;
+    }).length;
 
     // Needs escalation: Critical + In Progress + has risks
     const projectsWithRisks = new Set(risks.filter(r => r.status === 'Open').map(r => r.projectId));
@@ -295,12 +299,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [projects]);
 
   const addProject = useCallback((project: Omit<Project, 'id'> & { id?: string }): string => {
+    if (!canModifyDepartment(project.department)) {
+      notify('Permission denied', `You can only add projects in your own department.`, 'warning');
+      return '';
+    }
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
     const newProject: Project = { ...project, id, archived: false } as Project;
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
-    
+
     if (isSupabaseConfigured()) {
       supabase.from('departments').select('id').eq('name', newProject.department).single().then(({data: d}) => {
         const deptId = d?.id;
@@ -323,11 +331,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
     }
     return id;
-  }, [projects, logAudit, notify]);
+  }, [projects, logAudit, notify, canModifyDepartment]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     setProjects(prev => prev.map(p => {
       if (p.id !== id) return p;
+      // Block edits to projects outside the user's department (super admins exempt).
+      if (!canModifyDepartment(p.department)) {
+        notify('Permission denied', `You can only edit projects in your own department.`, 'warning');
+        return p;
+      }
       const changes: Record<string, { old: any; new: any }> = {};
       Object.keys(updates).forEach(key => {
         const k = key as keyof Project;
@@ -364,11 +377,65 @@ export function DataProvider({ children }: { children: ReactNode }) {
       
       return { ...p, ...updates };
     }));
-  }, [logAudit, notify]);
+  }, [logAudit, notify, canModifyDepartment]);
+
+  const splitProject = useCallback((originalId: string, splits: { department: string, percentage: number }[]) => {
+    const originalProject = projects.find(p => p.id === originalId);
+    if (!originalProject || splits.length === 0) return;
+
+    // Splitting moves/clones work across departments — require modify rights on the source
+    // and every target department (super admins satisfy all of these).
+    if (!canModifyDepartment(originalProject.department) || !splits.every(s => canModifyDepartment(s.department))) {
+      notify('Permission denied', `You can only split projects within departments you manage.`, 'warning');
+      return;
+    }
+
+    // The first split is assigned to the current project (updates its department and percentage)
+    const primarySplit = splits[0];
+    const secondarySplits = splits.slice(1);
+
+    const splitGroupId = originalProject.splitGroupId || originalProject.id;
+    
+    // Update original project
+    updateProject(originalId, {
+      department: primarySplit.department,
+      splitPercentage: primarySplit.percentage,
+      splitGroupId: splitGroupId
+    });
+
+    // Spawn cloned projects for the remaining splits
+    const currentProjectIds = projects.map(p => p.id);
+    
+    secondarySplits.forEach((split, index) => {
+      // Need a unique new ID
+      const newId = generateProjectId(split.department, currentProjectIds);
+      // Ensure we don't duplicate IDs in the same batch
+      currentProjectIds.push(newId);
+      
+      const newProject: Omit<Project, 'id'> & { id?: string } = {
+        ...originalProject,
+        id: newId,
+        department: split.department,
+        splitPercentage: split.percentage,
+        splitGroupId: splitGroupId,
+        tasks: [], // wipe tasks so they start fresh
+        allocations: [],
+        detailedDependencies: []
+      };
+      
+      addProject(newProject);
+    });
+    
+    notify('Project Split', `Successfully cloned ${originalProject.name} across ${splits.length} departments.`, 'success');
+  }, [projects, updateProject, addProject, notify, canModifyDepartment]);
 
   // Soft delete — moves to history (archived = true)
   const archiveProject = useCallback((id: string) => {
     const project = projects.find(p => p.id === id);
+    if (project && !canModifyDepartment(project.department)) {
+      notify('Permission denied', `You can only archive projects in your own department.`, 'warning');
+      return;
+    }
     if (project) {
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: false, new: true } } });
       notify('Project Archived', `${project.name} moved to history. Can be restored anytime.`, 'info');
@@ -378,7 +445,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured()) {
       supabase.from('projects').update({ archived: true, archived_at: now }).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
     }
-  }, [projects, logAudit, notify]);
+  }, [projects, logAudit, notify, canModifyDepartment]);
 
   // deleteProject now archives instead of deleting (for safety)
   const deleteProject = archiveProject;
@@ -398,6 +465,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Permanent delete — only from archived projects
   const purgeProject = useCallback((id: string) => {
     const project = projects.find(p => p.id === id);
+    if (project && !canModifyDepartment(project.department)) {
+      notify('Permission denied', `You can only delete projects in your own department.`, 'warning');
+      return;
+    }
     if (project) {
       logAudit({ action: 'delete', entityType: 'project', entityId: id, entityName: project.name, changes: {} });
       notify('Project Permanently Deleted', `${project.name} has been permanently removed.`, 'warning');
@@ -407,7 +478,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured()) {
       supabase.from('projects').delete().eq('project_code', id).then(({error}) => { if (error) console.error(error); });
     }
-  }, [projects, logAudit, notify]);
+  }, [projects, logAudit, notify, canModifyDepartment]);
 
   // ============================================
   // DEPARTMENT CRUD
@@ -576,7 +647,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataContext.Provider value={{
       projects, departments, risks, notifications, auditLog, kpi,
-      addProject, updateProject, deleteProject,
+      addProject, updateProject, splitProject, deleteProject,
       archiveProject, restoreProject, purgeProject, generateId,
       addDepartment, updateDepartment, deleteDepartment,
       addRisk, updateRisk, deleteRisk,

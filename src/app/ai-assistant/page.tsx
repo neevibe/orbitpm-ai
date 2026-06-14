@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Sparkles } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Bot, Send, Sparkles, RefreshCw, Copy, Check, Search } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { formatDate } from '@/lib/utils';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -12,103 +13,256 @@ interface Message {
 
 const suggestions = [
   'Show all delayed projects',
-  'Which department has the most critical projects?',
-  'Generate executive summary for this week',
-  'Who has the most projects assigned?',
-  'What are the open high-impact risks?',
-  'Which projects are stuck at 0%?',
+  'Which department has most critical projects?',
+  'List projects nearing deadline this month',
+  'Who owns the most active projects?',
+  'What are open high-impact risks?',
+  'Summarize the Operations department',
+  'Show all Not Started projects',
+  'Which projects are overdue?',
 ];
+
+function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr);
+  if (isNaN(target.getTime())) return null;
+  return Math.ceil((target.getTime() - Date.now()) / 86400000);
+}
 
 export default function AIAssistantPage() {
   const { projects, risks, departments, kpi } = useData();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const generateResponse = (query: string): string => {
-    const q = query.toLowerCase();
+  const generateResponse = useMemo(() => (query: string): string => {
+    const q = query.toLowerCase().trim();
+    const activePjs = projects.filter(p => !p.archived);
 
+    // ── DELAYED ──────────────────────────────────────────────
     if (q.includes('delayed')) {
-      const delayed = projects.filter(p => p.status === 'Delayed');
-      if (delayed.length === 0) return '✅ Great news! There are no delayed projects at the moment.';
-      return `📊 **Delayed Projects (${delayed.length})**\n\n${delayed.map(p => `• **${p.id}** — ${p.name}\n  Department: ${p.department} · Owner: ${p.owner || 'Unassigned'}`).join('\n\n')}\n\n⚠️ Recommend immediate escalation to department heads.`;
+      const list = activePjs.filter(p => p.status === 'Delayed');
+      if (!list.length) return '✅ Great news — no delayed projects right now!';
+      const rows = list.map(p => `• **${p.id}** — ${p.name}\n  Dept: ${p.department} | Owner: ${p.owner || 'Unassigned'} | Progress: ${p.progress}%`).join('\n\n');
+      return `📊 **Delayed Projects (${list.length})**\n\n${rows}\n\n⚠️ Recommend immediate escalation to department heads.`;
     }
 
-    if (q.includes('critical') && q.includes('department')) {
-      const deptCritical = departments.map(d => ({ name: d.name, critical: d.critical })).sort((a, b) => b.critical - a.critical);
-      return `🔴 **Critical Projects by Department:**\n\n${deptCritical.filter(d => d.critical > 0).map((d, i) => `${i + 1}. **${d.name}** — ${d.critical} critical project${d.critical > 1 ? 's' : ''}`).join('\n')}\n\nFocus on the top departments for immediate leadership review.`;
+    // ── OVERDUE ───────────────────────────────────────────────
+    if (q.includes('overdue')) {
+      const list = activePjs.filter(p => { const d = daysUntil(p.targetDate); return d !== null && d < 0 && p.status !== 'Completed'; });
+      if (!list.length) return '✅ No overdue projects — all target dates are current.';
+      const rows = list.sort((a,b)=>(daysUntil(a.targetDate)??0)-(daysUntil(b.targetDate)??0))
+        .map(p => { const d = daysUntil(p.targetDate)!; return `• **${p.id}** — ${p.name}\n  Overdue by **${Math.abs(d)} days** | Dept: ${p.department} | Status: ${p.status}`; }).join('\n\n');
+      return `🚨 **Overdue Projects (${list.length})**\n\n${rows}`;
     }
 
-    if (q.includes('executive summary') || q.includes('summary')) {
-      const deptActive = departments.filter(d => d.total > 0).length;
-      const stuckList = projects.filter(p => (p.priority === 'Critical' || p.priority === 'High') && p.status === 'In Progress' && p.progress === 0).slice(0, 3);
-      return `📋 **Executive Summary — ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}**\n\nThe BIAL Commercial Department has **${kpi.totalProjects} active projects** across ${deptActive} departments.\n\n**Key Highlights:**\n• ✅ ${kpi.inProgress} projects in progress, ${kpi.completed} completed\n• 🚨 ${kpi.delayed} projects delayed\n• ⚡ ${kpi.critical} critical priority items\n• 🔴 ${kpi.openRisks} open risks\n\n**Top Concerns:**\n${stuckList.map((p, i) => `${i + 1}. ${p.name} (${p.id}) — 0% progress`).join('\n')}\n\n**Recommendation:** Schedule urgent review with Digital & Data and Operations leads.`;
+    // ── DEADLINE / NEARING / DUE SOON ────────────────────────
+    if (q.includes('deadline') || q.includes('due') || q.includes('nearing') || q.includes('this month') || q.includes('upcoming')) {
+      const days = q.includes('week') ? 7 : q.includes('month') ? 30 : 30;
+      const list = activePjs.filter(p => { const d = daysUntil(p.targetDate); return d !== null && d >= 0 && d <= days && p.status !== 'Completed'; })
+        .sort((a,b) => (daysUntil(a.targetDate)??999) - (daysUntil(b.targetDate)??999));
+      if (!list.length) return `✅ No projects due in the next ${days} days.`;
+      const rows = list.map(p => { const d = daysUntil(p.targetDate)!; return `• **${p.id}** — ${p.name}\n  ⏰ ${d} day${d!==1?'s':''} left | ${p.department} | ${p.priority} | ${p.status}`; }).join('\n\n');
+      return `📅 **Projects Due in ${days} Days (${list.length})**\n\n${rows}`;
     }
 
-    if (q.includes('most projects') || q.includes('owner') || q.includes('assigned')) {
-      const ownerMap: Record<string, number> = {};
-      projects.filter(p => p.status === 'In Progress').forEach(p => {
-        if (p.owner) ownerMap[p.owner] = (ownerMap[p.owner] || 0) + 1;
-      });
-      const sorted = Object.entries(ownerMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      return `👥 **Owner Workload (Active Projects):**\n\n${sorted.map(([name, count], i) => `${i + 1}. **${name}** — ${count} active project${count > 1 ? 's' : ''} ${count >= 5 ? '🔴 Overloaded' : count >= 3 ? '🟠 At Capacity' : '✅'}`).join('\n')}\n\nConsider redistributing from overloaded owners.`;
-    }
-
-    if (q.includes('risk') && q.includes('high')) {
-      const highRisks = risks.filter(r => r.impact === 'High' && r.status === 'Open');
-      if (highRisks.length === 0) return '✅ No high-impact open risks at this time.';
-      return `🚨 **High-Impact Open Risks (${highRisks.length}):**\n\n${highRisks.map(r => `• **${r.id}** — ${r.description}\n  Project: ${r.projectId} · Owner: ${r.owner} · Category: ${r.category}`).join('\n\n')}\n\nImmediate mitigation review recommended.`;
-    }
-
-    if (q.includes('stuck') || q.includes('0%')) {
-      const stuck = projects.filter(p => (p.priority === 'Critical' || p.priority === 'High') && p.status === 'In Progress' && p.progress === 0);
-      if (stuck.length === 0) return '✅ No stuck projects detected — all high-priority projects show some progress.';
-      return `⚠️ **Stuck Projects (High Priority, 0% Progress): ${stuck.length}**\n\n${stuck.slice(0, 6).map(p => `• **${p.id}** — ${p.name}\n  ${p.department} · ${p.owner || 'Unassigned'} · ${p.priority}`).join('\n\n')}\n\nThese need immediate leadership attention and unblocking.`;
-    }
-
-    if (q.includes('owned by') || q.includes('assigned to') || q.includes('projects for')) {
-      const regex = /(?:owned by|assigned to|projects for)\s+([a-zA-Z\s]+)/i;
-      const match = query.match(regex);
-      if (match && match[1]) {
-        const ownerQuery = match[1].trim().toLowerCase();
-        // Skip common stop words that might be accidentally matched
-        if (!['me', 'us', 'the', 'them'].includes(ownerQuery)) {
-          const ownedProjects = projects.filter(p => p.owner && p.owner.toLowerCase().includes(ownerQuery));
-          if (ownedProjects.length === 0) return `✅ I couldn't find any projects currently owned by **${match[1].trim()}**.`;
-          return `👤 **Projects Owned by ${match[1].trim()} (${ownedProjects.length}):**\n\n${ownedProjects.map(p => `• **${p.id}** — ${p.name}\n  Status: ${p.status} · Priority: ${p.priority} · Progress: ${p.progress}%`).join('\n\n')}`;
-        }
+    // ── CRITICAL ──────────────────────────────────────────────
+    if (q.includes('critical')) {
+      // by dept?
+      if (q.includes('department') || q.includes('dept')) {
+        const sorted = [...departments].sort((a,b)=>b.critical-a.critical);
+        const rows = sorted.filter(d=>d.critical>0).map((d,i)=>`${i+1}. **${d.name}** — ${d.critical} critical project${d.critical>1?'s':''}`).join('\n');
+        return `🔴 **Critical Projects by Department:**\n\n${rows}\n\nFocus on the top departments for immediate leadership review.`;
       }
+      const list = activePjs.filter(p => p.priority === 'Critical');
+      if (!list.length) return '✅ No critical priority projects at the moment.';
+      const rows = list.map(p => `• **${p.id}** — ${p.name}\n  ${p.department} | Owner: ${p.owner||'Unassigned'} | Status: ${p.status} | Progress: ${p.progress}%`).join('\n\n');
+      return `🔴 **Critical Projects (${list.length})**\n\n${rows}`;
     }
 
-    // Default
-    return `I've analyzed the portfolio of **${kpi.totalProjects} projects**. Here's a quick snapshot:\n\n• **${kpi.inProgress}** in progress · **${kpi.delayed}** delayed · **${kpi.critical}** critical\n• **${kpi.openRisks}** open risks · **${kpi.stuckProjects}** stuck projects\n\nTry asking about delayed projects, executive summaries, owner workload, or high-impact risks for detailed analysis.`;
-  };
+    // ── NOT STARTED ───────────────────────────────────────────
+    if (q.includes('not started')) {
+      const list = activePjs.filter(p => p.status === 'Not Started');
+      if (!list.length) return '✅ All projects have been kicked off — none are in "Not Started" status.';
+      const rows = list.slice(0, 15).map(p => `• **${p.id}** — ${p.name} | ${p.department} | ${p.priority}`).join('\n');
+      return `🔲 **Not Started Projects (${list.length})**\n\n${rows}${list.length > 15 ? `\n\n...and ${list.length - 15} more.` : ''}`;
+    }
+
+    // ── STUCK / DEADLINE REACHING ─────────────────────────────
+    if (q.includes('stuck') || q.includes('0%') || q.includes('zero progress') || q.includes('no progress') || q.includes('reaching') || q.includes('deadline')) {
+      const list = activePjs.filter(p => {
+        if (p.status === 'Completed' || p.dismissedFromStuck) return false;
+        const days = daysUntil(p.targetDate);
+        return days !== null && days <= 7;
+      });
+      if (!list.length) return '✅ No stuck projects — all projects have comfortable timelines or have been dismissed.';
+      const rows = list.slice(0, 8).map(p => {
+        const d = daysUntil(p.targetDate);
+        return `• **${p.id}** — ${p.name}\n  ⏰ ${d !== null && d < 0 ? `Overdue by ${Math.abs(d)} days` : `${d} days remaining`} · ${p.department} · ${p.owner||'Unassigned'} · Priority: ${p.priority}`;
+      }).join('\n\n');
+      return `⚠️ **Stuck Projects (Deadlines in ≤ 7 days): ${list.length}**\n\n${rows}${list.length>8?`\n\n...and ${list.length-8} more.`:''}`;
+    }
+
+    // ── SPECIFIC DEPARTMENT ───────────────────────────────────
+    const deptMatch = departments.find(d => q.includes(d.name.toLowerCase()));
+    if (deptMatch) {
+      const deptPjs = activePjs.filter(p => p.department === deptMatch.name);
+      const delayed = deptPjs.filter(p => p.status === 'Delayed');
+      const critical = deptPjs.filter(p => p.priority === 'Critical');
+      const inProg = deptPjs.filter(p => p.status === 'In Progress');
+      const completed = deptPjs.filter(p => p.status === 'Completed');
+      const overdue = deptPjs.filter(p => { const d = daysUntil(p.targetDate); return d !== null && d < 0 && p.status !== 'Completed'; });
+
+      let detail = '';
+      if (q.includes('critical') && critical.length) {
+        detail = `\n\n🔴 **Critical Projects:**\n${critical.slice(0,5).map(p=>`• ${p.id} — ${p.name} (${p.status}, ${p.progress}%)`).join('\n')}`;
+      } else if (q.includes('delayed') && delayed.length) {
+        detail = `\n\n⏰ **Delayed Projects:**\n${delayed.slice(0,5).map(p=>`• ${p.id} — ${p.name} (${p.progress}%)`).join('\n')}`;
+      }
+
+      return `🏢 **${deptMatch.name} Department Summary**\n\n• Total: **${deptPjs.length}** projects\n• In Progress: **${inProg.length}**\n• Completed: **${completed.length}**\n• Delayed: **${delayed.length}** ${delayed.length>0?'⚠️':''}\n• Critical: **${critical.length}** ${critical.length>0?'🔴':''}\n• Overdue: **${overdue.length}** ${overdue.length>0?'🚨':''}${detail}`;
+    }
+
+    // ── OWNER / WORKLOAD ──────────────────────────────────────
+    if (q.includes('owner') || q.includes('workload') || q.includes('most projects') || q.includes('assigned')) {
+      // specific owner?
+      const ownerRegex = /(?:owned by|assigned to|projects (?:for|by)|owner[:\s]+)\s*([a-zA-Z\s]{3,30})/i;
+      const m = query.match(ownerRegex);
+      if (m?.[1]) {
+        const name = m[1].trim().toLowerCase();
+        const found = activePjs.filter(p => p.owner?.toLowerCase().includes(name));
+        if (!found.length) return `I couldn't find any projects owned by **${m[1].trim()}**. Double-check the name.`;
+        const rows = found.map(p => `• **${p.id}** — ${p.name}\n  ${p.status} | ${p.priority} | ${p.progress}%`).join('\n\n');
+        return `👤 **Projects owned by ${m[1].trim()} (${found.length})**\n\n${rows}`;
+      }
+      // workload ranking
+      const ownerMap: Record<string,number> = {};
+      activePjs.filter(p => p.status === 'In Progress').forEach(p => { if (p.owner) ownerMap[p.owner] = (ownerMap[p.owner]||0)+1; });
+      const sorted = Object.entries(ownerMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      const rows = sorted.map(([name,count],i) => `${i+1}. **${name}** — ${count} active project${count>1?'s':''} ${count>=5?'🔴 Overloaded':count>=3?'🟠 At Capacity':'✅'}`).join('\n');
+      return `👥 **Owner Workload (Active Projects)**\n\n${rows}\n\nConsider redistributing work from overloaded owners.`;
+    }
+
+    // ── RISKS ─────────────────────────────────────────────────
+    if (q.includes('risk')) {
+      const openRisks = risks.filter(r => r.status === 'Open');
+      const high = openRisks.filter(r => r.impact === 'High');
+      if (q.includes('high')) {
+        if (!high.length) return '✅ No high-impact open risks at this time.';
+        const rows = high.map(r => `• **${r.id}** — ${r.description}\n  Project: ${r.projectId} | Owner: ${r.owner} | Category: ${r.category}`).join('\n\n');
+        return `🚨 **High-Impact Open Risks (${high.length})**\n\n${rows}\n\nImmediate mitigation review recommended.`;
+      }
+      const rows = openRisks.slice(0,8).map(r => `• **${r.id}** — ${r.description} [${r.impact}]\n  Project: ${r.projectId} | ${r.category}`).join('\n\n');
+      return `⚠️ **Open Risks (${openRisks.length})**\n\n${rows || 'No open risks right now. ✅'}`;
+    }
+
+    // ── PROGRESS / STATUS ─────────────────────────────────────
+    if (q.includes('progress') || q.includes('complete') || q.includes('status') || q.includes('how many')) {
+      const byStatus: Record<string, number> = {};
+      activePjs.forEach(p => { byStatus[p.status] = (byStatus[p.status]||0)+1; });
+      const rows = Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([s,c]) => `• **${s}**: ${c} projects`).join('\n');
+      return `📊 **Portfolio Status Breakdown (${activePjs.length} total)**\n\n${rows}\n\nAverage progress across all active projects: **${Math.round(activePjs.reduce((s,p)=>s+p.progress,0)/activePjs.length)}%**`;
+    }
+
+    // ── EXECUTIVE SUMMARY ─────────────────────────────────────
+    if (q.includes('summary') || q.includes('executive') || q.includes('overview') || q.includes('report')) {
+      const overdue = activePjs.filter(p => { const d = daysUntil(p.targetDate); return d!==null && d<0 && p.status!=='Completed'; });
+      const nearDeadline = activePjs.filter(p => { const d = daysUntil(p.targetDate); return d!==null && d>=0 && d<=14 && p.status!=='Completed'; });
+      const stuck = activePjs.filter(p => {
+        if (p.status === 'Completed' || p.dismissedFromStuck) return false;
+        const d = daysUntil(p.targetDate);
+        return d !== null && d <= 7;
+      });
+      const topRisks = risks.filter(r => r.status==='Open' && r.impact==='High').slice(0,3);
+      const deptSummary = [...departments].sort((a,b)=>b.critical-a.critical).slice(0,3).map(d=>`  • ${d.name}: ${d.total} total, ${d.critical} critical`).join('\n');
+
+      return `📋 **Executive Summary — ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}**
+
+The Commercial Department manages **${kpi.totalProjects} projects** across ${departments.filter(d=>d.total>0).length} departments.
+
+**Portfolio Health:**
+• ✅ ${kpi.inProgress} in progress · ${kpi.completed} completed
+• 🚨 ${kpi.delayed} delayed · ${kpi.critical} critical
+• ⚠️ ${kpi.openRisks} open risks · ${stuck.length} stuck
+
+**Urgent Attention:**
+• ${overdue.length} projects are overdue
+• ${nearDeadline.length} projects due within 14 days
+
+**Top Departments by Critical Projects:**
+${deptSummary}
+${topRisks.length ? `\n**High-Impact Risks:**\n${topRisks.map(r=>`  • ${r.description} (${r.projectId})`).join('\n')}` : ''}
+
+**Recommendation:** Prioritise review of overdue and critical projects with Operations and Digital & Data leads.`;
+    }
+
+    // ── SPECIFIC PROJECT ID ───────────────────────────────────
+    const projectIdMatch = query.match(/\b(PR[A-Z]+_\d+)\b/i);
+    if (projectIdMatch) {
+      const p = projects.find(x => x.id.toLowerCase() === projectIdMatch[1].toLowerCase());
+      if (!p) return `I couldn't find project **${projectIdMatch[1]}**. Please verify the project ID.`;
+      const d = daysUntil(p.targetDate);
+      return `📁 **${p.id} — ${p.name}**\n\n• Department: ${p.department}\n• Owner: ${p.owner||'Unassigned'}\n• Status: **${p.status}**\n• Priority: **${p.priority}**\n• Progress: **${p.progress}%**\n• Start: ${formatDate(p.startDate)}\n• Target: ${formatDate(p.targetDate)}${d!==null ? ` (${d<0?`overdue by ${Math.abs(d)} days`:`${d} days left`})`:''}\n• Objective: ${p.objective||'—'}\n• KPI: ${p.kpi||'—'}\n• Notes: ${p.notes||'—'}`;
+    }
+
+    // ── PROJECT NAME SEARCH ───────────────────────────────────
+    const nameSearch = activePjs.filter(p => p.name.toLowerCase().includes(q) || (p.owner||'').toLowerCase().includes(q));
+    if (nameSearch.length > 0 && nameSearch.length <= 5) {
+      const rows = nameSearch.map(p => `• **${p.id}** — ${p.name}\n  ${p.department} | ${p.status} | ${p.priority} | ${p.progress}%`).join('\n\n');
+      return `🔍 **Matching Projects (${nameSearch.length})**\n\n${rows}`;
+    }
+
+    // ── DEFAULT PORTFOLIO SNAPSHOT ────────────────────────────
+    const overdue = activePjs.filter(p => { const d = daysUntil(p.targetDate); return d!==null && d<0 && p.status!=='Completed'; });
+    return `I have live access to your **${kpi.totalProjects}-project** portfolio. Here's a snapshot:\n\n• **${kpi.inProgress}** in progress · **${kpi.delayed}** delayed · **${kpi.critical}** critical\n• **${kpi.openRisks}** open risks · **${overdue.length}** overdue\n\nTry asking:\n• "Show delayed projects"\n• "Summarize Operations department"\n• "Who owns the most projects?"\n• "Which projects are due this month?"\n• "List all critical risks"\n• Any project ID like "PROPS_5"`;
+  }, [projects, risks, departments, kpi]);
 
   const handleSend = async (text?: string) => {
-    const msg = text || input;
-    if (!msg.trim()) return;
-
+    const msg = (text || input).trim();
+    if (!msg) return;
     const userMsg: Message = { role: 'user', content: msg, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
-
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
-
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
     const response = generateResponse(msg);
-    const aiMsg: Message = { role: 'assistant', content: response, timestamp: new Date() };
-    setMessages(prev => [...prev, aiMsg]);
+    setMessages(prev => [...prev, { role: 'assistant', content: response, timestamp: new Date() }]);
     setIsTyping(false);
+  };
+
+  const copyMessage = (content: string, idx: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 1500);
+  };
+
+  // Simple markdown renderer for bold
+  const renderContent = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return <span key={i}>{part}</span>;
+    });
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)] animate-fade-in">
-      <div className="mb-4">
-        <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">AI Project Copilot</h1>
-        <p className="text-[13px] text-[#64748b] mt-0.5">Ask anything about your projects, risks, and portfolio</p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">AI Project Copilot</h1>
+          <p className="text-[13px] text-[#64748b] mt-0.5">Ask anything about your {kpi.totalProjects} projects, risks, and portfolio</p>
+        </div>
+        {messages.length > 0 && (
+          <button onClick={() => setMessages([])} className="flex items-center gap-1.5 text-[12px] text-[#94a3b8] hover:text-[#64748b] border border-[#e2e8f0] px-3 py-1.5 rounded-lg transition-colors">
+            <RefreshCw className="w-3.5 h-3.5" /> New Chat
+          </button>
+        )}
       </div>
 
       {/* Chat Area */}
@@ -120,7 +274,7 @@ export default function AIAssistantPage() {
             </div>
             <h2 className="text-lg font-bold text-[#0f172a] mb-1">How can I help you today?</h2>
             <p className="text-[13px] text-[#64748b] mb-6 max-w-md text-center leading-relaxed">
-              I have live access to your BIAL Commercial portfolio — {kpi.totalProjects} projects, {risks.length} risks, and {departments.filter(d => d.total > 0).length} departments.
+              I have live access to your commercial portfolio — <strong>{kpi.totalProjects}</strong> projects, <strong>{risks.length}</strong> risks, across <strong>{departments.filter(d=>d.total>0).length}</strong> departments.
             </p>
             <div className="grid grid-cols-2 gap-2.5 max-w-lg w-full">
               {suggestions.map(s => (
@@ -141,12 +295,20 @@ export default function AIAssistantPage() {
                     <Bot className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
-                <div className={`max-w-2xl rounded-xl px-4 py-3 text-[13px] leading-relaxed whitespace-pre-line ${
+                <div className={`group relative max-w-2xl rounded-xl px-4 py-3 text-[13px] leading-relaxed whitespace-pre-wrap ${
                   m.role === 'user'
                     ? 'bg-indigo-600 text-white'
                     : 'bg-white border border-[#e2e8f0] text-[#334155]'
                 }`}>
-                  {m.content}
+                  {m.role === 'assistant' ? renderContent(m.content) : m.content}
+                  {m.role === 'assistant' && (
+                    <button
+                      onClick={() => copyMessage(m.content, i)}
+                      className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity bg-[#f8fafc] border border-[#e2e8f0] text-[#94a3b8] hover:text-[#64748b]"
+                    >
+                      {copiedIdx === i ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -172,20 +334,22 @@ export default function AIAssistantPage() {
       {/* Input */}
       <div className="mt-3 flex items-center gap-2.5">
         <div className="flex-1 relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Ask about projects, risks, performance..."
-            className="w-full bg-white border border-[#e2e8f0] rounded-xl px-5 py-3 text-[13px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:text-[#94a3b8]"
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            placeholder="Ask about projects, risks, deadlines, departments..."
+            className="w-full bg-white border border-[#e2e8f0] rounded-xl pl-10 pr-5 py-3 text-[13px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:text-[#94a3b8]"
           />
         </div>
         <button
           onClick={() => handleSend()}
-          className="w-11 h-11 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 flex items-center justify-center hover:from-indigo-500 hover:to-indigo-600 transition-all shadow-md"
+          disabled={!input.trim() || isTyping}
+          className="w-11 h-11 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 flex items-center justify-center hover:from-indigo-500 hover:to-indigo-600 disabled:opacity-40 transition-all shadow-md"
         >
-          <Send className="w-4.5 h-4.5 text-white" />
+          <Send className="w-4 h-4 text-white" />
         </button>
       </div>
     </div>

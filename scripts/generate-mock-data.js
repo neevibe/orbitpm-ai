@@ -3,10 +3,24 @@ const path = require('path');
 
 const bialData = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../src/lib/bial-data.json'), 'utf8'));
 
-// Generate TypeScript file with all 142 projects
-let ts = `// Auto-generated from BIAL_Dashboard_Final_V_Final.xlsx
-// Contains all 142 projects and 10 risks from the BIAL Commercial Department
+// Generate TypeScript file with all projects
+let ts = `// Auto-generated project data
+// Contains all projects and risks for the Enterprise portfolio
 // Generated: ${new Date().toISOString()}
+
+export interface Allocation {
+  id: string;
+  type: 'individual' | 'department';
+  target: string;
+  percentage: number;
+}
+
+export interface DetailedDependency {
+  id: string;
+  targetProjectId?: string;
+  description: string;
+  allocations: Allocation[];
+}
 
 export interface Project {
   id: string;
@@ -20,7 +34,27 @@ export interface Project {
   targetDate: string | null;
   risks: string;
   objective: string;
+  kpi?: string;
   notes: string;
+  projectDependencies?: string;
+  detailedDependencies?: DetailedDependency[];
+  allocations?: Allocation[];
+  splitGroupId?: string;
+  splitPercentage?: number;
+  supportTeam?: string;
+  archived?: boolean;
+  archivedAt?: string;
+  financials?: {
+    budget: number;
+    spent: number;
+  };
+  tasks?: {
+    id: string;
+    name: string;
+    assignee: string;
+    allocations?: Allocation[];
+    status: 'Not Started' | 'In Progress' | 'Done';
+  }[];
 }
 
 export interface Risk {
@@ -52,15 +86,53 @@ export interface Department {
 
 export const projects: Project[] = `;
 
-// Clean up project data
-const cleanProjects = bialData.projects.map(p => ({
-  ...p,
-  startDate: p.startDate || null,
-  targetDate: p.targetDate || null,
-  risks: p.risks || '',
-  objective: p.objective || '',
-  notes: p.notes || '',
-}));
+// Map old IDs to new IDs
+const deptCounters = {};
+const oldToNewId = {};
+
+const DEPT_PREFIX_MAP = {
+  'Digital & Data': 'PRDIGI',
+  'Operations': 'PROPS',
+  'Commercial Development': 'PRCOMDEV',
+  'Advertising & Marketing': 'PRADMKT',
+  'Retail & Commerce': 'PRRETAIL',
+  'Amenities & Hospitality': 'PRAMEN',
+  'Strategic Support': 'PRSTRAT',
+};
+
+function getNewId(dept, oldId) {
+  if (!deptCounters[dept]) deptCounters[dept] = 1;
+  const prefix = DEPT_PREFIX_MAP[dept] || ('PR' + dept.replace(/[^a-zA-Z]/g, '').toUpperCase().substring(0, 5));
+  const newId = `${prefix}_${deptCounters[dept]++}`;
+  oldToNewId[oldId] = newId;
+  return newId;
+}
+
+// First pass: assign new IDs
+bialData.projects.forEach(p => {
+  getNewId(p.department, p.id);
+});
+
+// Clean up project data and update references
+const cleanProjects = bialData.projects.map(p => {
+  // Fix comma-separated or space-separated old IDs in dependencies
+  let updatedDependencies = p.projectDependencies || '';
+  Object.keys(oldToNewId).forEach(old => {
+    // Basic string replace for dependencies (this works since old IDs are unique strings like PROPS_20)
+    updatedDependencies = updatedDependencies.replace(new RegExp(old, 'g'), oldToNewId[old]);
+  });
+
+  return {
+    ...p,
+    id: oldToNewId[p.id],
+    startDate: p.startDate || null,
+    targetDate: p.targetDate || null,
+    risks: p.risks || '',
+    objective: p.objective || '',
+    notes: p.notes || '',
+    projectDependencies: updatedDependencies,
+  };
+});
 
 ts += JSON.stringify(cleanProjects, null, 2) + ';\n\n';
 
@@ -71,6 +143,7 @@ const cleanRisks = bialData.risks.map(r => {
   const score = r.score || ((impact === 'High' ? 3 : impact === 'Medium' ? 2 : 1) * (r.likelihood || 2));
   return {
     ...r,
+    projectId: oldToNewId[r.projectId] || r.projectId,
     impact,
     score,
     severity: score >= 6 ? 'High' : score >= 3 ? 'Medium' : 'Low',
@@ -85,28 +158,32 @@ ts += `export const departments: Department[] = [
   { name: 'Operations', total: 35, inProgress: 22, completed: 0, notStarted: 11, delayed: 2, critical: 6, pctDone: 0, color: '#f59e0b' },
   { name: 'Commercial Development', total: 20, inProgress: 10, completed: 1, notStarted: 9, delayed: 0, critical: 1, pctDone: 5, color: '#10b981' },
   { name: 'Advertising & Marketing', total: 15, inProgress: 2, completed: 0, notStarted: 13, delayed: 0, critical: 0, pctDone: 0, color: '#8b5cf6' },
-  { name: 'Duty Free', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
-  { name: 'CBB & Lounge', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
-  { name: 'BASL', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
+  { name: 'Retail & Commerce', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
+  { name: 'Amenities & Hospitality', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
+  { name: 'Strategic Support', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
 ];
+`;
 
-export const kpiSummary = {
-  totalProjects: 142,
-  inProgress: 52,
-  completed: 1,
-  delayed: 2,
-  notStarted: 87,
-  critical: 13,
-  high: 119,
-  medium: 5,
-  low: 5,
-  openRisks: 9,
-  stuckProjects: 10,
-  needsEscalation: 12,
-  ownerBottlenecks: 7,
-  totalRisks: 10,
-  closedRisks: 1,
-  highSeverityOpen: 0,
+const inProgressCount = cleanProjects.filter(p => p.status === 'In Progress').length;
+const completedCount = cleanProjects.filter(p => p.status === 'Completed').length;
+const delayedCount = cleanProjects.filter(p => p.status === 'Delayed').length;
+const notStartedCount = cleanProjects.filter(p => p.status === 'Not Started').length;
+const criticalCount = cleanProjects.filter(p => p.priority === 'Critical').length;
+const highCount = cleanProjects.filter(p => p.priority === 'High').length;
+
+ts += `export const kpiSummary = {
+  totalProjects: ${cleanProjects.length},
+  inProgress: ${inProgressCount},
+  completed: ${completedCount},
+  delayed: ${delayedCount},
+  notStarted: ${notStartedCount},
+  critical: ${criticalCount},
+  high: ${highCount},
+
+  medium: ${cleanProjects.filter(p => p.priority === 'Medium').length},
+  low: ${cleanProjects.filter(p => p.priority === 'Low').length},
+  openRisks: ${cleanRisks.filter(r => r.status === 'Open').length},
+  highSeverityRisks: ${cleanRisks.filter(r => r.severity === 'High').length},
 };
 
 export const riskCategories = ['Data/Technical', 'Vendor/External', 'Data Quality', 'Compliance', 'Governance', 'People/Culture', 'Resource', 'Technical', 'Financial', 'Adoption'];

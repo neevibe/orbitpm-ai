@@ -18,7 +18,7 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `OrbitPM_BIAL_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const a = document.createElement('a'); a.href = url; a.download = `Xyrenis_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url);
       setImportStatus({ type: 'success', message: `Exported ${projects.length} projects and ${risks.length} risks to Excel` });
     } catch { setImportStatus({ type: 'error', message: 'Export failed.' }); }
@@ -47,7 +47,7 @@ export default function SettingsPage() {
       <div className="glass-card p-5 border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-emerald-50/50">
         <div className="flex items-start gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-indigo-500 flex items-center justify-center flex-shrink-0"><FileSpreadsheet className="w-5 h-5 text-white" /></div>
-          <div><h2 className="text-[15px] font-bold text-[#0f172a]">Excel Data Sync</h2><p className="text-[12px] text-[#64748b] mt-0.5">Import/export data maintaining BIAL Excel compatibility.</p></div>
+          <div><h2 className="text-[15px] font-bold text-[#0f172a]">Excel Data Sync</h2><p className="text-[12px] text-[#64748b] mt-0.5">Import/export data maintaining workbook compatibility.</p></div>
         </div>
 
         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-white border border-[#e2e8f0]">
@@ -66,7 +66,7 @@ export default function SettingsPage() {
           </div>
           <div className="p-4 rounded-xl bg-white border border-[#e2e8f0]">
             <div className="flex items-center gap-2 mb-2"><Download className="w-4 h-4 text-emerald-500" /><h3 className="text-[12px] font-semibold text-[#334155]">Export to Excel</h3></div>
-            <p className="text-[11px] text-[#94a3b8] mb-3">Download BIAL-compatible Excel with all sheets.</p>
+            <p className="text-[11px] text-[#94a3b8] mb-3">Download Excel export with all data sheets.</p>
             <button onClick={handleExport} disabled={isExporting} className="btn-secondary w-full justify-center text-[12px] py-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50">
               {isExporting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...</> : <><Download className="w-3.5 h-3.5" /> Export ({projects.length} projects)</>}</button>
           </div>

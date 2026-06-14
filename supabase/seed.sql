@@ -3,9 +3,9 @@
 -- Run after initial schema migration
 -- ============================================
 
--- Create BIAL organization
+-- Create Xyrenis organization
 INSERT INTO organizations (id, name, slug, plan) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'BIAL Commercial Department', 'bial-commercial', 'enterprise');
+  ('11111111-1111-1111-1111-111111111111', 'Xyrenis Commercial Department', 'xyrenis-commercial', 'enterprise');
 
 -- Create departments
 INSERT INTO departments (id, org_id, name, color) VALUES
@@ -13,9 +13,9 @@ INSERT INTO departments (id, org_id, name, color) VALUES
   ('d0000002-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Operations', '#f59e0b'),
   ('d0000003-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'Commercial Development', '#10b981'),
   ('d0000004-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'Advertising & Marketing', '#8b5cf6'),
-  ('d0000005-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'Duty Free', '#f97316'),
-  ('d0000006-0000-0000-0000-000000000006', '11111111-1111-1111-1111-111111111111', 'CBB & Lounge', '#ec4899'),
-  ('d0000007-0000-0000-0000-000000000007', '11111111-1111-1111-1111-111111111111', 'BASL', '#06b6d4');
+  ('d0000005-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'Retail & Commerce', '#f97316'),
+  ('d0000006-0000-0000-0000-000000000006', '11111111-1111-1111-1111-111111111111', 'Amenities & Hospitality', '#ec4899'),
+  ('d0000007-0000-0000-0000-000000000007', '11111111-1111-1111-1111-111111111111', 'Strategic Support', '#06b6d4');
 
 -- Sample projects (Digital & Data)
 INSERT INTO projects (org_id, department_id, project_code, name, status, priority, progress, owner_name, start_date, target_date, business_objective, notes) VALUES

@@ -57,7 +57,7 @@ export default function RisksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">Risk & Blocker Register</h1>
-          <p className="text-[13px] text-[#64748b] mt-0.5">BIAL Commercial Projects — Risk Tracking & History</p>
+          <p className="text-[13px] text-[#64748b] mt-0.5">Commercial Projects — Risk Tracking & History</p>
         </div>
         <button onClick={() => setShowModal(true)} className="btn-primary text-[12px]">
           <AlertTriangle className="w-3.5 h-3.5" /> Add Risk

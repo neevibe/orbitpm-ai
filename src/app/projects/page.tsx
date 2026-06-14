@@ -77,109 +77,112 @@ export default function ProjectsPage() {
   const openEdit = (p: Project) => { setEditProject(p); setShowModal(true); };
   const goToDetail = (id: string) => router.push(`/projects/${id}`);
 
-  const inputCls = "bg-white border border-[#e4e4e4] rounded px-3 py-1.5 text-[13px] text-[#334155] outline-none focus:border-[#0a46e5] transition-colors";
-
   return (
-    <div className="flex h-full animate-fade-in" style={{ minHeight: 'calc(100vh - 56px)' }}>
+    <div className="flex h-full animate-fade-in -mx-6 -mt-6 -mb-6 bg-[var(--color-x-bg)]" style={{ minHeight: 'calc(100vh - 52px)' }}>
 
       {/* ── LEFT SIDEBAR ── */}
-      <aside className="w-56 flex-shrink-0 bg-white border-r border-[#e4e4e4] flex flex-col" style={{ minHeight: '100%' }}>
-        <div className="px-4 py-3 border-b border-[#e4e4e4]">
-          <p className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">Departments</p>
+      <aside className="w-64 flex-shrink-0 bg-[var(--color-x-surface)] border-r border-[var(--color-x-border)] flex flex-col z-10" style={{ minHeight: '100%' }}>
+        <div className="px-5 py-4 border-b border-[var(--color-x-border)]">
+          <p className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-[0.08em]">Departments</p>
         </div>
-        <div className="flex-1 overflow-y-auto py-2">
+        <div className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2">
           <button
             onClick={() => setSelectedDept('All')}
-            className={`w-full text-left px-4 py-2 text-[13px] flex items-center gap-2 transition-colors ${selectedDept === 'All' ? 'bg-[#e8f0fe] text-[#0a46e5] font-semibold' : 'text-[#475569] hover:bg-[#f8f9fa]'}`}
+            className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${selectedDept === 'All' ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
           >
-            <FolderOpen className="w-3.5 h-3.5 flex-shrink-0" />
+            <FolderOpen className={`w-4 h-4 flex-shrink-0 ${selectedDept === 'All' ? 'text-indigo-600' : 'text-[var(--color-x-text-muted)]'}`} />
             <span className="truncate">All Departments</span>
             <span className="ml-auto text-[11px] font-mono">{activeProjects.length}</span>
           </button>
           {deptList.map(dept => {
             const count = activeProjects.filter(p => p.department === dept).length;
+            const isSelected = selectedDept === dept;
             return (
               <button
                 key={dept}
                 onClick={() => setSelectedDept(dept)}
-                className={`w-full text-left px-4 py-2 text-[13px] flex items-center gap-2 transition-colors ${selectedDept === dept ? 'bg-[#e8f0fe] text-[#0a46e5] font-semibold' : 'text-[#475569] hover:bg-[#f8f9fa]'}`}
+                className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${isSelected ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
               >
-                <span className="w-2 h-2 rounded-full bg-[#0a46e5] flex-shrink-0" style={{ opacity: selectedDept === dept ? 1 : 0.4 }} />
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-indigo-600' : 'bg-[var(--color-x-text-muted)] opacity-50'}`} />
+                </div>
                 <span className="truncate flex-1">{dept}</span>
-                <span className="ml-auto text-[11px] font-mono text-[#94a3b8]">{count}</span>
+                <span className={`ml-auto text-[11px] font-mono ${isSelected ? 'text-indigo-500' : 'text-[var(--color-x-text-muted)]'}`}>{count}</span>
               </button>
             );
           })}
         </div>
-        <div className="p-3 border-t border-[#e4e4e4]">
+        <div className="p-4 border-t border-[var(--color-x-border)]">
           <button onClick={() => setTab(tab === 'history' ? 'active' : 'history')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded text-[12px] font-medium transition-colors ${tab === 'history' ? 'bg-amber-50 text-amber-600' : 'text-[#64748b] hover:bg-[#f1f5f9]'}`}>
-            <History className="w-3.5 h-3.5" />
-            Archive {archivedProjects.length > 0 && <span className="ml-auto bg-amber-100 text-amber-600 text-[10px] px-1.5 py-0.5 rounded-full">{archivedProjects.length}</span>}
+            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-[12px] font-semibold transition-all ${tab === 'history' ? 'bg-amber-50 text-amber-700 shadow-sm border border-amber-100' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] border border-transparent'}`}>
+            <History className="w-4 h-4" />
+            Project Archive {archivedProjects.length > 0 && <span className="ml-auto bg-amber-200/50 text-amber-700 text-[10px] px-2 py-0.5 rounded-full">{archivedProjects.length}</span>}
           </button>
         </div>
       </aside>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-x-bg)]">
 
         {/* Top Bar */}
-        <div className="bg-white border-b border-[#e4e4e4] px-5 py-3 flex items-center gap-3 flex-shrink-0">
+        <div className="bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] px-6 py-4 flex items-center gap-4 flex-shrink-0 z-10 shadow-sm">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94a3b8]" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" className={`${inputCls} pl-8 w-52`} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-x-text-muted)]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" className="x-input pl-9 w-64" />
           </div>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={inputCls}>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="x-input w-40">
             {STATUS_OPTIONS.map(s => <option key={s}>{s === 'All' ? 'All Status' : s}</option>)}
           </select>
-          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className={inputCls}>
+          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="x-input w-40">
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
           </select>
 
-          <div className="flex items-center gap-1 ml-auto bg-[#f1f5f9] rounded p-0.5">
-            <button onClick={() => setView('list')} title="List" className={`p-1.5 rounded transition-colors ${view === 'list' ? 'bg-white shadow-sm text-[#0a46e5]' : 'text-[#94a3b8] hover:text-[#475569]'}`}><Table2 className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setView('kanban')} title="Kanban" className={`p-1.5 rounded transition-colors ${view === 'kanban' ? 'bg-white shadow-sm text-[#0a46e5]' : 'text-[#94a3b8] hover:text-[#475569]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setView('gantt')} title="Gantt" className={`p-1.5 rounded transition-colors ${view === 'gantt' ? 'bg-white shadow-sm text-[#0a46e5]' : 'text-[#94a3b8] hover:text-[#475569]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
+          <div className="flex items-center gap-1 ml-auto bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-1">
+            <button onClick={() => setView('list')} title="List" className={`p-2 rounded-md transition-all ${view === 'list' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><Table2 className="w-4 h-4" /></button>
+            <button onClick={() => setView('kanban')} title="Kanban" className={`p-2 rounded-md transition-all ${view === 'kanban' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><LayoutGrid className="w-4 h-4" /></button>
+            <button onClick={() => setView('gantt')} title="Gantt" className={`p-2 rounded-md transition-all ${view === 'gantt' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><BarChartHorizontal className="w-4 h-4" /></button>
           </div>
-          <button onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)} className="btn-primary text-[12px] flex items-center gap-1.5 px-3 py-1.5">
-            <Plus className="w-3.5 h-3.5" /> New Project
+          <button onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)} className="x-btn x-btn-primary ml-2">
+            <Plus className="w-4 h-4" /> New Project
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
           {/* ── HISTORY TAB ── */}
           {tab === 'history' && (
-            <div className="space-y-2">
-              <div className="glass-card p-4 border-amber-100 bg-amber-50/30">
-                <p className="text-[12px] font-semibold text-amber-700 mb-1">Archived Projects</p>
-                <p className="text-[11px] text-amber-600">Projects here have been archived and removed from active tracking. You can restore or permanently delete them.</p>
+            <div className="space-y-3">
+              <div className="x-card p-5 border-amber-200 bg-gradient-to-r from-amber-50/50 to-orange-50/50">
+                <p className="text-[13px] font-bold text-amber-800 mb-1 flex items-center gap-2"><Archive className="w-4 h-4" /> Archived Projects</p>
+                <p className="text-[12px] text-amber-700/80">Projects here have been archived and removed from active tracking. You can restore or permanently delete them.</p>
               </div>
               {archivedProjects.length === 0 ? (
-                <div className="glass-card p-12 text-center">
-                  <Archive className="w-8 h-8 text-[#cbd5e1] mx-auto mb-3" />
-                  <p className="text-[13px] text-[#94a3b8]">No archived projects.</p>
+                <div className="x-card p-16 text-center">
+                  <Archive className="w-10 h-10 text-[var(--color-x-border)] mx-auto mb-4" />
+                  <p className="text-[14px] font-medium text-[var(--color-x-text-muted)]">No archived projects.</p>
                 </div>
               ) : archivedProjects.map(p => (
-                <div key={p.id} className="glass-card p-4 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Archive className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <div key={p.id} className="x-card p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <Archive className="w-5 h-5 text-amber-600" />
+                    </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[10px] font-mono text-[#94a3b8]">{p.id}</span>
-                        <span className={`status-badge ${getStatusColor(p.status)}`}>{p.status}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
+                        <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'} text-[9px]`}>{p.status}</span>
                       </div>
-                      <p className="text-[13px] font-semibold text-[#334155] truncate">{p.name}</p>
-                      <p className="text-[11px] text-[#94a3b8]">{p.department} · {p.owner}</p>
+                      <p className="text-[14px] font-bold text-[var(--color-x-text)] truncate">{p.name}</p>
+                      <p className="text-[12px] text-[var(--color-x-text-secondary)]">{p.department} · {p.owner}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => restoreProject(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-[11px] font-semibold">
-                      <RotateCcw className="w-3 h-3" /> Restore
+                    <button onClick={() => restoreProject(p.id)} className="x-btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200">
+                      <RotateCcw className="w-3.5 h-3.5" /> Restore
                     </button>
-                    <button onClick={() => confirm(`Permanently delete "${p.name}"?`) && purgeProject(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded text-red-500 bg-red-50 border border-red-200 hover:bg-red-100 text-[11px] font-semibold">
-                      <Trash2 className="w-3 h-3" /> Delete Forever
+                    <button onClick={() => confirm(`Permanently delete "${p.name}"?`) && purgeProject(p.id)} className="x-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200">
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </div>
                 </div>
@@ -189,99 +192,94 @@ export default function ProjectsPage() {
 
           {/* ── LIST VIEW: grouped by department ── */}
           {tab === 'active' && view === 'list' && (
-            <div className="space-y-3">
+            <div className="space-y-6">
               {Object.keys(deptGroups).length === 0 && (
-                <div className="glass-card p-12 text-center">
-                  <FolderOpen className="w-8 h-8 text-[#cbd5e1] mx-auto mb-3" />
-                  <p className="text-[13px] text-[#94a3b8]">No projects match your filters.</p>
+                <div className="x-card p-16 text-center">
+                  <FolderOpen className="w-10 h-10 text-[var(--color-x-border)] mx-auto mb-4" />
+                  <p className="text-[14px] font-medium text-[var(--color-x-text-muted)]">No projects match your filters.</p>
                 </div>
               )}
               {Object.entries(deptGroups).map(([dept, deptProjects]) => {
                 const isCollapsed = collapsedDepts.has(dept);
-                const deptColor = departments.find(d => d.name === dept)?.color || '#64748b';
                 return (
-                  <div key={dept} className="glass-card overflow-hidden">
+                  <div key={dept} className="x-card-flush shadow-sm">
                     {/* Department Header */}
-                    <div className="flex items-center gap-3 px-4 py-3 bg-[#f8f9fa] border-b border-[#e4e4e4]">
-                      <button onClick={() => toggleCollapse(dept)} className="text-[#64748b] hover:text-[#1e293b] transition-colors">
-                        {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: deptColor }} />
-                      <span className="text-[13px] font-bold text-[#1e293b]">{dept}</span>
-                      <span className="text-[11px] text-[#94a3b8] ml-1">{deptProjects.length} project{deptProjects.length !== 1 ? 's' : ''}</span>
+                    <div className="flex items-center gap-3 px-5 py-3.5 bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] cursor-pointer select-none" onClick={() => toggleCollapse(dept)}>
+                      <div className="text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors">
+                        {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      </div>
+                      <div className="w-3 h-3 rounded-full flex-shrink-0 bg-indigo-500" />
+                      <span className="text-[14px] font-bold text-[var(--color-x-text)]">{dept}</span>
+                      <span className="text-[12px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{deptProjects.length} projects</span>
                       <button
-                        onClick={() => openNew(dept)}
-                        className="ml-auto flex items-center gap-1 text-[11px] text-[#0a46e5] hover:bg-[#e8f0fe] px-2.5 py-1 rounded font-semibold transition-colors"
+                        onClick={(e) => { e.stopPropagation(); openNew(dept); }}
+                        className="ml-auto flex items-center gap-1.5 text-[12px] text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-md font-semibold transition-colors border border-transparent hover:border-indigo-100"
                       >
-                        <Plus className="w-3 h-3" /> Add Project
+                        <Plus className="w-3.5 h-3.5" /> Add Project
                       </button>
                     </div>
 
                     {/* Project Rows */}
                     {!isCollapsed && (
-                      <div>
-                        {/* Table header */}
-                        <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-white border-b border-[#f1f5f9] text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider">
-                          <div className="col-span-1">ID</div>
-                          <div className="col-span-4">Project Name</div>
-                          <div className="col-span-2">Owner</div>
-                          <div className="col-span-1">Status</div>
-                          <div className="col-span-1">Priority</div>
-                          <div className="col-span-2">Progress</div>
-                          <div className="col-span-1">Actions</div>
-                        </div>
-                        {deptProjects.map(p => (
-                          <div
-                            key={p.id}
-                            className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-[#f8f9fa] hover:bg-[#f8f9fa] group transition-colors cursor-pointer items-center"
-                            onClick={() => goToDetail(p.id)}
-                          >
-                            <div className="col-span-1 font-mono text-[10px] text-[#94a3b8]">{p.id}</div>
-                            <div className="col-span-4 flex items-center gap-2 min-w-0">
-                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
-                              <span className="text-[13px] font-medium text-[#1e293b] truncate group-hover:text-[#0a46e5] transition-colors">{p.name}</span>
-                            </div>
-                            <div className="col-span-2 text-[12px] text-[#475569] truncate">{p.owner}</div>
-                            <div className="col-span-1">
-                              <span className={`status-badge text-[10px] py-0.5 px-1.5 ${getStatusColor(p.status)}`}>{p.status}</span>
-                            </div>
-                            <div className="col-span-1">
-                              <span className={`priority-badge text-[9px] ${getPriorityColor(p.priority)}`}>{p.priority}</span>
-                            </div>
-                            <div className="col-span-2 flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#0a46e5] rounded-full" style={{ width: `${p.progress}%` }} />
-                              </div>
-                              <span className="text-[10px] text-[#64748b] w-7 text-right">{p.progress}%</span>
-                            </div>
-                            <div className={`col-span-1 flex items-center gap-1 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                              <button
-                                onClick={e => { e.stopPropagation(); openEdit(p); }}
-                                className="p-1 rounded text-[#64748b] hover:bg-white hover:text-[#0a46e5] transition-colors"
-                                title="Edit"
-                              >
-                                <Edit2 className="w-3 h-3" />
-                              </button>
-                              <div className="relative" onClick={e => e.stopPropagation()}>
-                                <button
-                                  onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
-                                  className="p-1 rounded text-[#64748b] hover:bg-white hover:text-[#334155] transition-colors"
-                                >
-                                  <MoreVertical className="w-3 h-3" />
-                                </button>
-                                {openMenuId === p.id && (
-                                  <div className="absolute right-0 top-6 z-50 bg-white border border-[#e4e4e4] rounded shadow-lg py-1 w-36">
-                                    <button onClick={() => { goToDetail(p.id); setOpenMenuId(null); }} className="w-full text-left px-3 py-1.5 text-[12px] text-[#334155] hover:bg-[#f8f9fa]">View Details</button>
-                                    <button onClick={() => { openEdit(p); setOpenMenuId(null); }} className="w-full text-left px-3 py-1.5 text-[12px] text-[#334155] hover:bg-[#f8f9fa]">Edit Project</button>
-                                    <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-3 py-1.5 text-[12px] text-amber-600 hover:bg-amber-50">Archive</button>
-                                    <div className="border-t border-[#f1f5f9] my-1" />
-                                    <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-3 py-1.5 text-[12px] text-red-500 hover:bg-red-50">Delete</button>
+                      <div className="bg-[var(--color-x-surface)]">
+                        <table className="x-table w-full">
+                          <thead>
+                            <tr>
+                              <th className="w-24 pl-5">ID</th>
+                              <th>Project Name</th>
+                              <th className="w-48">Owner</th>
+                              <th className="w-32">Status</th>
+                              <th className="w-28">Priority</th>
+                              <th className="w-40">Progress</th>
+                              <th className="w-16 text-right pr-5"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {deptProjects.map(p => (
+                              <tr key={p.id} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
+                                <td className="pl-5 font-mono text-[11px] text-[var(--color-x-text-muted)]">{p.id}</td>
+                                <td>
+                                  <div className="flex items-center gap-2.5">
+                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
+                                    <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors">{p.name}</span>
                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                                </td>
+                                <td>{p.owner}</td>
+                                <td>
+                                  <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{p.status}</span>
+                                </td>
+                                <td>
+                                  <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
+                                </td>
+                                <td>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-2 bg-[var(--color-x-bg)] rounded-full overflow-hidden border border-[var(--color-x-border)]">
+                                      <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${p.progress}%` }} />
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-[var(--color-x-text-secondary)] w-8 text-right">{p.progress}%</span>
+                                  </div>
+                                </td>
+                                <td className="pr-5 text-right">
+                                  <div className={`flex items-center justify-end gap-1 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                    <div className="relative" onClick={e => e.stopPropagation()}>
+                                      <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                                      {openMenuId === p.id && (
+                                        <div className="absolute right-0 top-8 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl py-1 w-40 animate-scale-in">
+                                          <button onClick={() => { goToDetail(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]">View Details</button>
+                                          <button onClick={() => { openEdit(p); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]">Edit Project</button>
+                                          <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-amber-600 hover:bg-amber-50">Archive Project</button>
+                                          <div className="border-t border-[var(--color-x-border)] my-1" />
+                                          <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
@@ -295,31 +293,42 @@ export default function ProjectsPage() {
             const groups: Record<string, Project[]> = { 'Not Started': [], 'In Progress': [], 'Delayed': [], 'On Hold': [], 'Completed': [] };
             filtered.forEach(p => groups[p.status]?.push(p));
             return (
-              <div className="flex gap-3 overflow-x-auto pb-4">
+              <div className="flex gap-4 overflow-x-auto pb-4 items-start h-[calc(100vh-140px)]">
                 {Object.entries(groups).map(([status, cols]) => (
-                  <div key={status} className="flex-shrink-0 w-64 glass-card p-3 flex flex-col">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className={`status-badge text-[10px] ${getStatusColor(status)}`}>{status}</span>
-                      <span className="text-[10px] text-[#94a3b8] font-mono">{cols.length}</span>
+                  <div key={status} className="flex-shrink-0 w-[300px] flex flex-col max-h-full">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <span className={`x-badge ${getStatusColor(status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'} text-[11px]`}>{status}</span>
+                      <span className="text-[11px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-surface)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{cols.length}</span>
                     </div>
-                    <div className="space-y-2 flex-1 overflow-y-auto max-h-[70vh]">
+                    <div className="space-y-3 flex-1 overflow-y-auto px-1 pb-4">
                       {cols.map(p => (
-                        <div key={p.id} onClick={() => goToDetail(p.id)} className="p-2.5 bg-white rounded border border-[#f1f5f9] hover:border-[#0a46e5] hover:shadow-sm cursor-pointer transition-all group">
-                          <p className="text-[10px] font-mono text-[#94a3b8] mb-0.5">{p.id}</p>
-                          <p className="text-[12px] font-semibold text-[#1e293b] leading-snug line-clamp-2 group-hover:text-[#0a46e5] transition-colors">{p.name}</p>
-                          <p className="text-[10px] text-[#94a3b8] mt-1">{p.owner}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className={`priority-badge ${getPriorityColor(p.priority)} text-[9px] py-0`}>{p.priority}</span>
-                            <div className="flex items-center gap-1">
-                              <div className="w-10 h-1 bg-[#f1f5f9] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#0a46e5] rounded-full" style={{ width: `${p.progress}%` }} />
-                              </div>
-                              <span className="text-[9px] text-[#94a3b8]">{p.progress}%</span>
+                        <div key={p.id} onClick={() => goToDetail(p.id)} className="x-card p-4 hover:border-indigo-400 cursor-pointer group">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
+                            <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
+                          </div>
+                          <p className="text-[13px] font-bold text-[var(--color-x-text)] leading-snug mb-3 group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                          
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+                              {p.owner.split(' ').map(n => n[0]).join('').substring(0, 2)}
                             </div>
+                            <p className="text-[11px] text-[var(--color-x-text-secondary)] truncate">{p.owner}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-[var(--color-x-bg)] rounded-full overflow-hidden border border-[var(--color-x-border)]">
+                              <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${p.progress}%` }} />
+                            </div>
+                            <span className="text-[10px] font-bold text-[var(--color-x-text-muted)]">{p.progress}%</span>
                           </div>
                         </div>
                       ))}
-                      {cols.length === 0 && <p className="text-center text-[11px] text-[#e2e8f0] py-6">—</p>}
+                      {cols.length === 0 && (
+                        <div className="border-2 border-dashed border-[var(--color-x-border)] rounded-xl h-24 flex items-center justify-center">
+                          <p className="text-[12px] text-[var(--color-x-text-muted)]">Drop here</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -329,17 +338,17 @@ export default function ProjectsPage() {
 
           {/* ── GANTT VIEW ── */}
           {tab === 'active' && view === 'gantt' && (
-            <div className="glass-card overflow-x-auto p-4">
-              <div className="min-w-[900px]">
-                <div className="flex border-b border-[#e4e4e4] pb-2 mb-3">
-                  <div className="w-72 flex-shrink-0 text-[10px] font-bold text-[#64748b] uppercase">Project</div>
+            <div className="x-card overflow-x-auto p-5">
+              <div className="min-w-[1000px]">
+                <div className="flex border-b border-[var(--color-x-border)] pb-3 mb-4">
+                  <div className="w-80 flex-shrink-0 text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider">Project</div>
                   <div className="flex-1 flex">
                     {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => (
-                      <div key={m} className="flex-1 text-center text-[10px] font-semibold text-[#64748b] border-l border-[#f1f5f9]">{m}</div>
+                      <div key={m} className="flex-1 text-center text-[11px] font-bold text-[var(--color-x-text-muted)] border-l border-[var(--color-x-border)]">{m}</div>
                     ))}
                   </div>
                 </div>
-                <div className="space-y-1.5 max-h-[65vh] overflow-y-auto">
+                <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
                   {filtered.map(p => {
                     const cy = new Date().getFullYear();
                     const sd = p.startDate ? new Date(p.startDate) : new Date();
@@ -349,25 +358,25 @@ export default function ProjectsPage() {
                     if (em < sm) em = sm;
                     const sp = (sm / 12) * 100;
                     const wp = (Math.max(1, em - sm + 1) / 12) * 100;
-                    const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#0a46e5';
+                    const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#6366f1';
                     return (
-                      <div key={p.id} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[#f8f9fa] rounded px-1 py-1 transition-colors">
-                        <div className="w-72 flex-shrink-0 pr-4 truncate">
-                          <p className="text-[12px] font-medium text-[#1e293b] truncate group-hover:text-[#0a46e5] transition-colors">{p.name}</p>
-                          <p className="text-[10px] text-[#94a3b8]">{p.owner} · {p.department}</p>
+                      <div key={p.id} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
+                        <div className="w-80 flex-shrink-0 pr-5 truncate">
+                          <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                          <p className="text-[11px] text-[var(--color-x-text-muted)]">{p.owner} · {p.department}</p>
                         </div>
-                        <div className="flex-1 relative h-6 bg-[#f1f5f9] rounded overflow-hidden">
+                        <div className="flex-1 relative h-7 bg-[var(--color-x-bg)] rounded-md overflow-hidden border border-[var(--color-x-border)]">
                           <div className="absolute inset-0 flex">{Array.from({length:12}).map((_,i) => <div key={i} className="flex-1 border-l border-white/40"/>)}</div>
-                          <div className="absolute top-1 bottom-1 rounded overflow-hidden border border-black/10"
+                          <div className="absolute top-1 bottom-1 rounded-md overflow-hidden shadow-sm transition-all group-hover:shadow-md"
                             style={{ left: `${sp}%`, width: `${Math.min(100-sp, wp)}%`, background: barColor }}>
-                            <div className="absolute top-0 bottom-0 left-0 bg-white/25" style={{ width: `${p.progress}%` }} />
-                            <span className="absolute inset-0 flex items-center px-1.5 text-[9px] font-bold text-white z-10">{p.progress}%</span>
+                            <div className="absolute top-0 bottom-0 left-0 bg-white/20" style={{ width: `${p.progress}%` }} />
+                            <span className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white z-10">{p.progress}%</span>
                           </div>
                         </div>
                       </div>
                     );
                   })}
-                  {filtered.length === 0 && <p className="text-center text-[12px] text-[#94a3b8] py-10">No projects to show.</p>}
+                  {filtered.length === 0 && <div className="text-center p-12 text-[var(--color-x-text-muted)]">No projects to show.</div>}
                 </div>
               </div>
             </div>

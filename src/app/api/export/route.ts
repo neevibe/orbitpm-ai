@@ -20,8 +20,8 @@ export async function POST(request: Request) {
     const critical = projects.filter((p: any) => p.priority === 'Critical').length;
 
     const dashboardData = [
-      ['BIAL COMMERCIAL DEPARTMENT · Project Governance Dashboard'],
-      [`Generated from OrbitPM AI · ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`],
+      ['XYRENIS COMMERCIAL DEPARTMENT · Project Governance Dashboard'],
+      [`Generated from Xyrenis Work OS · ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`],
       [''],
       ['KPI', 'Value'],
       ['Total Projects', totalProjects],
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="OrbitPM_BIAL_Export_${new Date().toISOString().split('T')[0]}.xlsx"`,
+        'Content-Disposition': `attachment; filename="Xyrenis_Export_${new Date().toISOString().split('T')[0]}.xlsx"`,
       },
     });
   } catch (error) {

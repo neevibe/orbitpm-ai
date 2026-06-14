@@ -1,215 +1,181 @@
 'use client';
 
+import { useState } from 'react';
 import { useData } from '@/lib/data-context';
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  RadarChart, PolarGrid, PolarAngleAxis, Radar, PieChart, Pie, Legend,
-  AreaChart, Area,
-} from 'recharts';
-import { BarChart3, TrendingUp, AlertTriangle, Users, Target, Zap } from 'lucide-react';
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload) return null;
-  return (
-    <div className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 shadow-lg">
-      <p className="text-[11px] font-semibold text-[#1e293b] mb-1">{label}</p>
-      {payload.map((p: any, i: number) => (
-        <p key={i} className="text-[11px] text-[#64748b]">
-          <span style={{ color: p.color }}>●</span> {p.name}: <span className="text-[#1e293b] font-medium">{p.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-};
+import { BarChart3, Activity, Target, Download, Settings2, LayoutTemplate, ShieldAlert } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AnalyticsPage() {
-  const { projects, departments, risks, kpi } = useData();
+  const { kpi, departments, projects } = useData();
+  const [activeTab, setActiveTab] = useState('executive');
 
-  // Department breakdown for stacked bar
-  const deptData = departments.map(d => ({
-    name: d.name.length > 18 ? d.name.substring(0, 16) + '…' : d.name,
-    fullName: d.name,
-    'In Progress': d.inProgress,
-    'Completed': d.completed,
-    'Not Started': d.notStarted,
-    'Delayed': d.delayed,
-    pctDone: d.pctDone,
-    color: d.color,
-  })).filter(d => d['In Progress'] + d['Completed'] + d['Not Started'] + d['Delayed'] > 0);
+  const tabs = [
+    { id: 'executive', label: 'Executive Summary', icon: LayoutTemplate },
+    { id: 'portfolio', label: 'Portfolio Health', icon: Target },
+    { id: 'financial', label: 'Financial Data', icon: Activity },
+    { id: 'risk', label: 'Risk Analysis', icon: ShieldAlert },
+  ];
 
-  // Priority breakdown
-  const priorityData = [
-    { name: 'Critical', value: kpi.critical, color: '#ef4444' },
-    { name: 'High', value: kpi.high, color: '#f97316' },
-    { name: 'Medium', value: kpi.medium, color: '#eab308' },
-    { name: 'Low', value: kpi.low, color: '#22c55e' },
-  ].filter(d => d.value > 0);
+  const trendData = [
+    { month: 'Jan', completed: 5, started: 8, target: 10 },
+    { month: 'Feb', completed: 8, started: 12, target: 15 },
+    { month: 'Mar', completed: 12, started: 18, target: 20 },
+    { month: 'Apr', completed: 18, started: 22, target: 25 },
+    { month: 'May', completed: kpi.completed, started: kpi.inProgress + kpi.completed, target: 30 },
+  ];
 
-  // Status breakdown
   const statusData = [
-    { name: 'In Progress', value: kpi.inProgress, color: '#3b82f6' },
-    { name: 'Not Started', value: kpi.notStarted, color: '#94a3b8' },
+    { name: 'Active', value: kpi.inProgress, color: '#3b82f6' },
     { name: 'Completed', value: kpi.completed, color: '#10b981' },
     { name: 'Delayed', value: kpi.delayed, color: '#ef4444' },
+    { name: 'On Hold', value: kpi.onHold, color: '#f59e0b' },
   ].filter(d => d.value > 0);
 
-  // Radar data for department health
-  const radarData = departments.slice(0, 6).map(d => ({
-    dept: d.name.length > 12 ? d.name.substring(0, 10) + '…' : d.name,
-    'Completion %': d.pctDone,
-    'In Progress': d.total > 0 ? Math.round((d.inProgress / d.total) * 100) : 0,
-    'Risk Score': d.delayed > 0 ? Math.round((d.delayed / d.total) * 100) : 0,
+  const deptData = departments.slice(0, 6).map(d => ({
+    name: d.name.length > 12 ? d.name.substring(0, 10) + '…' : d.name,
+    active: d.inProgress,
+    done: d.completed,
+    delayed: d.delayed
   }));
 
-  // Owner workload
-  const ownerMap: Record<string, number> = {};
-  projects.filter(p => p.status === 'In Progress').forEach(p => {
-    if (p.owner) ownerMap[p.owner] = (ownerMap[p.owner] || 0) + 1;
-  });
-  const ownerData = Object.entries(ownerMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(([name, count]) => ({
-      name: name.split('/')[0].trim().split(' ')[0],
-      fullName: name,
-      count,
-      color: count >= 5 ? '#ef4444' : count >= 3 ? '#f97316' : '#6366f1',
-    }));
+  const topProjects = projects
+    .filter(p => p.status === 'In Progress' && (p.priority === 'Critical' || p.priority === 'High'))
+    .sort((a, b) => b.progress - a.progress)
+    .slice(0, 5);
 
-  const overallCompletionPct = kpi.totalProjects > 0 ? Math.round((kpi.completed / kpi.totalProjects) * 100) : 0;
+  const tooltipStyle = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: '8px 12px' };
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* Header */}
+    <div className="x-page space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">Analytics</h1>
-          <p className="text-[13px] text-[#64748b] mt-0.5">Portfolio intelligence · {kpi.totalProjects} projects across {departments.filter(d => d.total > 0).length} departments</p>
+          <h1 className="x-page-title flex items-center gap-2"><BarChart3 className="w-5 h-5 text-orange-500" /> Analytics</h1>
+          <p className="x-page-subtitle">Executive reporting and business intelligence</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100">
-          <Zap className="w-3.5 h-3.5 text-indigo-500" />
-          <span className="text-[12px] font-semibold text-indigo-600">Live Data</span>
+        <div className="flex items-center gap-2">
+          <button className="x-btn x-btn-secondary"><Settings2 className="w-4 h-4" /> Filters</button>
+          <button className="x-btn x-btn-primary"><Download className="w-4 h-4" /> Export PDF</button>
         </div>
       </div>
 
-      {/* Summary KPIs */}
-      <div className="grid grid-cols-5 gap-3">
-        {[
-          { label: 'Portfolio Size', value: kpi.totalProjects, icon: BarChart3, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-          { label: 'Completion Rate', value: `${overallCompletionPct}%`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-          { label: 'Active Projects', value: kpi.inProgress, icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Open Risks', value: kpi.openRisks, icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: 'Owner Bottlenecks', value: kpi.ownerBottlenecks, icon: Users, color: 'text-purple-500', bg: 'bg-purple-50' },
-        ].map(k => (
-          <div key={k.label} className="glass-card p-4">
-            <div className={`w-8 h-8 rounded-lg ${k.bg} flex items-center justify-center mb-2`}>
-              <k.icon className={`w-4 h-4 ${k.color}`} />
-            </div>
-            <p className="text-2xl font-bold text-[#0f172a]">{k.value}</p>
-            <p className="text-[11px] text-[#94a3b8] mt-0.5">{k.label}</p>
-          </div>
+      <div className="flex items-center gap-1 border-b border-[var(--color-x-border)]">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={`flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium border-b-2 transition-all ${activeTab === t.id ? 'text-[var(--color-x-accent)] border-[var(--color-x-accent)]' : 'text-[var(--color-x-text-muted)] border-transparent hover:text-[var(--color-x-text-secondary)]'}`}>
+            <t.icon className="w-3.5 h-3.5" /> {t.label}
+          </button>
         ))}
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Department Stacked Bar */}
-        <div className="col-span-2 glass-card p-4">
-          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Projects by Department & Status</h3>
-          <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={deptData} layout="vertical" margin={{ left: 0, right: 10 }}>
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} width={120} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
-              <Bar dataKey="In Progress" stackId="a" fill="#3b82f6" radius={0} />
-              <Bar dataKey="Completed" stackId="a" fill="#10b981" radius={0} />
-              <Bar dataKey="Not Started" stackId="a" fill="#e2e8f0" radius={0} />
-              <Bar dataKey="Delayed" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Priority Pie */}
-        <div className="glass-card p-4">
-          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Priority Distribution</h3>
-          <ResponsiveContainer width="100%" height={230}>
-            <PieChart>
-              <Pie data={priorityData} cx="50%" cy="44%" innerRadius={48} outerRadius={72} paddingAngle={3} dataKey="value" stroke="none">
-                {priorityData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
-              </Pie>
-              <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={6}
-                formatter={(value: string) => <span className="text-[10px] text-[#64748b] ml-1">{value}</span>} />
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Owner Workload */}
-        <div className="glass-card p-4">
-          <h3 className="text-[12px] font-semibold text-[#334155] mb-1">Owner Workload (Active Projects)</h3>
-          <p className="text-[10px] text-[#94a3b8] mb-3">🔴 Overloaded (5+) · 🟠 At Capacity (3-4) · 🟣 Healthy</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={ownerData} layout="vertical" margin={{ left: 0, right: 10 }}>
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} width={70} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" name="Active Projects" radius={[0, 4, 4, 0]} barSize={14}>
-                {ownerData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Department Completion Heatmap */}
-        <div className="glass-card p-4">
-          <h3 className="text-[12px] font-semibold text-[#334155] mb-3">Department Completion Rate</h3>
-          <div className="space-y-2.5">
-            {departments.filter(d => d.total > 0).sort((a, b) => b.pctDone - a.pctDone).map(d => (
-              <div key={d.name} className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: d.color }} />
-                <span className="text-[11px] text-[#475569] w-40 truncate flex-shrink-0">{d.name}</span>
-                <div className="flex-1 h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${d.pctDone}%`,
-                      background: d.pctDone >= 50 ? '#10b981' : d.pctDone >= 20 ? '#6366f1' : '#f59e0b',
-                    }}
-                  />
-                </div>
-                <span className="text-[10px] text-[#94a3b8] w-8 text-right">{d.pctDone}%</span>
-                <span className="text-[10px] text-[#cbd5e1] w-12 text-right font-mono">{d.total} proj</span>
+      {activeTab === 'executive' && (
+        <div className="space-y-4 animate-fade-in">
+          {/* Top KPIs */}
+          <div className="grid grid-cols-4 gap-4">
+            {[
+              { label: 'Total Volume', value: kpi.totalProjects, sub: 'All recorded projects' },
+              { label: 'Completion Rate', value: `${kpi.totalProjects > 0 ? Math.round((kpi.completed/kpi.totalProjects)*100) : 0}%`, sub: `${kpi.completed} projects delivered` },
+              { label: 'Variance (Delayed)', value: kpi.delayed, sub: 'Projects behind schedule' },
+              { label: 'Risk Exposure', value: kpi.openRisks, sub: 'Active logged risks' },
+            ].map(m => (
+              <div key={m.label} className="x-card p-4">
+                <p className="text-[12px] font-semibold text-[var(--color-x-text-secondary)] uppercase tracking-wider">{m.label}</p>
+                <p className="text-[24px] font-bold text-[var(--color-x-text)] mt-1">{m.value}</p>
+                <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1">{m.sub}</p>
               </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Risk Analytics */}
-      <div className="glass-card p-4">
-        <h3 className="text-[12px] font-semibold text-[#334155] mb-3 flex items-center gap-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-          Risk Register Analytics
-        </h3>
-        <div className="grid grid-cols-4 gap-3">
-          {['Technical', 'Operational', 'Vendor', 'Compliance'].map(category => {
-            const count = risks.filter(r => r.category === category).length;
-            const open = risks.filter(r => r.category === category && r.status === 'Open').length;
-            const high = risks.filter(r => r.category === category && r.impact === 'High').length;
-            return (
-              <div key={category} className="p-3 rounded-xl bg-[#f8fafc] border border-[#f1f5f9]">
-                <p className="text-[11px] font-semibold text-[#334155] mb-2">{category}</p>
-                <p className="text-xl font-bold text-[#0f172a]">{count}</p>
-                <p className="text-[10px] text-[#94a3b8] mt-0.5">{open} open · {high} high</p>
+          <div className="grid grid-cols-3 gap-4">
+            {/* Delivery Trend */}
+            <div className="col-span-2 x-card p-5">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-4">Delivery Velocity</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={trendData}>
+                  <defs>
+                    <linearGradient id="colorTarget" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="colorDone" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="target" stroke="#8b5cf6" fill="url(#colorTarget)" name="Target Velocity" strokeDasharray="5 5" />
+                  <Area type="monotone" dataKey="completed" stroke="#10b981" fill="url(#colorDone)" name="Actual Delivered" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Status Distribution */}
+            <div className="col-span-1 x-card p-5">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-4">Status Distribution</h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                    {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {statusData.map(s => (
+                  <div key={s.name} className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1.5 text-[var(--color-x-text-secondary)]"><span className="w-2 h-2 rounded-full" style={{ background: s.color }} /> {s.name}</span>
+                    <span className="font-bold text-[var(--color-x-text)]">{s.value}</span>
+                  </div>
+                ))}
               </div>
-            );
-          })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Department Comparison */}
+            <div className="x-card p-5">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-4">Department Execution</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={deptData} layout="vertical" margin={{ left: 0 }}>
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={90} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="done" stackId="a" fill="#10b981" name="Completed" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Top Critical Projects */}
+            <div className="x-card-flush">
+              <div className="px-5 py-4 border-b border-[var(--color-x-border)]">
+                <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Top Critical Projects (Active)</h3>
+              </div>
+              <table className="x-table">
+                <thead><tr><th>Project</th><th>Owner</th><th>Progress</th></tr></thead>
+                <tbody>
+                  {topProjects.map(p => (
+                    <tr key={p.id}>
+                      <td className="max-w-[150px]"><p className="truncate text-[12px] font-medium text-[var(--color-x-text)]">{p.name}</p><p className="text-[10px] text-[var(--color-x-text-muted)]">{p.department}</p></td>
+                      <td className="text-[12px]">{p.owner}</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 x-progress"><div className="x-progress-bar bg-indigo-500" style={{ width: `${p.progress}%` }} /></div>
+                          <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.progress}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {topProjects.length === 0 && <div className="p-8 text-center text-[var(--color-x-text-muted)] text-[12px]">No critical active projects.</div>}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {activeTab !== 'executive' && (
+        <div className="x-card p-12 text-center animate-fade-in">
+          <Activity className="w-8 h-8 text-indigo-300 mx-auto mb-3" />
+          <h3 className="text-[14px] font-bold text-[var(--color-x-text)]">Detailed Analytics View</h3>
+          <p className="text-[12px] text-[var(--color-x-text-muted)] mt-1">The {tabs.find(t => t.id === activeTab)?.label} dashboard is being provisioned.</p>
+        </div>
+      )}
     </div>
   );
 }
