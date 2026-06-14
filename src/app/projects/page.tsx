@@ -126,23 +126,48 @@ export default function ProjectsPage() {
 
         {/* Top Bar */}
         <div className="bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] px-6 py-3 flex items-center gap-2 flex-shrink-0 z-10 shadow-sm">
-          <div className="relative flex-1 min-w-[140px] max-w-[240px]">
+          {/* Search */}
+          <div className="relative" style={{ width: 200, flexShrink: 0 }}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…" className="x-input pl-8 w-full text-[13px] h-8" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search projects…"
+              className="x-input pl-8"
+              style={{ width: '100%', height: 32, fontSize: 13, padding: '0 12px 0 30px' }}
+            />
           </div>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="x-input w-[118px] flex-shrink-0 text-[13px] h-8">
+          {/* Status */}
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="x-input"
+            style={{ width: 120, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
+          >
             {STATUS_OPTIONS.map(s => <option key={s}>{s === 'All' ? 'All Status' : s}</option>)}
           </select>
-          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="x-input w-[118px] flex-shrink-0 text-[13px] h-8">
+          {/* Priority */}
+          <select
+            value={priorityFilter}
+            onChange={e => setPriorityFilter(e.target.value)}
+            className="x-input"
+            style={{ width: 120, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
+          >
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
           </select>
 
+          {/* View toggle */}
           <div className="flex items-center gap-0.5 ml-auto flex-shrink-0 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-0.5">
             <button onClick={() => setView('list')} title="List" className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><Table2 className="w-3.5 h-3.5" /></button>
             <button onClick={() => setView('kanban')} title="Kanban" className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
             <button onClick={() => setView('gantt')} title="Gantt" className={`p-1.5 rounded-md transition-all ${view === 'gantt' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
           </div>
-          <button onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)} className="x-btn x-btn-primary flex-shrink-0 text-[13px] h-8 px-3">
+          {/* New Project */}
+          <button
+            onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)}
+            className="x-btn x-btn-primary flex-shrink-0"
+            style={{ height: 32, fontSize: 13, padding: '0 12px' }}
+          >
             <Plus className="w-3.5 h-3.5" /> New Project
           </button>
         </div>
