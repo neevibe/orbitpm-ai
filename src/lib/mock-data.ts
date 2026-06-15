@@ -2509,6 +2509,21 @@ export const projects: Project[] = [
     "objective": "",
     "notes": "",
     "projectDependencies": ""
+  },
+  {
+    "id": "PRAMEN_7",
+    "name": "Lounge Automation Phase 2",
+    "department": "Amenities & Hospitality",
+    "owner": "System",
+    "status": "In Progress",
+    "progress": 50,
+    "priority": "Medium",
+    "startDate": null,
+    "targetDate": null,
+    "risks": "",
+    "objective": "Complete automation rollout",
+    "notes": "Restored sequence",
+    "projectDependencies": ""
   }
 ];
 
