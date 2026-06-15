@@ -42,9 +42,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
-      setUser(data.session?.user ?? null);
+      if (data.session) {
+        // The cached session JWT can hold STALE user_metadata (e.g. a department/role
+        // an admin just assigned). getUser() pulls the authoritative metadata from the
+        // server so changes take effect on reload — not only after a full re-login.
+        const { data: fresh } = await supabase.auth.getUser();
+        setUser(fresh.user ?? data.session.user);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 

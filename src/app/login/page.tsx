@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
-  const { signIn, signUp } = useAuth();
-  const [tab, setTab] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const { signIn } = useAuth();
+  const [tab, setTab] = useState<'signin' | 'forgot'>('signin');
 
   // Sign-in state
   const [siEmail, setSiEmail] = useState('');
@@ -15,15 +15,6 @@ export default function LoginPage() {
   const [siError, setSiError] = useState<string | null>(null);
   const [siLoading, setSiLoading] = useState(false);
   const [showSiPassword, setShowSiPassword] = useState(false);
-
-  // Sign-up state
-  const [suEmail, setSuEmail] = useState('');
-  const [suPassword, setSuPassword] = useState('');
-  const [suConfirm, setSuConfirm] = useState('');
-  const [suError, setSuError] = useState<string | null>(null);
-  const [suSuccess, setSuSuccess] = useState(false);
-  const [suLoading, setSuLoading] = useState(false);
-  const [showSuPassword, setShowSuPassword] = useState(false);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
@@ -48,27 +39,6 @@ export default function LoginPage() {
     const { error } = await signIn('demo@xyrenis.com', 'demopass123');
     if (error) setSiError(error);
     setSiLoading(false);
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuError(null);
-    if (suPassword !== suConfirm) {
-      setSuError('Passwords do not match.');
-      return;
-    }
-    if (suPassword.length < 8) {
-      setSuError('Password must be at least 8 characters.');
-      return;
-    }
-    setSuLoading(true);
-    const { error } = await signUp(suEmail.trim().toLowerCase(), suPassword);
-    if (error) {
-      setSuError(error);
-    } else {
-      setSuSuccess(true);
-    }
-    setSuLoading(false);
   };
 
   const handleForgot = async (e: React.FormEvent) => {
@@ -152,31 +122,11 @@ export default function LoginPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">
-            {tab === 'signin' ? 'Welcome back' : tab === 'signup' ? 'Create account' : 'Reset password'}
+            {tab === 'forgot' ? 'Reset password' : 'Welcome back'}
           </h2>
           <p className="text-[13px] mb-6" style={{ color: '#8ca4c0' }}>
-            {tab === 'signin' ? 'Sign in to your workspace' : tab === 'signup' ? 'Sign up with your email' : 'Enter your email to reset your password'}
+            {tab === 'forgot' ? 'Enter your email to reset your password' : 'Sign in to your workspace'}
           </p>
-
-          {/* Tab switcher */}
-          {tab !== 'forgot' && (
-            <div className="flex rounded-lg p-1 mb-6" style={{ background: '#1a2535' }}>
-              {(['signin', 'signup'] as const).map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => { setTab(t); setSiError(null); setSuError(null); setSuSuccess(false); }}
-                  className="flex-1 py-2 rounded-md text-[12px] font-semibold transition-all cursor-pointer"
-                  style={{
-                    background: tab === t ? '#e86c2d' : 'transparent',
-                    color: tab === t ? 'white' : '#8ca4c0',
-                  }}
-                >
-                  {t === 'signin' ? 'Sign In' : 'Sign Up'}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Sign In Form */}
           {tab === 'signin' && (
@@ -255,101 +205,6 @@ export default function LoginPage() {
                 ✦ Try Live Demo Account
               </button>
             </form>
-          )}
-
-          {/* Sign Up Form */}
-          {tab === 'signup' && (
-            <>
-              {suSuccess ? (
-                <div className="px-4 py-5 rounded-xl text-center" style={{ background: '#0f2a1a', border: '1px solid #1a5a30' }}>
-                  <div className="text-2xl mb-2 text-[#34d399]">✓</div>
-                  <p className="text-[14px] font-semibold text-white mb-1">Account created!</p>
-                  <p className="text-[12px]" style={{ color: '#8ca4c0' }}>
-                    Check your inbox at <strong>{suEmail}</strong> for a confirmation email, then sign in.
-                  </p>
-                  <button
-                    onClick={() => { setTab('signin'); setSuSuccess(false); setSiEmail(suEmail); }}
-                    className="mt-4 px-4 py-2 rounded-lg text-[12px] font-semibold text-white cursor-pointer"
-                    style={{ background: '#e86c2d' }}
-                  >
-                    Go to Sign In
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSignUp} className="flex flex-col gap-4">
-                  <div>
-                    <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Work Email</label>
-                    <input
-                      type="email"
-                      value={suEmail}
-                      onChange={e => setSuEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                      placeholder="you@company.com"
-                      className="w-full px-3.5 py-2.5 rounded-lg text-[13px] outline-none transition-all"
-                      style={inputStyle}
-                      onFocus={e => (e.target.style.borderColor = '#e86c2d')}
-                      onBlur={e => (e.target.style.borderColor = '#2a3a50')}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Password</label>
-                    <div className="relative">
-                      <input
-                        type={showSuPassword ? "text" : "password"}
-                        value={suPassword}
-                        onChange={e => setSuPassword(e.target.value)}
-                        required
-                        autoComplete="new-password"
-                        placeholder="Min. 8 characters"
-                        className="w-full pl-3.5 pr-10 py-2.5 rounded-lg text-[13px] outline-none transition-all"
-                        style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#e86c2d')}
-                        onBlur={e => (e.target.style.borderColor = '#2a3a50')}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSuPassword(!showSuPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ca4c0] hover:text-white transition-colors cursor-pointer"
-                      >
-                        {showSuPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Confirm Password</label>
-                    <input
-                      type="password"
-                      value={suConfirm}
-                      onChange={e => setSuConfirm(e.target.value)}
-                      required
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-lg text-[13px] outline-none transition-all"
-                      style={{
-                        ...inputStyle,
-                        borderColor: suConfirm.length > 0 ? (suPassword === suConfirm ? '#34d399' : '#ef4444') : '#2a3a50',
-                      }}
-                      onFocus={e => (e.target.style.borderColor = '#e86c2d')}
-                      onBlur={e => (e.target.style.borderColor = suConfirm.length > 0 ? (suPassword === suConfirm ? '#34d399' : '#ef4444') : '#2a3a50')}
-                    />
-                  </div>
-                  {suError && (
-                    <div className="px-3.5 py-2.5 rounded-lg text-[12px] font-medium" style={{ background: '#3a1a1a', color: '#f87171', border: '1px solid #5a2a2a' }}>
-                      {suError}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={suLoading}
-                    className="w-full py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all mt-1 cursor-pointer"
-                    style={{ background: suLoading ? '#a04d1e' : '#e86c2d', cursor: suLoading ? 'not-allowed' : 'pointer' }}
-                  >
-                    {suLoading ? 'Creating account…' : 'Create account'}
-                  </button>
-                </form>
-              )}
-            </>
           )}
 
           {/* Forgot Password Form */}
