@@ -51,7 +51,8 @@ const fmtDate = v => {
   if (!v) return null;
   if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0, 10);
   if (typeof v === 'number') { const d = XLSX.SSF.parse_date_code(v); return d ? `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}` : null; }
-  return String(v).trim() || null;
+  // Free-text cells like "Ongoing"/"TBD" are NOT valid dates → store null, don't crash.
+  const t = Date.parse(String(v)); return isNaN(t) ? null : new Date(t).toISOString().slice(0, 10);
 };
 const fmtProgress = v => {
   const n = Number(v); if (isNaN(n)) return 0;
@@ -139,7 +140,7 @@ async function main() {
     const department_id = nameToId[p.department];
     if (!department_id) { skip++; continue; }
     const { department, ...rest } = p;
-    const payload = { ...rest, department_id };
+    const payload = { ...rest, department_id, archived: false, archived_at: null };
     if (have.has(p.project_code)) {
       const { error } = await sb.from('projects').update(payload).eq('project_code', p.project_code);
       if (error) { console.log(`  ❌ ${p.project_code}: ${error.message}`); fail++; } else upd++;
@@ -149,6 +150,18 @@ async function main() {
     }
   }
   console.log(`\n✅ Done — ${upd} updated, ${ins} inserted, ${skip} skipped (no dept), ${fail} failed.`);
+
+  // Archive (don't delete) any project no longer present in the sheet, so the active
+  // view matches the workbook exactly while old/duplicate rows stay recoverable in History.
+  const sheetCodes = new Set(all.map(p => p.project_code));
+  const { data: cur } = await sb.from('projects').select('project_code,archived');
+  const stale = (cur || []).filter(p => !sheetCodes.has(p.project_code) && !p.archived).map(p => p.project_code);
+  if (stale.length) {
+    const { error } = await sb.from('projects').update({ archived: true, archived_at: new Date().toISOString() }).in('project_code', stale);
+    console.log(error ? `archive ERR: ${error.message}` : `📦 Archived ${stale.length} projects not in the sheet (recoverable from History).`);
+  }
+  const { count: active } = await sb.from('projects').select('*', { count: 'exact', head: true }).neq('archived', true);
+  console.log(`📊 Active projects now: ${active}`);
 }
 
 main().catch(e => { console.error('ERR', e.message); process.exit(1); });
