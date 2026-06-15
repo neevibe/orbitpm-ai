@@ -2423,7 +2423,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_1",
     "name": "PRM Wheel chair ( B2c/B2b)",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "Noel/Pradip",
     "status": "Not Started",
     "progress": 0,
@@ -2438,7 +2438,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_2",
     "name": "Paid premuim Buggy",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "Noel",
     "status": "Not Started",
     "progress": 0,
@@ -2453,7 +2453,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_3",
     "name": "MHB Baggage Service (B2b/Airline)",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "Noel/Pradip",
     "status": "Not Started",
     "progress": 0,
@@ -2468,7 +2468,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_4",
     "name": "Medical Tourism",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "Noel",
     "status": "Not Started",
     "progress": 0,
@@ -2483,7 +2483,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_5",
     "name": "Courier Service ( Excess Baggage)",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "Noel/Pradip",
     "status": "Not Started",
     "progress": 0,
@@ -2498,7 +2498,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_6",
     "name": "Travel Concierge",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "Noel",
     "status": "Not Started",
     "progress": 0,
@@ -2513,7 +2513,7 @@ export const projects: Project[] = [
   {
     "id": "PRAMEN_7",
     "name": "Lounge Automation Phase 2",
-    "department": "Amenities & Hospitality",
+    "department": "CBB",
     "owner": "System",
     "status": "In Progress",
     "progress": 50,
@@ -2535,7 +2535,7 @@ export const departments: Department[] = [
   { name: 'Commercial Development', total: 20, inProgress: 10, completed: 1, notStarted: 9, delayed: 0, critical: 1, pctDone: 5, color: '#10b981' },
   { name: 'Advertising & Marketing', total: 15, inProgress: 2, completed: 0, notStarted: 13, delayed: 0, critical: 0, pctDone: 0, color: '#8b5cf6' },
   { name: 'Retail & Commerce', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
-  { name: 'Amenities & Hospitality', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
+  { name: 'CBB', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
   { name: 'Strategic Support', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
 ];
 export const kpiSummary = {

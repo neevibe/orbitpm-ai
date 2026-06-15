@@ -36,7 +36,7 @@ const DEPT_PREFIX_MAP: Record<string, string> = {
   'Commercial Development': 'PRCOMDEV',
   'Advertising & Marketing': 'PRADMKT',
   'Retail & Commerce': 'PRRETAIL',
-  'Amenities & Hospitality': 'PRAMEN',
+  'CBB': 'PRAMEN',
   'Strategic Support': 'PRSTRAT',
 };
 

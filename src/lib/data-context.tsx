@@ -212,7 +212,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     'Commercial Development': '#10b981',
     'Advertising & Marketing': '#8b5cf6',
     'Retail & Commerce': '#f97316',
-    'Amenities & Hospitality': '#ec4899',
+    'CBB': '#ec4899',
     'Strategic Support': '#06b6d4',
   };
 

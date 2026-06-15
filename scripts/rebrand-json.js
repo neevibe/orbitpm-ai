@@ -7,7 +7,7 @@ let content = fs.readFileSync(jsonPath, 'utf8');
 // List of replacements: [target regex/string, replacement]
 const replacements = [
   // Departments
-  [/CBB & Lounge/g, 'Amenities & Hospitality'],
+  [/CBB & Lounge/g, 'CBB'],
   [/Duty Free/g, 'Retail & Commerce'],
   [/BASL/g, 'Strategic Support'],
   [/BACL/g, 'Corporate Division'],

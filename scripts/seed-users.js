@@ -33,7 +33,7 @@ const EMAIL_DOMAIN = 'bialairport.com';
 // + stripped of non-alphanumerics for robust matching.
 const CANONICAL_DEPARTMENTS = [
   'Operations', 'Digital & Data', 'Retail & Commerce', 'Commercial Development',
-  'Strategic Support', 'Advertising & Marketing', 'Amenities & Hospitality',
+  'Strategic Support', 'Advertising & Marketing', 'CBB',
 ];
 const DEPARTMENT_MAP = {
   digital: 'Digital & Data',
@@ -44,9 +44,9 @@ const DEPARTMENT_MAP = {
   basl: 'Strategic Support',
   advertismentmarketing: 'Advertising & Marketing',
   advertisingmarketing: 'Advertising & Marketing',
-  ccb: 'Amenities & Hospitality',
-  cbb: 'Amenities & Hospitality',
-  cbblounge: 'Amenities & Hospitality',
+  ccb: 'CBB',
+  cbb: 'CBB',
+  cbblounge: 'CBB',
   cco: 'CCO', // super-admin marker (not a project department)
 };
 function normaliseDept(raw) {

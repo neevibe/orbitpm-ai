@@ -2187,7 +2187,7 @@
     {
       "id": "PRCBB_02",
       "name": "PRM Wheel chair ( B2c/B2b)",
-      "department": "Amenities & Hospitality",
+      "department": "CBB",
       "owner": "Noel/Pradip",
       "status": "Not Started",
       "progress": 0,
@@ -2201,7 +2201,7 @@
     {
       "id": "PRCBB_03",
       "name": "Paid premuim Buggy",
-      "department": "Amenities & Hospitality",
+      "department": "CBB",
       "owner": "Noel",
       "status": "Not Started",
       "progress": 0,
@@ -2215,7 +2215,7 @@
     {
       "id": "PRCBB_04",
       "name": "MHB Baggage Service (B2b/Airline)",
-      "department": "Amenities & Hospitality",
+      "department": "CBB",
       "owner": "Noel/Pradip",
       "status": "Not Started",
       "progress": 0,
@@ -2229,7 +2229,7 @@
     {
       "id": "PRCBB_05",
       "name": "Medical Tourism",
-      "department": "Amenities & Hospitality",
+      "department": "CBB",
       "owner": "Noel",
       "status": "Not Started",
       "progress": 0,
@@ -2243,7 +2243,7 @@
     {
       "id": "PRCBB_06",
       "name": "Courier Service ( Excess Baggage)",
-      "department": "Amenities & Hospitality",
+      "department": "CBB",
       "owner": "Noel/Pradip",
       "status": "Not Started",
       "progress": 0,
@@ -2257,7 +2257,7 @@
     {
       "id": "PRCBB_01",
       "name": "Travel Concierge",
-      "department": "Amenities & Hospitality",
+      "department": "CBB",
       "owner": "Noel",
       "status": "Not Started",
       "progress": 0,
@@ -2319,7 +2319,7 @@
       "delayed": 0,
       "critical": 0
     },
-    "Amenities & Hospitality": {
+    "CBB": {
       "total": 6,
       "inProgress": 0,
       "completed": 0,

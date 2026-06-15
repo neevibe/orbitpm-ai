@@ -17,7 +17,7 @@ interface AdminUser {
 
 const DEPARTMENTS = [
   'Operations', 'Digital & Data', 'Retail & Commerce', 'Commercial Development',
-  'Strategic Support', 'Advertising & Marketing', 'Amenities & Hospitality', 'CCO',
+  'Strategic Support', 'Advertising & Marketing', 'CBB', 'CCO',
 ];
 const ROLES = [
   { value: 'user', label: 'User (own department)' },

@@ -5,6 +5,7 @@ import { X, Save, Trash2, Wand2, Lock } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { generateProjectId } from '@/lib/utils';
+import NotesLog from '@/components/NotesLog';
 import type { Project } from '@/lib/mock-data';
 
 interface Props {
@@ -221,8 +222,10 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
             <textarea value={form.kpi || ''} onChange={e => setForm(f => ({ ...f, kpi: e.target.value }))} rows={2} placeholder="e.g. 90% uptime, 15% revenue increase, NPS > 8" className={`${inputCls} resize-none`} /></div>
           <div><label className={labelCls}>Key Risks / Blockers</label>
             <textarea value={form.risks} onChange={e => setForm(f => ({ ...f, risks: e.target.value }))} rows={2} placeholder="Known risks, blockers..." className={`${inputCls} resize-none`} /></div>
-          <div><label className={labelCls}>Notes</label>
-            <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Additional notes..." className={`${inputCls} resize-none`} /></div>
+          <div><label className={labelCls}>Notes <span className="text-[10px] font-normal text-[#94a3b8]">(each entry is timestamped)</span></label>
+            <NotesLog value={form.notes} onAdd={next => setForm(f => ({ ...f, notes: next }))} readOnly={readOnly}
+              inputClassName={`${inputCls} flex-1`}
+              buttonClassName="flex items-center gap-1 px-3 rounded-lg text-[12px] font-semibold text-white bg-[#e86c2d] whitespace-nowrap" /></div>
           </fieldset>
 
           <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">

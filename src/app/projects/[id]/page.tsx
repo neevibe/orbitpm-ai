@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, DollarSign, ListTodo, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import NotesLog from '@/components/NotesLog';
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils';
 import type { Project, Allocation } from '@/lib/mock-data';
 
@@ -206,10 +207,8 @@ export default function ProjectDetailPage() {
               <div className="x-card p-5 border-amber-200 bg-amber-50/30"><h3 className="text-[13px] font-bold text-amber-700 mb-2 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /> Key Risks Summary</h3>
                 {isEditing ? <textarea value={editForm.risks || ''} onChange={e => setEditForm(f => ({ ...f, risks: e.target.value }))} rows={2} className="x-input resize-none" />
                   : <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.risks}</p>}</div>)}
-            {(project.notes || isEditing) && (
-              <div className="x-card p-5"><h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-2">Notes</h3>
-                {isEditing ? <textarea value={editForm.notes || ''} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="x-input resize-none" />
-                  : <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.notes}</p>}</div>)}
+            <div className="x-card p-5"><h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3">Notes <span className="text-[11px] font-normal text-[var(--color-x-text-muted)]">— timestamped log</span></h3>
+              <NotesLog value={project.notes || ''} onAdd={next => updateProject(project.id, { notes: next })} /></div>
           </div>
           <div className="col-span-1 space-y-4">
             <div className="x-card p-5 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 border-indigo-100/50">
