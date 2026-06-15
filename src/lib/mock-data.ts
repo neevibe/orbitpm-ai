@@ -937,7 +937,7 @@ export const projects: Project[] = [
   },
   {
     "id": "PRDIGI_8",
-    "name": "Retail & Commerce Click and Collect",
+    "name": "Duty Free Click and Collect",
     "department": "Digital & Data",
     "owner": "Ajay Rao",
     "status": "In Progress",
@@ -946,7 +946,7 @@ export const projects: Project[] = [
     "startDate": "2026-04-01",
     "targetDate": null,
     "risks": "",
-    "objective": "Retail & Commerce sales target through PULSE for FY26-27 is ₹8.3Cr. In order to drive this 3X growth, we need to drive as many projects as possible to hit this target",
+    "objective": "Duty Free sales target through PULSE for FY26-27 is ₹8.3Cr. In order to drive this 3X growth, we need to drive as many projects as possible to hit this target",
     "notes": "Programm has started and progress is closely monitored.",
     "projectDependencies": ""
   },
@@ -1718,7 +1718,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_1",
     "name": "Financials - SPP - 964 (total users) / IPP 385 (total users)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1733,7 +1733,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_2",
     "name": "Introducing MAC cosmetics",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1748,7 +1748,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_3",
     "name": "Introducing new categories (Home appliances)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1763,7 +1763,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_4",
     "name": "XYR donation (collection at Cash counter) - implementation on POS",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1778,7 +1778,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_5",
     "name": "PULSE - \"Click & Collect\" - to achieve 10 Cr for FY 26-27",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1793,7 +1793,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_6",
     "name": "PULSE - \"Click & Collect\" - Onboarding and maintaining 10 BAs",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1808,7 +1808,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_7",
     "name": "Marketing Support on Creatives for monthly campaigns",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Midhun",
     "status": "Not Started",
     "progress": 0,
@@ -1823,7 +1823,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_8",
     "name": "NPS - 80",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1838,7 +1838,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_9",
     "name": "AI Projects - Passenger led Promos",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1853,7 +1853,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_10",
     "name": "AI Projects - Heat Map",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1867,8 +1867,8 @@ export const projects: Project[] = [
   },
   {
     "id": "PRRETAIL_11",
-    "name": "AI Projects - Smart Pricing compared to destination/origin Retail & Commerce",
-    "department": "Retail & Commerce",
+    "name": "AI Projects - Smart Pricing compared to destination/origin Duty Free",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1883,7 +1883,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_12",
     "name": "PULSE Campaigns - DF X Cab Promotion",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1898,7 +1898,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_13",
     "name": "PULSE Campaigns - DF X VIP Access (Strategic Support)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1913,7 +1913,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_14",
     "name": "PULSE Campaigns - DF X SPA Access (Strategic Support)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1928,7 +1928,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_15",
     "name": "Campaigns for migrated users  - 9 nos.",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1943,7 +1943,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_16",
     "name": "New Store - LMS 2",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1958,7 +1958,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_17",
     "name": "New Store - Chanel",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1973,7 +1973,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_18",
     "name": "New Store - India Story",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -1988,7 +1988,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_19",
     "name": "New Store - Tom Ford",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2003,7 +2003,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_20",
     "name": "New Store - Coty",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2018,7 +2018,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_21",
     "name": "New Store - Dior",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2033,7 +2033,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_22",
     "name": "P&C Campaigns - 10 no.s (staff Incentivised)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2048,7 +2048,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_23",
     "name": "Taj X Bengaluru DF Collaborated Offer",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2063,7 +2063,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_24",
     "name": "Pre-immigration DF / Pulse offer ads (Arr & Dep)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2078,7 +2078,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_25",
     "name": "Category Expert Badge & Certification (Motivating staffs)",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2093,7 +2093,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_26",
     "name": "DF cross promo Offer with HMS outlets",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2108,7 +2108,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_27",
     "name": "DF is now Free Campaign",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2123,7 +2123,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_28",
     "name": "FINANCIALS \r\nIPP ..\r\nSPP 817",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2138,7 +2138,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_29",
     "name": "DIGITAL / PULSE REWARD\r\n15,00,000 Active Members\r\nNPS - 80",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2153,7 +2153,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_30",
     "name": "PROCESS\r\nBuilding destination",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2168,7 +2168,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_31",
     "name": "GPTW - 85% for commercial",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2183,7 +2183,7 @@ export const projects: Project[] = [
   {
     "id": "PRRETAIL_32",
     "name": "XYR - 2 Cr\r\nSUSTAINABILITY -5000 tons of CO2 saving",
-    "department": "Retail & Commerce",
+    "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
     "progress": 0,
@@ -2534,7 +2534,7 @@ export const departments: Department[] = [
   { name: 'Operations', total: 35, inProgress: 22, completed: 0, notStarted: 11, delayed: 2, critical: 6, pctDone: 0, color: '#f59e0b' },
   { name: 'Commercial Development', total: 20, inProgress: 10, completed: 1, notStarted: 9, delayed: 0, critical: 1, pctDone: 5, color: '#10b981' },
   { name: 'Advertising & Marketing', total: 15, inProgress: 2, completed: 0, notStarted: 13, delayed: 0, critical: 0, pctDone: 0, color: '#8b5cf6' },
-  { name: 'Retail & Commerce', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
+  { name: 'Duty Free', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
   { name: 'CBB', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
   { name: 'Strategic Support', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
 ];

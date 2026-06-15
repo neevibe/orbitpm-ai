@@ -16,7 +16,7 @@ interface AdminUser {
 }
 
 const DEPARTMENTS = [
-  'Operations', 'Digital & Data', 'Retail & Commerce', 'Commercial Development',
+  'Operations', 'Digital & Data', 'Duty Free', 'Commercial Development',
   'Strategic Support', 'Advertising & Marketing', 'CBB', 'CCO',
 ];
 const ROLES = [

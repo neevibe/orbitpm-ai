@@ -95,7 +95,7 @@ const DEPT_PREFIX_MAP = {
   'Operations': 'PROPS',
   'Commercial Development': 'PRCOMDEV',
   'Advertising & Marketing': 'PRADMKT',
-  'Retail & Commerce': 'PRRETAIL',
+  'Duty Free': 'PRRETAIL',
   'CBB': 'PRAMEN',
   'Strategic Support': 'PRSTRAT',
 };
@@ -158,7 +158,7 @@ ts += `export const departments: Department[] = [
   { name: 'Operations', total: 35, inProgress: 22, completed: 0, notStarted: 11, delayed: 2, critical: 6, pctDone: 0, color: '#f59e0b' },
   { name: 'Commercial Development', total: 20, inProgress: 10, completed: 1, notStarted: 9, delayed: 0, critical: 1, pctDone: 5, color: '#10b981' },
   { name: 'Advertising & Marketing', total: 15, inProgress: 2, completed: 0, notStarted: 13, delayed: 0, critical: 0, pctDone: 0, color: '#8b5cf6' },
-  { name: 'Retail & Commerce', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
+  { name: 'Duty Free', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
   { name: 'CBB', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
   { name: 'Strategic Support', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
 ];

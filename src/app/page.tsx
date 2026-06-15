@@ -190,7 +190,7 @@ function MiniVisual({ kind }: { kind: 'kanban' | 'chart' | 'ai' | 'team' }) {
         </div>
         {[
           { t: '3 projects are trending toward delay in Digital & Data', c: '#fef2f2', b: '#fecaca' },
-          { t: 'Retail & Commerce Expansion is 12% ahead — reallocate 2 FTE?', c: '#f0fdf4', b: '#bbf7d0' },
+          { t: 'Duty Free Expansion is 12% ahead — reallocate 2 FTE?', c: '#f0fdf4', b: '#bbf7d0' },
           { t: 'Summary ready: Q2 portfolio review (8 risks flagged)', c: '#eff6ff', b: '#bfdbfe' },
         ].map((m, i) => (
           <div key={i} className="rise" style={{ background: m.c, border: `1px solid ${m.b}`, borderRadius: 9, padding: '9px 11px', marginBottom: 8, fontSize: 10.5, color: '#334155', lineHeight: 1.4, animationDelay: `${i * 0.14}s` }}>{m.t}</div>
@@ -201,7 +201,7 @@ function MiniVisual({ kind }: { kind: 'kanban' | 'chart' | 'ai' | 'team' }) {
   return (
     <div style={wrap}>
       <div style={{ fontSize: 11, fontWeight: 700, color: '#16263c', marginBottom: 14 }}>Workforce Capacity</div>
-      {[['Operations', 86, '#2563eb'], ['Digital & Data', 72, '#e86c2d'], ['Commercial Dev', 64, '#8b5cf6'], ['Retail & Commerce', 91, '#ef4444']].map(([l, w, c], i) => (
+      {[['Operations', 86, '#2563eb'], ['Digital & Data', 72, '#e86c2d'], ['Commercial Dev', 64, '#8b5cf6'], ['Duty Free', 91, '#ef4444']].map(([l, w, c], i) => (
         <div key={l as string} style={{ marginBottom: 13 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#475569', fontWeight: 600, marginBottom: 5 }}>
             <span>{l}</span><span>{w}%</span>
@@ -399,7 +399,7 @@ export default function LandingPage() {
         <Reveal>
           <p style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.14em', marginBottom: 26 }}>RUNNING WORK ACROSS EVERY ENTERPRISE DEPARTMENT</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(20px,4vw,52px)', flexWrap: 'wrap', alignItems: 'center' }}>
-            {['Operations', 'Digital & Data', 'Retail & Commerce', 'Commercial Development', 'Strategic Support', 'Advertising & Marketing', 'CBB'].map(d => (
+            {['Operations', 'Digital & Data', 'Duty Free', 'Commercial Development', 'Strategic Support', 'Advertising & Marketing', 'CBB'].map(d => (
               <span key={d} style={{ fontSize: 15, fontWeight: 700, color: '#9aa7b8', letterSpacing: '-0.01em' }}>{d}</span>
             ))}
           </div>

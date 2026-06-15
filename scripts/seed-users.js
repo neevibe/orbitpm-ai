@@ -32,14 +32,14 @@ const EMAIL_DOMAIN = 'bialairport.com';
 // projects (so department-scoped permissions actually match). Keys are lowercased
 // + stripped of non-alphanumerics for robust matching.
 const CANONICAL_DEPARTMENTS = [
-  'Operations', 'Digital & Data', 'Retail & Commerce', 'Commercial Development',
+  'Operations', 'Digital & Data', 'Duty Free', 'Commercial Development',
   'Strategic Support', 'Advertising & Marketing', 'CBB',
 ];
 const DEPARTMENT_MAP = {
   digital: 'Digital & Data',
   digitaldata: 'Digital & Data',
   operations: 'Operations',
-  dutyfree: 'Retail & Commerce',
+  dutyfree: 'Duty Free',
   commercialdevelopment: 'Commercial Development',
   basl: 'Strategic Support',
   advertismentmarketing: 'Advertising & Marketing',

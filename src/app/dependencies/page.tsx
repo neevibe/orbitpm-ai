@@ -20,7 +20,7 @@ interface Dependency {
 
 // Initial sample dependencies
 const initialDependencies: Dependency[] = [
-  { id: 'DEP-001', projectId: 'PRDIGI_03', projectName: 'Payment Gateway Enhancement', description: 'Retail POS integration API ready', assignedType: 'department', assignedTo: 'Retail & Commerce', status: 'Pending', priority: 'High', dueDate: '2026-06-15', createdDate: '2026-05-01', notes: 'Pilot with new device scheduled for 15th May' },
+  { id: 'DEP-001', projectId: 'PRDIGI_03', projectName: 'Payment Gateway Enhancement', description: 'Retail POS integration API ready', assignedType: 'department', assignedTo: 'Duty Free', status: 'Pending', priority: 'High', dueDate: '2026-06-15', createdDate: '2026-05-01', notes: 'Pilot with new device scheduled for 15th May' },
   { id: 'DEP-002', projectId: 'PRDIGI_06', projectName: 'CRM for Pulse Rewards Members', description: 'CRM platform vendor selection completed', assignedType: 'user', assignedTo: 'Musthaq Ahamed', status: 'In Progress', priority: 'High', dueDate: '2026-05-30', createdDate: '2026-04-15', notes: 'Proposal ready for leadership review' },
   { id: 'DEP-003', projectId: 'PRDIGI_08', projectName: 'Retail Click and Collect', description: 'App stability testing in low-network zones', assignedType: 'user', assignedTo: 'Ajay Rao', status: 'Pending', priority: 'High', dueDate: '2026-06-01', createdDate: '2026-04-20', notes: '' },
   { id: 'DEP-004', projectId: 'PROPR_01', projectName: 'Academy relaunch', description: 'RFQ vendor response evaluation', assignedType: 'department', assignedTo: 'Operations', status: 'In Progress', priority: 'Medium', dueDate: '2026-05-20', createdDate: '2026-05-01', notes: 'Go-live target May 11' },
