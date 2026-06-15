@@ -69,7 +69,7 @@ interface DataContextType {
   // Project CRUD
   addProject: (project: Omit<Project, 'id'> & { id?: string }) => string;
   updateProject: (id: string, updates: Partial<Project>) => void;
-  splitProject: (originalId: string, splits: { department: string, percentage: number }[]) => void;
+  splitProject: (originalId: string, splits: { department: string, owner?: string, percentage: number }[]) => void;
   deleteProject: (id: string) => void;       // kept for compatibility — now archives
   archiveProject: (id: string) => void;       // soft-delete: moves to history
   restoreProject: (id: string) => void;       // restore from history
@@ -379,7 +379,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
   }, [logAudit, notify, canModifyDepartment]);
 
-  const splitProject = useCallback((originalId: string, splits: { department: string, percentage: number }[]) => {
+  const splitProject = useCallback((originalId: string, splits: { department: string, owner?: string, percentage: number }[]) => {
     const originalProject = projects.find(p => p.id === originalId);
     if (!originalProject || splits.length === 0) return;
 
@@ -390,43 +390,49 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // The first split is assigned to the current project (updates its department and percentage)
-    const primarySplit = splits[0];
-    const secondarySplits = splits.slice(1);
-
     const splitGroupId = originalProject.splitGroupId || originalProject.id;
-    
-    // Update original project
-    updateProject(originalId, {
-      department: primarySplit.department,
-      splitPercentage: primarySplit.percentage,
-      splitGroupId: splitGroupId
+
+    // Pre-allocate every piece's ID up front (the original keeps its ID; each extra
+    // piece gets a fresh one) so we can cross-link them as dependencies.
+    const currentProjectIds = projects.map(p => p.id);
+    const pieces = splits.map((s, i) => {
+      if (i === 0) return { id: originalId, ...s };
+      const newId = generateProjectId(s.department, currentProjectIds);
+      currentProjectIds.push(newId);
+      return { id: newId, ...s };
     });
 
-    // Spawn cloned projects for the remaining splits
-    const currentProjectIds = projects.map(p => p.id);
-    
-    secondarySplits.forEach((split, index) => {
-      // Need a unique new ID
-      const newId = generateProjectId(split.department, currentProjectIds);
-      // Ensure we don't duplicate IDs in the same batch
-      currentProjectIds.push(newId);
-      
+    // Auto-create dependencies: every piece depends on every OTHER piece in the group.
+    const depsFor = (id: string) => pieces.filter(p => p.id !== id).map(p => p.id).join(', ');
+
+    // The first piece updates the original project in place (department, owner, %, links).
+    const primary = pieces[0];
+    updateProject(originalId, {
+      department: primary.department,
+      owner: primary.owner || originalProject.owner,
+      splitPercentage: primary.percentage,
+      splitGroupId,
+      projectDependencies: depsFor(primary.id),
+    });
+
+    // The remaining pieces are spawned as new linked projects.
+    pieces.slice(1).forEach(piece => {
       const newProject: Omit<Project, 'id'> & { id?: string } = {
         ...originalProject,
-        id: newId,
-        department: split.department,
-        splitPercentage: split.percentage,
-        splitGroupId: splitGroupId,
+        id: piece.id,
+        department: piece.department,
+        owner: piece.owner || originalProject.owner,
+        splitPercentage: piece.percentage,
+        splitGroupId,
+        projectDependencies: depsFor(piece.id),
         tasks: [], // wipe tasks so they start fresh
         allocations: [],
-        detailedDependencies: []
+        detailedDependencies: [],
       };
-      
       addProject(newProject);
     });
-    
-    notify('Project Split', `Successfully cloned ${originalProject.name} across ${splits.length} departments.`, 'success');
+
+    notify('Project Split', `Split ${originalProject.name} into ${pieces.length} pieces — owners assigned and dependencies linked.`, 'success');
   }, [projects, updateProject, addProject, notify, canModifyDepartment]);
 
   // Soft delete — moves to history (archived = true)

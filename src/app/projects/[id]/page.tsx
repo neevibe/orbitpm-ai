@@ -55,13 +55,13 @@ export default function ProjectDetailPage() {
 
   const [isSplitWizardOpen, setIsSplitWizardOpen] = useState(false);
   const [splitCount, setSplitCount] = useState<number>(2);
-  const [splitsForm, setSplitsForm] = useState<{ department: string, percentage: number }[]>([]);
+  const [splitsForm, setSplitsForm] = useState<{ department: string, owner: string, percentage: number }[]>([]);
 
   const openSplitWizard = () => {
     setSplitCount(2);
     setSplitsForm([
-      { department: project.department, percentage: 50 },
-      { department: '', percentage: 50 }
+      { department: project.department, owner: project.owner || '', percentage: 50 },
+      { department: '', owner: '', percentage: 50 }
     ]);
     setIsSplitWizardOpen(true);
   };
@@ -71,9 +71,10 @@ export default function ProjectDetailPage() {
     setSplitCount(safeCount);
     const equalPct = Math.floor(100 / safeCount);
     const remainder = 100 - (equalPct * safeCount);
-    
+
     const newSplits = Array.from({ length: safeCount }).map((_, i) => ({
       department: i === 0 ? project.department : '',
+      owner: i === 0 ? (project.owner || '') : '',
       percentage: equalPct + (i === 0 ? remainder : 0)
     }));
     setSplitsForm(newSplits);
@@ -87,6 +88,10 @@ export default function ProjectDetailPage() {
     }
     if (splitsForm.some(s => !s.department)) {
       alert("Please select a target department for all splits.");
+      return;
+    }
+    if (splitsForm.some(s => !s.owner.trim())) {
+      alert("Please assign a person (owner) to every split.");
       return;
     }
     splitProject(project.id, splitsForm);
@@ -545,14 +550,15 @@ export default function ProjectDetailPage() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider px-2">
-                  <span>Target Department</span>
-                  <span>Ownership %</span>
+                <div className="flex items-center gap-3 text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider px-2">
+                  <span className="flex-1">Target Department</span>
+                  <span className="flex-1">Assigned Person</span>
+                  <span className="w-28 text-right">Ownership %</span>
                 </div>
                 {splitsForm.map((split, idx) => (
                   <div key={idx} className="flex items-center gap-3 bg-[var(--color-x-bg)] p-3 rounded-lg border border-[var(--color-x-border)]">
                     <div className="flex-1">
-                      <select 
+                      <select
                         value={split.department}
                         onChange={e => {
                           const newSplits = [...splitsForm];
@@ -565,7 +571,21 @@ export default function ProjectDetailPage() {
                         {departments.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
                       </select>
                     </div>
-                    
+
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={split.owner}
+                        placeholder="Owner name…"
+                        onChange={e => {
+                          const newSplits = [...splitsForm];
+                          newSplits[idx].owner = e.target.value;
+                          setSplitsForm(newSplits);
+                        }}
+                        className="x-input py-1.5 px-3 text-[13px] w-full"
+                      />
+                    </div>
+
                     <div className="flex items-center gap-2 w-28 bg-white border border-[var(--color-x-border)] rounded-lg px-3 py-1.5">
                       <input 
                         type="number" 
