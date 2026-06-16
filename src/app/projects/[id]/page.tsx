@@ -108,7 +108,7 @@ export default function ProjectDetailPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in pb-10 max-w-6xl">
+    <div className="space-y-6 animate-fade-in pb-10 max-w-7xl mx-auto w-full">
       <div className="flex items-start gap-4">
         <button onClick={() => router.push('/projects')} className="mt-1 w-9 h-9 rounded-xl bg-[var(--color-x-surface)] border border-[var(--color-x-border)] flex items-center justify-center hover:bg-[var(--color-x-bg)] transition-all shadow-sm">
           <ArrowLeft className="w-4 h-4 text-[var(--color-x-text-secondary)]" />
