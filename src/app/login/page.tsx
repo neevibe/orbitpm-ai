@@ -23,10 +23,12 @@ export default function LoginPage() {
   // Sign-up state
   const [suEmail, setSuEmail] = useState('');
   const [suPassword, setSuPassword] = useState('');
+  const [suConfirmPassword, setSuConfirmPassword] = useState('');
   const [suError, setSuError] = useState<string | null>(null);
   const [suSuccess, setSuSuccess] = useState(false);
   const [suLoading, setSuLoading] = useState(false);
   const [showSuPassword, setShowSuPassword] = useState(false);
+  const [showSuConfirmPassword, setShowSuConfirmPassword] = useState(false);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
@@ -47,6 +49,12 @@ export default function LoginPage() {
     e.preventDefault();
     setSuError(null);
     setSuSuccess(false);
+
+    if (suPassword !== suConfirmPassword) {
+      setSuError('Passwords do not match');
+      return;
+    }
+
     setSuLoading(true);
     const { error } = await signUp(suEmail.trim(), suPassword);
     if (error) {
@@ -327,6 +335,30 @@ export default function LoginPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ca4c0] hover:text-white transition-colors cursor-pointer"
                   >
                     {showSuPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Confirm Password</label>
+                <div className="relative">
+                  <input
+                    type={showSuConfirmPassword ? "text" : "password"}
+                    value={suConfirmPassword}
+                    onChange={e => setSuConfirmPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-lg text-[13px] outline-none transition-all"
+                    style={inputStyle}
+                    onFocus={e => (e.target.style.borderColor = '#e86c2d')}
+                    onBlur={e => (e.target.style.borderColor = '#2a3a50')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSuConfirmPassword(!showSuConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ca4c0] hover:text-white transition-colors cursor-pointer"
+                  >
+                    {showSuConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>

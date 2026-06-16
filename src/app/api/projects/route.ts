@@ -194,6 +194,51 @@ export async function POST(request: NextRequest) {
       }).eq('project_code', originalId);
       if (archiveErr) throw archiveErr;
     }
+    else if (action === 'create_risk') {
+      const { data: proj } = await supabase.from('projects').select('id').eq('project_code', project.projectId).single();
+      const { error } = await supabase.from('risks').insert({
+        org_id: orgId,
+        risk_code: project.id,
+        project_id: proj?.id || null,
+        description: project.description,
+        category: project.category,
+        impact: project.impact,
+        likelihood: project.likelihood,
+        score: project.score,
+        severity: project.severity,
+        owner_name: project.owner || null,
+        mitigation: project.mitigation || null,
+        status: project.status || 'Open',
+        target_date: project.targetDate || null,
+        archived: false
+      });
+      if (error) throw error;
+    }
+    else if (action === 'update_risk') {
+      const dbUpdates: any = {};
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+      if (updates.category !== undefined) dbUpdates.category = updates.category;
+      if (updates.impact !== undefined) dbUpdates.impact = updates.impact;
+      if (updates.likelihood !== undefined) dbUpdates.likelihood = updates.likelihood;
+      if (updates.score !== undefined) dbUpdates.score = updates.score;
+      if (updates.severity !== undefined) dbUpdates.severity = updates.severity;
+      if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
+      if (updates.mitigation !== undefined) dbUpdates.mitigation = updates.mitigation;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
+
+      if (Object.keys(dbUpdates).length > 0) {
+        const { error } = await supabase.from('risks').update(dbUpdates).eq('risk_code', project.id);
+        if (error) throw error;
+      }
+    }
+    else if (action === 'delete_risk') {
+      const { error } = await supabase.from('risks').update({
+        archived: true,
+        archived_at: new Date().toISOString()
+      }).eq('risk_code', project.id);
+      if (error) throw error;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
