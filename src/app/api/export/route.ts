@@ -85,24 +85,27 @@ export async function POST(request: Request) {
     // ============================================
     // Per-department sheets
     // ============================================
+    // Per-department register sheets — named "📋 <Dept>" with the SAME columns the
+    // importer reads, so an exported workbook re-imports cleanly (true round-trip).
     const deptNames = [...new Set(projects.map((p: any) => p.department))] as string[];
+    const deptHeaders = ['Project ID', 'Project Name', 'Department', 'Project Owner', 'Status',
+      '% Progress', 'Priority', 'Start Date', 'Target Date', 'Key Risks/Blockers',
+      'Business Objective', 'Dependencies', 'KPI', 'Supporting Team', 'Notes'];
     deptNames.forEach((deptName: string) => {
       const deptProjects = projects.filter((p: any) => p.department === deptName);
       const deptRows = deptProjects.map((p: any) => [
-        p.id, p.name, p.owner, p.status, p.progress,
-        p.priority, p.startDate || '', p.targetDate || '',
-        p.risks || '', p.objective || '', p.notes || '',
+        p.id, p.name, p.department, p.owner, p.status, p.progress,
+        p.priority, p.startDate || '', p.targetDate || '', p.risks || '',
+        p.objective || '', p.projectDependencies || '', p.kpi || '', p.supportTeam || '', p.notes || '',
       ]);
-      const deptHeaders = ['Project ID', 'Project Name', 'Owner', 'Status', 'Progress %',
-        'Priority', 'Start Date', 'Target Date', 'Risks', 'Objective', 'Notes'];
       const deptSheet = XLSX.utils.aoa_to_sheet([deptHeaders, ...deptRows]);
       deptSheet['!cols'] = [
-        { wch: 14 }, { wch: 45 }, { wch: 25 }, { wch: 14 }, { wch: 10 },
-        { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 40 }, { wch: 40 },
+        { wch: 14 }, { wch: 45 }, { wch: 22 }, { wch: 25 }, { wch: 14 }, { wch: 10 },
+        { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 30 }, { wch: 40 }, { wch: 24 }, { wch: 24 }, { wch: 24 }, { wch: 40 },
       ];
-      // Shorten sheet name to max 31 chars (Excel limit)
-      const sheetName = deptName.length > 28 ? deptName.substring(0, 28) + '...' : deptName;
-      XLSX.utils.book_append_sheet(wb, deptSheet, sheetName);
+      // "📋 " prefix is what the importer filters on; keep within Excel's 31-char sheet-name limit.
+      const base = deptName.length > 26 ? deptName.substring(0, 26) : deptName;
+      XLSX.utils.book_append_sheet(wb, deptSheet, `📋 ${base}`);
     });
 
     // Generate buffer

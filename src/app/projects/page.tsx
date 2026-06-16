@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen } from 'lucide-react';
+import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import ProjectModal from '@/components/modals/ProjectModal';
@@ -21,7 +21,7 @@ function statusDot(status: string) {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const { projects, departments, archiveProject, restoreProject, purgeProject, updateProject } = useData();
+  const { projects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -33,6 +33,7 @@ export default function ProjectsPage() {
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const activeProjects = useMemo(() => projects.filter(p => !p.archived), [projects]);
   const archivedProjects = useMemo(() => projects.filter(p => p.archived), [projects]);
@@ -76,6 +77,23 @@ export default function ProjectsPage() {
 
   const openEdit = (p: Project) => { setEditProject(p); setShowModal(true); };
   const goToDetail = (id: string) => router.push(`/projects/${id}`);
+
+  // Export all current (live, edited) data to a re-importable Excel workbook.
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Xyrenis_Projects_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch { alert('Export failed. Please try again.'); }
+    setIsExporting(false);
+  };
 
   return (
     <div className="flex flex-1 animate-fade-in bg-[var(--color-x-bg)]" style={{ height: 'calc(100vh - 52px)' }}>
@@ -162,6 +180,16 @@ export default function ProjectsPage() {
             <button onClick={() => setView('kanban')} title="Kanban" className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
             <button onClick={() => setView('gantt')} title="Gantt" className={`p-1.5 rounded-md transition-all ${view === 'gantt' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
           </div>
+          {/* Export to Excel (re-importable workbook reflecting all in-app edits) */}
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            title="Download all projects as an Excel workbook (re-importable, reflects every in-app edit)"
+            className="x-btn x-btn-secondary flex-shrink-0 disabled:opacity-60"
+            style={{ height: 32, fontSize: 13, padding: '0 12px' }}
+          >
+            <Download className="w-3.5 h-3.5" /> {isExporting ? 'Exporting…' : 'Export to Excel'}
+          </button>
           {/* New Project */}
           <button
             onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)}
