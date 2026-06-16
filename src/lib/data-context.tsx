@@ -309,6 +309,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
 
+    // Sync to local Excel files
+    fetch('/api/sync-local-excel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', project: newProject }),
+    }).catch(err => console.error('Error syncing project to local Excel:', err));
+
     if (isSupabaseConfigured()) {
       supabase.from('departments').select('id').eq('name', newProject.department).single().then(({data: d}) => {
         const deptId = d?.id;
@@ -334,6 +341,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [projects, logAudit, notify, canModifyDepartment]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
+    let updatedProj: Project | null = null;
     setProjects(prev => prev.map(p => {
       if (p.id !== id) return p;
       // Block edits to projects outside the user's department (super admins exempt).
@@ -375,8 +383,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      return { ...p, ...updates };
+      updatedProj = { ...p, ...updates };
+      return updatedProj;
     }));
+
+    if (updatedProj) {
+      fetch('/api/sync-local-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', project: updatedProj }),
+      }).catch(err => console.error('Error syncing project to local Excel:', err));
+    }
   }, [logAudit, notify, canModifyDepartment]);
 
   const splitProject = useCallback((originalId: string, splits: { department: string, owner?: string, percentage: number }[]) => {
@@ -445,6 +462,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (project) {
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: false, new: true } } });
       notify('Project Archived', `${project.name} moved to history. Can be restored anytime.`, 'info');
+
+      // Sync local Excel
+      fetch('/api/sync-local-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', project }),
+      }).catch(err => console.error('Error syncing project archive to local Excel:', err));
     }
     const now = new Date().toISOString();
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: now } : p));
@@ -459,14 +483,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Restore from history
   const restoreProject = useCallback((id: string) => {
     const project = projects.find(p => p.id === id);
+    if (project && !canModifyDepartment(project.department)) {
+      notify('Permission denied', `You can only restore projects in your own department.`, 'warning');
+      return;
+    }
     if (project) {
+      logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: true, new: false } } });
       notify('Project Restored', `${project.name} has been restored from history.`, 'success');
+
+      // Sync local Excel
+      fetch('/api/sync-local-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', project: { ...project, archived: false } }),
+      }).catch(err => console.error('Error syncing project restore to local Excel:', err));
     }
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false, archivedAt: undefined } : p));
     if (isSupabaseConfigured()) {
       supabase.from('projects').update({ archived: false, archived_at: null }).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
     }
-  }, [projects, notify]);
+  }, [projects, logAudit, notify, canModifyDepartment]);
 
   // Permanent delete — only from archived projects
   const purgeProject = useCallback((id: string) => {
@@ -478,6 +514,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (project) {
       logAudit({ action: 'delete', entityType: 'project', entityId: id, entityName: project.name, changes: {} });
       notify('Project Permanently Deleted', `${project.name} has been permanently removed.`, 'warning');
+
+      // Sync local Excel
+      fetch('/api/sync-local-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', project }),
+      }).catch(err => console.error('Error syncing project purge to local Excel:', err));
     }
     setProjects(prev => prev.filter(p => p.id !== id));
     setRisks(prev => prev.filter(r => r.projectId !== id));
