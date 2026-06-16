@@ -114,64 +114,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) return;
     
     async function fetchData() {
-      console.log('Connecting to Supabase...');
+      console.log('Connecting to Supabase via secure API route...');
       try {
-        const { data: dbProjects } = await supabase.from('projects').select('*').neq('archived', true);
-        if (dbProjects && dbProjects.length > 0) {
-          const mappedProjects = dbProjects.map(p => ({
-            id: p.project_code,
-            name: p.name,
-            department: p.department_id ? p.department_id : 'Unknown', // we will fetch depts below
-            owner: p.owner_name || '',
-            status: p.status,
-            priority: p.priority,
-            progress: p.progress,
-            startDate: p.start_date,
-            targetDate: p.target_date,
-            objective: p.business_objective || '',
-            kpi: p.kpi || '',
-            projectDependencies: p.dependencies || '',
-            supportTeam: p.support_team || '',
-            notes: p.notes || '',
-            risks: '',
-            archived: p.archived,
-            archivedAt: p.archived_at
-          }));
-          
-          const { data: dbDepts } = await supabase.from('departments').select('*');
-          if (dbDepts) {
-            const deptMap: Record<string, string> = {};
-            dbDepts.forEach(d => deptMap[d.id] = d.name);
-            mappedProjects.forEach(p => {
-              if (deptMap[p.department]) p.department = deptMap[p.department];
-            });
-          }
-          setProjects(mappedProjects);
-          console.log('Successfully loaded ' + mappedProjects.length + ' projects from live database!');
+        const res = await fetch('/api/projects');
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        
+        if (data.projects && data.projects.length > 0) {
+          setProjects(data.projects);
+          console.log('Successfully loaded ' + data.projects.length + ' projects from live database!');
         }
-
-        const { data: dbRisks } = await supabase.from('risks').select('*').neq('archived', true);
-        if (dbRisks && dbRisks.length > 0) {
-          // get project mapping
-          const { data: dbProjs } = await supabase.from('projects').select('id, project_code');
-          const projMap: Record<string, string> = {};
-          if (dbProjs) dbProjs.forEach(p => projMap[p.id] = p.project_code);
-          
-          const mappedRisks = dbRisks.map(r => ({
-            id: r.risk_code,
-            projectId: projMap[r.project_id] || '',
-            description: r.description,
-            category: r.category || '',
-            impact: r.impact || 'Low',
-            likelihood: r.likelihood || 1,
-            score: r.score || 1,
-            severity: r.severity || 'Low',
-            owner: r.owner_name || '',
-            mitigation: r.mitigation || '',
-            status: r.status,
-            targetDate: r.target_date || ''
-          }));
-          setRisks(mappedRisks);
+        if (data.risks && data.risks.length > 0) {
+          setRisks(data.risks);
         }
       } catch (err) {
         console.error('[CRITICAL] Error fetching Supabase data:', err);
@@ -320,25 +274,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }).catch(err => console.error('Error syncing project to local Excel:', err));
 
     if (isSupabaseConfigured()) {
-      supabase.from('departments').select('id').eq('name', newProject.department).single().then(({data: d}) => {
-        const deptId = d?.id;
-        supabase.from('projects').insert({
-          project_code: id,
-          name: newProject.name,
-          department_id: deptId,
-          status: newProject.status,
-          priority: newProject.priority,
-          progress: newProject.progress,
-          owner_name: newProject.owner || null,
-          start_date: newProject.startDate || null,
-          target_date: newProject.targetDate || null,
-          business_objective: newProject.objective || null,
-          kpi: newProject.kpi || null,
-          dependencies: newProject.projectDependencies || null,
-          support_team: newProject.supportTeam || null,
-          notes: newProject.notes || null
-        }).then(({error}) => { if (error) console.error(error); });
-      });
+      fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', project: newProject }),
+      }).catch(err => console.error('Error saving new project to database:', err));
     }
     return id;
   }, [projects, logAudit, notify, canModifyDepartment]);
@@ -368,22 +308,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       
       if (isSupabaseConfigured()) {
-        const dbUpdates: any = {};
-        if (updates.name !== undefined) dbUpdates.name = updates.name;
-        if (updates.status !== undefined) dbUpdates.status = updates.status;
-        if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
-        if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
-        if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
-        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
-        if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
-        if (updates.objective !== undefined) dbUpdates.business_objective = updates.objective;
-        if (updates.kpi !== undefined) dbUpdates.kpi = updates.kpi;
-        if (updates.projectDependencies !== undefined) dbUpdates.dependencies = updates.projectDependencies;
-        if (updates.supportTeam !== undefined) dbUpdates.support_team = updates.supportTeam;
-        if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-        if (Object.keys(dbUpdates).length > 0) {
-          supabase.from('projects').update(dbUpdates).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
-        }
+        fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update', project: { id }, updates }),
+        }).catch(err => console.error('Error updating project in database:', err));
       }
       
       updatedProj = { ...p, ...updates };
@@ -476,7 +405,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: now } : p));
     if (isSupabaseConfigured()) {
-      supabase.from('projects').update({ archived: true, archived_at: now }).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+      fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive', project: { id } }),
+      }).catch(err => console.error('Error archiving project in database:', err));
     }
   }, [projects, logAudit, notify, canModifyDepartment]);
 
@@ -503,7 +436,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false, archivedAt: undefined } : p));
     if (isSupabaseConfigured()) {
-      supabase.from('projects').update({ archived: false, archived_at: null }).eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+      fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore', project: { id } }),
+      }).catch(err => console.error('Error restoring project in database:', err));
     }
   }, [projects, logAudit, notify, canModifyDepartment]);
 
@@ -528,7 +465,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setProjects(prev => prev.filter(p => p.id !== id));
     setRisks(prev => prev.filter(r => r.projectId !== id));
     if (isSupabaseConfigured()) {
-      supabase.from('projects').delete().eq('project_code', id).then(({error}) => { if (error) console.error(error); });
+      fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', project: { id } }),
+      }).catch(err => console.error('Error purging project from database:', err));
     }
   }, [projects, logAudit, notify, canModifyDepartment]);
 
