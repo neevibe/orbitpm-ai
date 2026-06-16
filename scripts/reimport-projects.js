@@ -40,7 +40,7 @@ const DEPT_MAP = {
   operations: 'Operations', ops: 'Operations',
   commercialdevelopment: 'Commercial Development', commdev: 'Commercial Development',
   dutyfree: 'Duty Free', retailcommerce: 'Duty Free',
-  basl: 'Strategic Support', strategicsupport: 'Strategic Support',
+  basl: 'BASL', strategicsupport: 'BASL',
   advertisingmarketing: 'Advertising & Marketing', advertismentmarketing: 'Advertising & Marketing', adv: 'Advertising & Marketing',
   cbb: 'CBB', cbblounge: 'CBB', amenitieshospitality: 'CBB',
 };

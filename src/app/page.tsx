@@ -399,7 +399,7 @@ export default function LandingPage() {
         <Reveal>
           <p style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.14em', marginBottom: 26 }}>RUNNING WORK ACROSS EVERY ENTERPRISE DEPARTMENT</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(20px,4vw,52px)', flexWrap: 'wrap', alignItems: 'center' }}>
-            {['Operations', 'Digital & Data', 'Duty Free', 'Commercial Development', 'Strategic Support', 'Advertising & Marketing', 'CBB'].map(d => (
+            {['Operations', 'Digital & Data', 'Duty Free', 'Commercial Development', 'BASL', 'Advertising & Marketing', 'CBB'].map(d => (
               <span key={d} style={{ fontSize: 15, fontWeight: 700, color: '#9aa7b8', letterSpacing: '-0.01em' }}>{d}</span>
             ))}
           </div>

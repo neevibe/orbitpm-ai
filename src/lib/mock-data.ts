@@ -1897,7 +1897,7 @@ export const projects: Project[] = [
   },
   {
     "id": "PRRETAIL_13",
-    "name": "PULSE Campaigns - DF X VIP Access (Strategic Support)",
+    "name": "PULSE Campaigns - DF X VIP Access (BASL)",
     "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
@@ -1912,7 +1912,7 @@ export const projects: Project[] = [
   },
   {
     "id": "PRRETAIL_14",
-    "name": "PULSE Campaigns - DF X SPA Access (Strategic Support)",
+    "name": "PULSE Campaigns - DF X SPA Access (BASL)",
     "department": "Duty Free",
     "owner": "Avishek",
     "status": "Not Started",
@@ -2196,9 +2196,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_1",
+    "id": "PRBASL_1",
     "name": "Flexi Space-Business Case & Mgt Approval",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2211,9 +2211,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_2",
+    "id": "PRBASL_2",
     "name": "Skydeck-Business Case & Mgt Approval",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2226,9 +2226,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_3",
+    "id": "PRBASL_3",
     "name": "Quad 080 Café- Concpet Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2241,9 +2241,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_4",
+    "id": "PRBASL_4",
     "name": "T1 Celebrity Restaurant- Ideation Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2256,9 +2256,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_5",
+    "id": "PRBASL_5",
     "name": "Habitat-Business Case & Mgt Approval",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2271,9 +2271,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_6",
+    "id": "PRBASL_6",
     "name": "SPA Extension In T2 Intl SHA Design Development Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2286,9 +2286,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_7",
+    "id": "PRBASL_7",
     "name": "East Wing Mezzanine Lounge/F&B- Business Discovery & Mgt Approval Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2301,9 +2301,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_8",
+    "id": "PRBASL_8",
     "name": "West Wing Indian Restaurant Kitchen @ Building B Main Floor Café Menu Finalisation & Project Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2316,9 +2316,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_9",
+    "id": "PRBASL_9",
     "name": "Urban Consolidation Centre - Central Kitchen / Bakery / Institute Ideation Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2331,9 +2331,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_10",
+    "id": "PRBASL_10",
     "name": "Forest Of Abundance -Project Execution & Business Evaluation Stage",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2346,9 +2346,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_11",
+    "id": "PRBASL_11",
     "name": "FINANCIALS\r\nIPP 151\r\nSPP 415",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2361,9 +2361,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_12",
+    "id": "PRBASL_12",
     "name": "PULSE REWARD\r\n100,000 Active Members\r\nNPS - 80",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2376,9 +2376,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_13",
+    "id": "PRBASL_13",
     "name": "PROCESS\r\nLadies & Gentlemen serve Ladies & Gentlemen",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2391,9 +2391,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_14",
-    "name": "GPTW - 90% for Strategic Support",
-    "department": "Strategic Support",
+    "id": "PRBASL_14",
+    "name": "GPTW - 90% for BASL",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2406,9 +2406,9 @@ export const projects: Project[] = [
     "projectDependencies": ""
   },
   {
-    "id": "PRSTRAT_15",
+    "id": "PRBASL_15",
     "name": "XYR - INR 25,00,000\r\nSUSTAINABILITY - 10% reduction in food waste (0.40 gms per user)",
-    "department": "Strategic Support",
+    "department": "BASL",
     "owner": "George Kuruvilla",
     "status": "In Progress",
     "progress": 0,
@@ -2536,7 +2536,7 @@ export const departments: Department[] = [
   { name: 'Advertising & Marketing', total: 15, inProgress: 2, completed: 0, notStarted: 13, delayed: 0, critical: 0, pctDone: 0, color: '#8b5cf6' },
   { name: 'Duty Free', total: 32, inProgress: 0, completed: 0, notStarted: 32, delayed: 0, critical: 0, pctDone: 0, color: '#f97316' },
   { name: 'CBB', total: 6, inProgress: 0, completed: 0, notStarted: 6, delayed: 0, critical: 0, pctDone: 0, color: '#ec4899' },
-  { name: 'Strategic Support', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
+  { name: 'BASL', total: 15, inProgress: 0, completed: 0, notStarted: 15, delayed: 0, critical: 0, pctDone: 0, color: '#06b6d4' },
 ];
 export const kpiSummary = {
   totalProjects: 162,

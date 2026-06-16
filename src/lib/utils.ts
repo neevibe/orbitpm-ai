@@ -37,7 +37,7 @@ const DEPT_PREFIX_MAP: Record<string, string> = {
   'Advertising & Marketing': 'PRADMKT',
   'Duty Free': 'PRRETAIL',
   'CBB': 'PRAMEN',
-  'Strategic Support': 'PRSTRAT',
+  'BASL': 'PRBASL',
 };
 
 export function getDeptPrefix(department: string): string {

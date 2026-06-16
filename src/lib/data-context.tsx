@@ -214,7 +214,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     'Advertising & Marketing': '#8b5cf6',
     'Duty Free': '#f97316',
     'CBB': '#ec4899',
-    'Strategic Support': '#06b6d4',
+    'BASL': '#06b6d4',
   };
 
   // Merge any custom departments added by user
