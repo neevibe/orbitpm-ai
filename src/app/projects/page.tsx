@@ -252,11 +252,11 @@ export default function ProjectsPage() {
                             <tr>
                               <th className="w-20 pl-5">ID</th>
                               <th>Project Name</th>
-                              <th className="w-40">Owner</th>
+                              <th className="w-36">Owner</th>
                               <th className="w-28">Status</th>
                               <th className="w-24">Priority</th>
                               <th className="w-36">Progress</th>
-                              <th className="w-12 text-right pr-5"></th>
+                              <th className="w-24 text-right pr-5"></th>
                             </tr>
                           </thead>
                           <tbody>

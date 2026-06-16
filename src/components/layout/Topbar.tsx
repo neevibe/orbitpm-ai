@@ -36,7 +36,7 @@ export default function Topbar() {
   const currentRoute = routeNames[pathname] || routeNames['/' + segments[0]] || segments[0] || 'Command Center';
 
   return (
-    <header className="fixed top-0 left-[248px] right-0 h-[52px] bg-[var(--color-x-surface)]/90 backdrop-blur-xl border-b border-[var(--color-x-border)] flex items-center justify-between px-5 z-30">
+    <header className="fixed top-0 left-[212px] right-0 h-[52px] bg-[var(--color-x-surface)]/90 backdrop-blur-xl border-b border-[var(--color-x-border)] flex items-center justify-between px-5 z-30">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-[13px]">
         <span className="text-[var(--color-x-text-muted)]">Xyrenis</span>
