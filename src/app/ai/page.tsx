@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useData } from '@/lib/data-context';
 import { Sparkles, Briefcase, BookOpen, BarChart3, Bot, User, Send, Zap, ChevronRight, RefreshCw } from 'lucide-react';
 
@@ -87,7 +87,7 @@ export default function AICopilotPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     totalProjects: kpi.totalProjects,
     completed: kpi.completed,
     delayed: kpi.delayed,
@@ -96,7 +96,7 @@ export default function AICopilotPage() {
     openRisks: kpi.openRisks,
     stuckProjects: kpi.stuckProjects,
     departments: departments.map(d => d.name),
-  };
+  }), [kpi, projects, departments]);
 
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
