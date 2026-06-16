@@ -21,7 +21,7 @@ function statusDot(status: string) {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const { projects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
+  const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -34,9 +34,6 @@ export default function ProjectsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-
-  const activeProjects = useMemo(() => projects.filter(p => !p.archived), [projects]);
-  const archivedProjects = useMemo(() => projects.filter(p => p.archived), [projects]);
 
   const filtered = useMemo(() => {
     const pool = tab === 'active' ? activeProjects : archivedProjects;
@@ -82,7 +79,7 @@ export default function ProjectsPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
+      const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects: activeProjects, risks, departments }) });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);

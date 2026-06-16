@@ -41,6 +41,7 @@ export interface Notification {
 interface DataContextType {
   // Data
   projects: Project[];
+  archivedProjects: Project[];
   departments: Department[];
   risks: Risk[];
   notifications: Notification[];
@@ -220,14 +221,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [customDepartments, setCustomDepartments] = useState<{ name: string; color: string }[]>([]);
 
   const departments: Department[] = React.useMemo(() => {
+    const activeProjects = projects.filter(p => !p.archived);
     const allDeptNames = new Set([
       ...Object.keys(departmentColors),
       ...customDepartments.map(d => d.name),
-      ...projects.map(p => p.department),
+      ...activeProjects.map(p => p.department),
     ]);
 
     return Array.from(allDeptNames).map(name => {
-      const deptProjects = projects.filter(p => p.department === name);
+      const deptProjects = activeProjects.filter(p => p.department === name);
       const custom = customDepartments.find(d => d.name === name);
       return {
         name,
@@ -249,29 +251,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // COMPUTED: KPIs derived from projects + risks
   // ============================================
   const kpi = React.useMemo(() => {
-    const total = projects.length;
-    const inProgress = projects.filter(p => p.status === 'In Progress').length;
-    const completed = projects.filter(p => p.status === 'Completed').length;
-    const delayed = projects.filter(p => p.status === 'Delayed').length;
-    const notStarted = projects.filter(p => p.status === 'Not Started').length;
-    const onHold = projects.filter(p => p.status === 'On Hold').length;
-    const critical = projects.filter(p => p.priority === 'Critical').length;
-    const high = projects.filter(p => p.priority === 'High').length;
-    const medium = projects.filter(p => p.priority === 'Medium').length;
-    const low = projects.filter(p => p.priority === 'Low').length;
+    const active = projects.filter(p => !p.archived);
+    const total = active.length;
+    const inProgress = active.filter(p => p.status === 'In Progress').length;
+    const completed = active.filter(p => p.status === 'Completed').length;
+    const delayed = active.filter(p => p.status === 'Delayed').length;
+    const notStarted = active.filter(p => p.status === 'Not Started').length;
+    const onHold = active.filter(p => p.status === 'On Hold').length;
+    const critical = active.filter(p => p.priority === 'Critical').length;
+    const high = active.filter(p => p.priority === 'High').length;
+    const medium = active.filter(p => p.priority === 'Medium').length;
+    const low = active.filter(p => p.priority === 'Low').length;
     const openRisks = risks.filter(r => r.status === 'Open').length;
     const closedRisks = risks.filter(r => r.status === 'Closed').length;
 
     // Stuck: targetDate <= 7 days, any priority, status !== Completed, not dismissedFromStuck
-    const stuckProjects = projects.filter(p => {
-      if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
+    const stuckProjects = active.filter(p => {
+      if (p.status === 'Completed' || p.dismissedFromStuck) return false;
       const days = daysUntil(p.targetDate);
       return days !== null && days <= 7;
     }).length;
 
     // Needs escalation: Critical + In Progress + has risks
     const projectsWithRisks = new Set(risks.filter(r => r.status === 'Open').map(r => r.projectId));
-    const needsEscalation = projects.filter(p =>
+    const needsEscalation = active.filter(p =>
       p.priority === 'Critical' &&
       p.status === 'In Progress' &&
       (projectsWithRisks.has(p.id) || (p.risks && p.risks.length > 0))
@@ -279,7 +282,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Owner bottlenecks: owners with 3+ active projects
     const ownerCounts: Record<string, number> = {};
-    projects.filter(p => p.status === 'In Progress').forEach(p => {
+    active.filter(p => p.status === 'In Progress').forEach(p => {
       ownerCounts[p.owner] = (ownerCounts[p.owner] || 0) + 1;
     });
     const ownerBottlenecks = Object.values(ownerCounts).filter(c => c >= 3).length;
@@ -695,13 +698,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      projects, departments, risks, notifications, auditLog, kpi,
-      addProject, updateProject, splitProject, deleteProject,
-      archiveProject, restoreProject, purgeProject, generateId,
-      addDepartment, updateDepartment, deleteDepartment,
-      addRisk, updateRisk, deleteRisk,
+      projects: projects.filter(p => !p.archived),
+      archivedProjects: projects.filter(p => p.archived),
+      departments,
+      risks,
+      notifications,
+      auditLog,
+      kpi,
+      addProject,
+      updateProject,
+      splitProject,
+      deleteProject,
+      archiveProject,
+      restoreProject,
+      purgeProject,
+      generateId,
+      addDepartment,
+      updateDepartment,
+      deleteDepartment,
+      addRisk,
+      updateRisk,
+      deleteRisk,
       importProjects,
-      addNotification, markNotificationRead, markAllNotificationsRead,
+      addNotification,
+      markNotificationRead,
+      markAllNotificationsRead,
     }}>
       {children}
     </DataContext.Provider>
