@@ -5,9 +5,13 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
+function isInternalEmail(email: string) {
+  return email.trim().toLowerCase().endsWith('@bialairport.com');
+}
+
 export default function LoginPage() {
-  const { signIn } = useAuth();
-  const [tab, setTab] = useState<'signin' | 'forgot'>('signin');
+  const { signIn, signUp } = useAuth();
+  const [tab, setTab] = useState<'signin' | 'signup' | 'forgot'>('signin');
 
   // Sign-in state
   const [siEmail, setSiEmail] = useState('');
@@ -15,6 +19,14 @@ export default function LoginPage() {
   const [siError, setSiError] = useState<string | null>(null);
   const [siLoading, setSiLoading] = useState(false);
   const [showSiPassword, setShowSiPassword] = useState(false);
+
+  // Sign-up state
+  const [suEmail, setSuEmail] = useState('');
+  const [suPassword, setSuPassword] = useState('');
+  const [suError, setSuError] = useState<string | null>(null);
+  const [suSuccess, setSuSuccess] = useState(false);
+  const [suLoading, setSuLoading] = useState(false);
+  const [showSuPassword, setShowSuPassword] = useState(false);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
@@ -29,6 +41,20 @@ export default function LoginPage() {
     const { error } = await signIn(siEmail.trim(), siPassword);
     if (error) setSiError('Invalid email or password. Please try again.');
     setSiLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSuError(null);
+    setSuSuccess(false);
+    setSuLoading(true);
+    const { error } = await signUp(suEmail.trim(), suPassword);
+    if (error) {
+      setSuError(error);
+    } else {
+      setSuSuccess(true);
+    }
+    setSuLoading(false);
   };
 
   const handleDemoLogin = async () => {
@@ -62,6 +88,11 @@ export default function LoginPage() {
     border: '1px solid #2a3a50',
     color: 'white',
   };
+
+  // Sign-up email detection banner
+  const suEmailTrimmed = suEmail.trim();
+  const showSuBanner = tab === 'signup' && suEmailTrimmed.length > 0;
+  const isBialEmail = isInternalEmail(suEmailTrimmed);
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0f1623' }}>
@@ -122,11 +153,43 @@ export default function LoginPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">
-            {tab === 'forgot' ? 'Reset password' : 'Welcome back'}
+            {tab === 'forgot' ? 'Reset password' : tab === 'signup' ? 'Create account' : 'Welcome back'}
           </h2>
           <p className="text-[13px] mb-6" style={{ color: '#8ca4c0' }}>
-            {tab === 'forgot' ? 'Enter your email to reset your password' : 'Sign in to your workspace'}
+            {tab === 'forgot'
+              ? 'Enter your email to reset your password'
+              : tab === 'signup'
+              ? 'Request access to your workspace'
+              : 'Sign in to your workspace'}
           </p>
+
+          {/* Tab switcher (Sign In / Sign Up) */}
+          {tab !== 'forgot' && (
+            <div className="flex rounded-lg overflow-hidden mb-6" style={{ background: '#131e2e', border: '1px solid #1e2e40' }}>
+              <button
+                type="button"
+                onClick={() => setTab('signin')}
+                className="flex-1 py-2 text-[12px] font-semibold transition-all cursor-pointer"
+                style={{
+                  background: tab === 'signin' ? '#e86c2d' : 'transparent',
+                  color: tab === 'signin' ? 'white' : '#8ca4c0',
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('signup')}
+                className="flex-1 py-2 text-[12px] font-semibold transition-all cursor-pointer"
+                style={{
+                  background: tab === 'signup' ? '#e86c2d' : 'transparent',
+                  color: tab === 'signup' ? 'white' : '#8ca4c0',
+                }}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
 
           {/* Sign In Form */}
           {tab === 'signin' && (
@@ -203,6 +266,87 @@ export default function LoginPage() {
                 className="w-full py-2.5 rounded-lg text-[13px] font-semibold text-[#8ca4c0] border border-[#2a3a50] hover:border-[#e86c2d] hover:text-white hover:bg-[#131e2e] transition-all mt-1 flex items-center justify-center gap-2 cursor-pointer"
               >
                 ✦ Try Live Demo Account
+              </button>
+            </form>
+          )}
+
+          {/* Sign Up Form */}
+          {tab === 'signup' && (
+            <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Work Email</label>
+                <input
+                  type="email"
+                  value={suEmail}
+                  onChange={e => setSuEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="you@company.com"
+                  className="w-full px-3.5 py-2.5 rounded-lg text-[13px] outline-none transition-all"
+                  style={inputStyle}
+                  onFocus={e => (e.target.style.borderColor = '#e86c2d')}
+                  onBlur={e => (e.target.style.borderColor = '#2a3a50')}
+                />
+                {/* User-type detection banner */}
+                {showSuBanner && (
+                  isBialEmail ? (
+                    <div
+                      className="mt-2 px-3 py-2 rounded-md text-[11.5px] font-medium flex items-center gap-1.5"
+                      style={{ background: '#0d2137', color: '#60a5fa', border: '1px solid #1e3a5f' }}
+                    >
+                      ✓ Internal BIAL user — View access granted automatically
+                    </div>
+                  ) : (
+                    <div
+                      className="mt-2 px-3 py-2 rounded-md text-[11.5px] font-medium flex items-center gap-1.5"
+                      style={{ background: '#1f1508', color: '#fbbf24', border: '1px solid #3d2a00' }}
+                    >
+                      External user — access pending admin approval
+                    </div>
+                  )
+                )}
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold mb-1.5" style={{ color: '#8ca4c0' }}>Password</label>
+                <div className="relative">
+                  <input
+                    type={showSuPassword ? "text" : "password"}
+                    value={suPassword}
+                    onChange={e => setSuPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-lg text-[13px] outline-none transition-all"
+                    style={inputStyle}
+                    onFocus={e => (e.target.style.borderColor = '#e86c2d')}
+                    onBlur={e => (e.target.style.borderColor = '#2a3a50')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSuPassword(!showSuPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ca4c0] hover:text-white transition-colors cursor-pointer"
+                  >
+                    {showSuPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              {suError && (
+                <div className="px-3.5 py-2.5 rounded-lg text-[12px] font-medium" style={{ background: '#3a1a1a', color: '#f87171', border: '1px solid #5a2a2a' }}>
+                  {suError}
+                </div>
+              )}
+              {suSuccess && (
+                <div className="px-3.5 py-2.5 rounded-lg text-[12px] font-medium" style={{ background: '#0f2a1a', color: '#34d399', border: '1px solid #1a5a30' }}>
+                  Account created! Check your email to confirm your address.
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={suLoading}
+                className="w-full py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all mt-1 cursor-pointer"
+                style={{ background: suLoading ? '#a04d1e' : '#e86c2d', cursor: suLoading ? 'not-allowed' : 'pointer' }}
+              >
+                {suLoading ? 'Creating account…' : 'Create account'}
               </button>
             </form>
           )}
