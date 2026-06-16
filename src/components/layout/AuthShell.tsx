@@ -47,13 +47,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ background: '#0f1623' }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#e86c2d' }}>
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-            </svg>
-          </div>
+        <div className="flex flex-col items-center gap-4">
+          <img src="/logo.png" alt="Xyrenis" className="h-16 w-auto object-contain animate-pulse" />
           <p className="text-[13px] font-medium" style={{ color: '#8ca4c0' }}>Loading Xyrenis…</p>
         </div>
       </div>

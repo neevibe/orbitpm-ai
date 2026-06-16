@@ -53,13 +53,7 @@ export default function ChangePasswordPage() {
       <div className="w-full max-w-[420px]">
         {/* Logo */}
         <div className="flex items-center gap-2.5 mb-10">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#e86c2d' }}>
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-            </svg>
-          </div>
-          <span className="text-white font-bold text-lg tracking-tight">Xyrenis</span>
+          <img src="/logo.png" alt="Xyrenis" className="h-10 w-auto object-contain" />
         </div>
 
         {/* Welcome banner */}

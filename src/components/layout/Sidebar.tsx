@@ -91,16 +91,8 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-[212px] bg-[var(--color-x-surface)] border-r border-[var(--color-x-border)] flex flex-col z-40 select-none">
       {/* Logo */}
-      <div className="h-[52px] flex items-center gap-2.5 px-5 border-b border-[var(--color-x-border)]">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-sm">
-          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-          </svg>
-        </div>
-        <div>
-          <h1 className="text-[14px] font-extrabold tracking-tight text-[var(--color-x-text)] leading-none">Xyrenis</h1>
-          <p className="text-[9px] font-semibold text-[var(--color-x-text-muted)] tracking-[0.12em] uppercase mt-px">Work OS</p>
-        </div>
+      <div className="h-[52px] flex items-center px-4 border-b border-[var(--color-x-border)]">
+        <img src="/logo.png" alt="Xyrenis" className="h-8 w-auto object-contain" style={{ maxWidth: 150 }} />
       </div>
 
       {/* Workspace Selector */}

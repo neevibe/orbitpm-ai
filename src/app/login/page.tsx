@@ -107,15 +107,7 @@ export default function LoginPage() {
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-[460px] flex-shrink-0 p-12" style={{ background: '#131e2e' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#e86c2d' }}>
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-white font-bold text-lg tracking-tight">Xyrenis</span>
-          </div>
+          <img src="/logo.png" alt="Xyrenis Logo" className="h-14 w-auto object-contain" />
         </div>
 
         <div>
@@ -151,13 +143,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#e86c2d' }}>
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-              </svg>
-            </div>
-            <span className="text-white font-bold text-base">Xyrenis</span>
+            <img src="/logo.png" alt="Xyrenis" className="h-10 w-auto object-contain" />
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">
