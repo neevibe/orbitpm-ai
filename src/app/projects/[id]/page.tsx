@@ -25,6 +25,9 @@ export default function ProjectDetailPage() {
   const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
   const [allocationsForm, setAllocationsForm] = useState<Allocation[]>([]);
+  const [isSplitWizardOpen, setIsSplitWizardOpen] = useState(false);
+  const [splitCount, setSplitCount] = useState<number>(2);
+  const [splitsForm, setSplitsForm] = useState<{ department: string, owner: string, percentage: number }[]>([]);
 
   if (!project) return (
     <div className="flex items-center justify-center h-[60vh]">
@@ -52,10 +55,6 @@ export default function ProjectDetailPage() {
     setNewTaskName('');
     setNewTaskAssignee('');
   };
-
-  const [isSplitWizardOpen, setIsSplitWizardOpen] = useState(false);
-  const [splitCount, setSplitCount] = useState<number>(2);
-  const [splitsForm, setSplitsForm] = useState<{ department: string, owner: string, percentage: number }[]>([]);
 
   const openSplitWizard = () => {
     setSplitCount(2);
