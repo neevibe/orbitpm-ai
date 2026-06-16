@@ -86,30 +86,37 @@ export async function POST(request: NextRequest) {
       { role: 'user', parts: [{ text: message }] },
     ];
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt + contextBlock }] },
-          contents: contentsPayload,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-        }),
+    try {
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt + contextBlock }] },
+            contents: contentsPayload,
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+          }),
+        }
+      );
+
+      if (!geminiResponse.ok) {
+        const mockResponse = buildSmartMockResponse(message, stats);
+        return NextResponse.json({ response: mockResponse, source: 'mock-fallback' });
       }
-    );
 
-    if (!geminiResponse.ok) {
+      const geminiData = await geminiResponse.json();
+      const responseText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ??
+        buildSmartMockResponse(message, stats);
+
+      return NextResponse.json({ response: responseText, source: 'gemini' });
+    } catch (fetchError) {
+      console.error('Fetch to Gemini failed, falling back to mock:', fetchError);
       const mockResponse = buildSmartMockResponse(message, stats);
-      return NextResponse.json({ response: mockResponse, source: 'mock-fallback' });
+      return NextResponse.json({ response: mockResponse, source: 'mock-fallback-exception' });
     }
-
-    const geminiData = await geminiResponse.json();
-    const responseText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ??
-      buildSmartMockResponse(message, stats);
-
-    return NextResponse.json({ response: responseText, source: 'gemini' });
-  } catch {
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+  } catch (err: any) {
+    console.error('API route failed:', err);
+    return NextResponse.json({ error: 'Failed to process request: ' + err.message }, { status: 500 });
   }
 }
