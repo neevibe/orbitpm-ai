@@ -246,17 +246,17 @@ export default function ProjectsPage() {
 
                     {/* Project Rows */}
                     {!isCollapsed && (
-                      <div className="bg-[var(--color-x-surface)]">
-                        <table className="x-table w-full">
+                      <div className="bg-[var(--color-x-surface)] overflow-x-auto">
+                        <table className="x-table w-full table-fixed min-w-[880px]">
                           <thead>
                             <tr>
-                              <th className="w-24 pl-5">ID</th>
+                              <th className="w-20 pl-5">ID</th>
                               <th>Project Name</th>
-                              <th className="w-48">Owner</th>
-                              <th className="w-32">Status</th>
-                              <th className="w-28">Priority</th>
-                              <th className="w-40">Progress</th>
-                              <th className="w-16 text-right pr-5"></th>
+                              <th className="w-40">Owner</th>
+                              <th className="w-28">Status</th>
+                              <th className="w-24">Priority</th>
+                              <th className="w-36">Progress</th>
+                              <th className="w-12 text-right pr-5"></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -264,12 +264,12 @@ export default function ProjectsPage() {
                               <tr key={p.id} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
                                 <td className="pl-5 font-mono text-[11px] text-[var(--color-x-text-muted)]">{p.id}</td>
                                 <td>
-                                  <div className="flex items-center gap-2.5">
+                                  <div className="flex items-center gap-2.5 min-w-0">
                                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
-                                    <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors">{p.name}</span>
+                                    <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
                                   </div>
                                 </td>
-                                <td>{p.owner}</td>
+                                <td className="truncate" title={p.owner}>{p.owner}</td>
                                 <td>
                                   <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{p.status}</span>
                                 </td>
