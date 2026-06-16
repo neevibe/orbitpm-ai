@@ -244,7 +244,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="Xyrenis" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
+            <img src="/logo.svg?v=2" alt="Xyrenis" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
           </div>
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: 30 }}>
             {['Features', 'Solutions', 'Resources', 'Pricing'].map(l => (
@@ -470,7 +470,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 30, marginBottom: 34 }}>
             <div style={{ maxWidth: 280 }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
-                <img src="/logo.png" alt="Xyrenis" style={{ height: 32, width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                <img src="/logo.svg?v=2" alt="Xyrenis" style={{ height: 32, width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
               </div>
               <p style={{ fontSize: 13, color: '#7e93ad', lineHeight: 1.6 }}>The AI-powered Enterprise Work Operating System.</p>
             </div>

@@ -21,7 +21,7 @@ export default function ClientShell({ children }: { children: React.ReactNode })
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ background: '#f8f9fa' }}>
         <div className="flex flex-col items-center gap-4">
-          <img src="/logo.png" alt="Xyrenis" className="h-14 w-auto object-contain animate-pulse" />
+          <img src="/logo.svg?v=2" alt="Xyrenis" className="h-14 w-auto object-contain animate-pulse" />
           <p className="text-[13px] text-[#64748b] font-medium">Loading Xyrenis...</p>
         </div>
       </div>

@@ -107,7 +107,7 @@ export default function LoginPage() {
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-[460px] flex-shrink-0 p-12" style={{ background: '#131e2e' }}>
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Xyrenis Logo" className="h-14 w-auto object-contain" />
+          <img src="/logo.svg?v=2" alt="Xyrenis Logo" className="h-14 w-auto object-contain" />
         </div>
 
         <div>
@@ -143,7 +143,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <img src="/logo.png" alt="Xyrenis" className="h-10 w-auto object-contain" />
+            <img src="/logo.svg?v=2" alt="Xyrenis" className="h-10 w-auto object-contain" />
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">
