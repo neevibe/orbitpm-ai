@@ -105,19 +105,20 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex" style={{ background: '#0f1623' }}>
       {/* Left panel — branding */}
-      <div className="hidden lg:flex flex-col justify-between w-[460px] flex-shrink-0 p-12" style={{ background: '#131e2e' }}>
-        <div className="flex items-center gap-3">
-          <img src="/logo.svg?v=2" alt="Xyrenis Logo" className="h-14 w-auto object-contain" />
-        </div>
+      <div className="hidden lg:flex flex-col justify-between w-[500px] flex-shrink-0 px-16 py-12" style={{ background: 'linear-gradient(135deg, #0f1623 0%, #1a2638 100%)' }}>
+        <div className="flex flex-col gap-8">
+          <div className="flex items-start">
+            <img src="/logo.svg?v=3" alt="Xyrenis Logo" className="h-20 w-auto object-contain" />
+          </div>
 
-        <div>
-          <p className="text-[12px] font-semibold mb-5 tracking-widest" style={{ color: '#e86c2d' }}>ENTERPRISE WORK OS</p>
-          <h1 className="text-[36px] font-bold text-white leading-tight mb-5">
-            One platform.<br />Every project.<br />Total clarity.
-          </h1>
-          <p className="text-[14px] leading-relaxed" style={{ color: '#8ca4c0' }}>
-            AI-powered project governance, portfolio intelligence, workforce management, and knowledge collaboration — built for modern enterprise scale.
-          </p>
+          <div>
+            <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#e86c2d' }}>Enterprise Platform</p>
+            <h1 className="text-[42px] font-bold text-white leading-tight mb-4">
+              Manage projects.<br />Manage them<br /><span style={{ color: '#e86c2d' }}>brilliantly.</span>
+            </h1>
+            <p className="text-sm leading-relaxed" style={{ color: '#a0b0c8' }}>
+              Project governance, portfolio intelligence, AI copilot, and workforce planning — unified in one platform.
+            </p>
           <div className="mt-10 flex flex-col gap-5">
             {[
               { icon: '◎', label: 'Portfolio Intelligence', desc: 'Real-time health across all programs' },
@@ -143,7 +144,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <img src="/logo.svg?v=2" alt="Xyrenis" className="h-10 w-auto object-contain" />
+            <img src="/logo.svg?v=3" alt="Xyrenis" className="h-16 w-auto object-contain" />
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">
