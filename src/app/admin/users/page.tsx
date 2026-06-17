@@ -12,6 +12,9 @@ interface AdminUser {
   full_name: string;
   department: string | null;
   role: string;
+  permission: string;
+  userType: string;
+  account_status: string;
   last_sign_in_at: string | null;
 }
 
@@ -24,6 +27,15 @@ const ROLES = [
   { value: 'cco', label: 'CCO (super admin)' },
   { value: 'admin', label: 'Admin (super admin)' },
 ];
+const PERMISSIONS = [
+  { value: 'view', label: 'View — read only' },
+  { value: 'edit', label: 'Edit — edit own dept' },
+  { value: 'modify', label: 'Modify — add/edit/archive own dept' },
+  { value: 'admin', label: 'Admin — full access' },
+];
+const PERM_COLOR: Record<string, string> = {
+  view: '#16a34a', edit: '#3b82f6', modify: '#d97706', admin: '#dc2626',
+};
 
 export default function UserManagementPage() {
   const { isSuperAdmin, loading } = useAuth();
@@ -62,7 +74,7 @@ export default function UserManagementPage() {
     if (!loading && isSuperAdmin) load();
   }, [loading, isSuperAdmin, load]);
 
-  const updateUser = async (id: string, patch: { department?: string | null; role?: string }) => {
+  const updateUser = async (id: string, patch: { department?: string | null; role?: string; permission?: string; account_status?: string }) => {
     setSavingId(id);
     setError(null);
     // optimistic
@@ -88,6 +100,8 @@ export default function UserManagementPage() {
       u.full_name.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
       u.employee_code.includes(q) ||
+      (u.userType || '').toLowerCase().includes(q) ||
+      (u.permission || '').toLowerCase().includes(q) ||
       (u.department || '').toLowerCase().includes(q));
   }, [users, search]);
 
@@ -107,8 +121,9 @@ export default function UserManagementPage() {
 
   const counts = {
     total: users.length,
-    admins: users.filter(u => ['cco', 'admin', 'super_admin'].includes(u.role)).length,
-    unassigned: users.filter(u => !u.department && !['cco', 'admin', 'super_admin'].includes(u.role)).length,
+    admins: users.filter(u => u.permission === 'admin' || ['cco', 'admin', 'super_admin'].includes(u.role)).length,
+    external: users.filter(u => u.userType === 'external').length,
+    unassigned: users.filter(u => u.permission === 'view').length,
   };
 
   return (
@@ -132,7 +147,7 @@ export default function UserManagementPage() {
 
       {/* stat chips */}
       <div className="flex items-center gap-3 flex-wrap">
-        {[['Total users', counts.total, '#0f172a'], ['Super admins', counts.admins, '#e86c2d'], ['No department (view-only)', counts.unassigned, '#dc2626']].map(([l, n, c]) => (
+        {[['Total users', counts.total, '#0f172a'], ['Super admins', counts.admins, '#e86c2d'], ['External users', counts.external, '#b45309'], ['View-only', counts.unassigned, '#16a34a']].map(([l, n, c]) => (
           <div key={l as string} className="px-4 py-2.5 rounded-xl bg-white border border-[#eef2f7]">
             <span className="text-[18px] font-extrabold mr-2" style={{ color: c as string }}>{n as number}</span>
             <span className="text-[12px] text-[#64748b] font-medium">{l}</span>
@@ -157,14 +172,14 @@ export default function UserManagementPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {['Employee', 'Code', 'Department', 'Role', ''].map(h => (
+                {['Employee', 'Type', 'Code', 'Department', 'Permission', 'Role', ''].map(h => (
                   <th key={h} className="text-left text-[10.5px] font-bold uppercase tracking-wider text-[#94a3b8] px-4 py-3 border-b border-[#eef2f7] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {fetching ? (
-                <tr><td colSpan={5} className="py-16 text-center text-[#94a3b8]"><Loader2 className="w-5 h-5 animate-spin inline" /></td></tr>
+                <tr><td colSpan={7} className="py-16 text-center text-[#94a3b8]"><Loader2 className="w-5 h-5 animate-spin inline" /></td></tr>
               ) : filtered.map(u => {
                 const isAdminRole = ['cco', 'admin', 'super_admin'].includes(u.role);
                 return (
@@ -180,6 +195,13 @@ export default function UserManagementPage() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-4 py-3 border-b border-[#f1f5f9]">
+                      {u.userType === 'external' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold" style={{ background: '#fef3c7', color: '#b45309' }}>External</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold" style={{ background: '#dbeafe', color: '#1d4ed8' }}>Internal</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 border-b border-[#f1f5f9] text-[12px] font-mono text-[#64748b]">{u.employee_code || '—'}</td>
                     <td className="px-4 py-3 border-b border-[#f1f5f9]">
                       <select
@@ -190,6 +212,17 @@ export default function UserManagementPage() {
                       >
                         <option value="">— None (view-only) —</option>
                         {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 border-b border-[#f1f5f9]">
+                      <select
+                        value={u.permission || 'view'}
+                        onChange={e => updateUser(u.id, { permission: e.target.value })}
+                        disabled={savingId === u.id}
+                        className="bg-white border rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-[#e86c2d] disabled:opacity-50 min-w-[150px]"
+                        style={{ color: PERM_COLOR[u.permission] || '#1e293b', borderColor: '#e2e8f0' }}
+                      >
+                        {PERMISSIONS.map(p => <option key={p.value} value={p.value} style={{ color: '#1e293b' }}>{p.label}</option>)}
                       </select>
                     </td>
                     <td className="px-4 py-3 border-b border-[#f1f5f9]">
@@ -210,7 +243,7 @@ export default function UserManagementPage() {
                 );
               })}
               {!fetching && filtered.length === 0 && (
-                <tr><td colSpan={5} className="py-12 text-center text-[13px] text-[#94a3b8]">No users match your search.</td></tr>
+                <tr><td colSpan={7} className="py-12 text-center text-[13px] text-[#94a3b8]">No users match your search.</td></tr>
               )}
             </tbody>
           </table>

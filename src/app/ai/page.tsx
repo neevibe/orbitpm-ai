@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import { Sparkles, Briefcase, BookOpen, BarChart3, Bot, User, Send, Zap, ChevronRight, RefreshCw } from 'lucide-react';
 
 const modes = [
@@ -72,31 +73,55 @@ function MessageBubble({ msg }: { msg: Message }) {
 
 export default function AICopilotPage() {
   const { kpi, projects, departments } = useData();
+  const { user, department } = useAuth();
   const [activeMode, setActiveMode] = useState('executive');
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([{
-    role: 'assistant',
-    content: `Hello! I'm your AI Copilot. I've analysed your portfolio of **${kpi.totalProjects} projects** across **${departments.length} departments**.\n\nI can help you with risk analysis, delivery forecasts, team capacity, and executive reporting. What would you like to explore?`,
-    timestamp: new Date(),
-  }]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const greetedRef = useRef(false);
+
+  const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'there';
+  const firstName = fullName.split(' ')[0];
+
+  const stats = useMemo(() => ({
+    inProgress: projects.filter(p => p.status === 'In Progress').length,
+    notStarted: projects.filter(p => p.status === 'Not Started').length,
+    // active projects owned by the signed-in user
+    mine: projects.filter(p => p.owner && fullName && p.owner.toLowerCase() === fullName.toLowerCase()).length,
+    // owners carrying 4+ active (non-completed) projects
+    overloaded: (() => {
+      const c = new Map<string, number>();
+      projects.filter(p => !/complete|done|closed/i.test(p.status) && p.owner).forEach(p => c.set(p.owner, (c.get(p.owner) || 0) + 1));
+      return [...c.values()].filter(n => n >= 4).length;
+    })(),
+  }), [projects, fullName]);
+
+  // Personalized, data-driven greeting.
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    const tod = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const bullets: string[] = [
+      `📌 **${kpi.totalProjects} active projects** (${stats.inProgress} in progress)`,
+    ];
+    if (stats.mine > 0) bullets.push(`📌 **${stats.mine}** owned by you`);
+    if (kpi.stuckProjects > 0) bullets.push(`⏰ **${kpi.stuckProjects}** due this week`);
+    if (kpi.delayed > 0) bullets.push(`⚠️ **${kpi.delayed}** delayed / need attention`);
+    if (kpi.openRisks > 0) bullets.push(`🛡️ **${kpi.openRisks}** open risks`);
+    return `🌞 ${tod}, ${firstName}! 🙏\n\nWelcome back to Xyrenis${department ? ` — ${department}` : ''}.\n\n${bullets.join('\n')}\n\nHow can I help you today?`;
+  }, [kpi, stats, firstName, department]);
+
+  // Seed (and refresh once data loads) the greeting, without clobbering a live chat.
+  useEffect(() => {
+    if (greetedRef.current) return;
+    setMessages(prev => (prev.length <= 1 ? [{ role: 'assistant', content: greeting, timestamp: new Date() }] : prev));
+    if (kpi.totalProjects > 0) greetedRef.current = true;
+  }, [greeting, kpi.totalProjects]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
-
-  const stats = useMemo(() => ({
-    totalProjects: kpi.totalProjects,
-    completed: kpi.completed,
-    delayed: kpi.delayed,
-    inProgress: projects.filter(p => p.status === 'In Progress').length,
-    notStarted: projects.filter(p => p.status === 'Not Started').length,
-    openRisks: kpi.openRisks,
-    stuckProjects: kpi.stuckProjects,
-    departments: departments.map(d => d.name),
-  }), [kpi, projects, departments]);
 
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -113,10 +138,9 @@ export default function AICopilotPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: trimmed,
-          history: newHistory.slice(-8).map(m => ({ role: m.role, content: m.content })),
+          messages: newHistory.slice(-12).map(m => ({ role: m.role, content: m.content })),
           mode: activeMode,
-          stats,
+          user: { name: fullName, department, role: (user?.user_metadata?.role as string) || 'user' },
         }),
       });
 
@@ -136,7 +160,7 @@ export default function AICopilotPage() {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [messages, isLoading, activeMode, stats]);
+  }, [messages, isLoading, activeMode, fullName, department, user]);
 
   const handleModeChange = (modeId: string) => {
     setActiveMode(modeId);
@@ -159,7 +183,7 @@ export default function AICopilotPage() {
 
   const insights = [
     { title: 'Delivery Risk', desc: `${kpi.delayed} projects past target date need attention.`, dot: 'bg-red-500', prompt: 'Which projects are delayed and what are the root causes?' },
-    { title: 'Resource Alert', desc: '3 PMs handling 4+ projects — above threshold.', dot: 'bg-amber-500', prompt: 'Who is overloaded and how should we redistribute?' },
+    { title: 'Resource Alert', desc: stats.overloaded > 0 ? `${stats.overloaded} owner${stats.overloaded > 1 ? 's' : ''} handling 4+ active projects.` : 'Team workload is balanced — no one over 4 active projects.', dot: stats.overloaded > 0 ? 'bg-amber-500' : 'bg-emerald-500', prompt: 'Who is overloaded and how should we redistribute?' },
     { title: 'Portfolio Health', desc: `Completion rate at ${kpi.totalProjects > 0 ? Math.round((kpi.completed / kpi.totalProjects) * 100) : 0}% — tracking positively.`, dot: 'bg-emerald-500', prompt: 'Generate an executive portfolio health summary' },
   ];
 

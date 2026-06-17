@@ -41,13 +41,21 @@ function isInternalEmail(email: string): boolean {
 }
 
 function derivePermission(user: User | null): Permission {
+  // 1. An explicit permission set by an admin always wins.
   const p = user?.user_metadata?.permission as Permission | undefined;
   if (p && p in PERM_RANK) return p;
+  // 2. Admin / CCO roles are unconditionally admin.
   const role = (user?.user_metadata?.role as string) ?? 'user';
   if (ADMIN_ROLES.includes(role)) return 'admin';
-  // neeraj.p@bialairport.com is always admin
   if (user?.email?.toLowerCase() === 'neeraj.p@bialairport.com') return 'admin';
-  return 'view'; // default: View-Only until admin grants more
+  // 3. A user mapped to a department gets working authority over that department
+  //    by default (add / edit / archive in own dept) — assigning a department is
+  //    meant to grant access, not leave the user stuck in view-only. Admins can
+  //    still raise to 'admin' or lower to 'edit' / 'view' explicitly.
+  const dept = (user?.user_metadata?.department as string | undefined)?.trim();
+  if (dept) return 'modify';
+  // 4. No department, no explicit grant → View-Only (internal default & external).
+  return 'view';
 }
 
 function deriveUserType(user: User | null): UserType {
@@ -98,6 +106,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  /** Best-effort client → audit log (login / logout). Never blocks or throws. */
+  const logAuthEvent = (
+    action: 'auth.login' | 'auth.logout' | 'auth.login_failed',
+    opts?: { token?: string; email?: string; status?: 'success' | 'failure' },
+  ) => {
+    try {
+      fetch('/api/audit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(opts?.token ? { Authorization: `Bearer ${opts.token}` } : {}),
+        },
+        body: JSON.stringify({
+          action,
+          module: 'auth',
+          status: opts?.status ?? (action === 'auth.login_failed' ? 'failure' : 'success'),
+          entityType: 'session',
+          entityName: opts?.email,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch { /* ignore */ }
+  };
+
   const signIn = async (email: string, password: string) => {
     const emailLower = email.trim().toLowerCase();
 
@@ -135,7 +167,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      logAuthEvent('auth.login_failed', { email: emailLower });
+    } else {
+      logAuthEvent('auth.login', { token: data.session?.access_token, email: emailLower });
+    }
     return { error: error?.message ?? null };
   };
 
@@ -147,24 +184,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return signIn(email, password);
     }
 
-    const internal = isInternalEmail(emailLower);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role: 'user',
-          permission: 'view',
-          userType: internal ? 'internal' : 'external',
-          must_change_password: false,
-        },
-        emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : 'https://orbitpm-ai.vercel.app'}/login`,
-      },
-    });
+    // Activation-first registration.
+    //
+    // Every BIAL employee is *pre-provisioned* in Supabase (via the employee
+    // master). A plain supabase.auth.signUp() therefore fails with
+    // "User already registered". Instead we hit a server route that:
+    //   • finds the pre-provisioned account and lets the user set their own
+    //     password + activate it (inheriting their department / role), OR
+    //   • creates a brand-new external account if the email isn't pre-provisioned.
+    // Either way no confirmation email is sent.
+    let res: Response;
+    try {
+      res = await fetch('/api/auth/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLower, password }),
+      });
+    } catch {
+      return { error: 'Could not reach the server. Please try again.' };
+    }
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { error: json.error || 'Registration failed. Please try again.' };
+    }
+
+    // Account is ready — sign the user straight in (no email round-trip).
+    const { error } = await supabase.auth.signInWithPassword({ email: emailLower, password });
     return { error: error?.message ?? null };
   };
 
   const signOut = async () => {
+    // Capture the token before the session is torn down so the actor resolves.
+    const token = session?.access_token;
+    logAuthEvent('auth.logout', { token, email: user?.email ?? undefined });
     await supabase.auth.signOut();
   };
 

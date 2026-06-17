@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { DataProvider } from '@/lib/data-context';
@@ -24,6 +24,30 @@ function Shell({ children }: { children: React.ReactNode }) {
   const isLanding = pathname === '/';
   const mustChangePassword = user?.user_metadata?.must_change_password === true;
 
+  const [playReveal, setPlayReveal] = useState(false);
+  const [fadingOut, setFadingOut] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const show = sessionStorage.getItem('play_reveal') === 'true';
+      if (show) {
+        setPlayReveal(true);
+        sessionStorage.removeItem('play_reveal');
+        
+        const fadeTimer = setTimeout(() => setFadingOut(true), 2300);
+        const doneTimer = setTimeout(() => {
+          setPlayReveal(false);
+          setFadingOut(false);
+        }, 2800);
+        
+        return () => {
+          clearTimeout(fadeTimer);
+          clearTimeout(doneTimer);
+        };
+      }
+    }
+  }, [pathname]);
+
   useEffect(() => {
     if (loading) return;
 
@@ -42,6 +66,25 @@ function Shell({ children }: { children: React.ReactNode }) {
       router.replace(HOME);
     }
   }, [user, loading, isStandalone, isAuthPath, isLanding, mustChangePassword, pathname, router]);
+
+  // Logo Reveal Animation Overlay
+  if (playReveal) {
+    return (
+      <div 
+        className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black transition-opacity duration-500 ${
+          fadingOut ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <video 
+          src="/logo-reveal.mp4" 
+          autoPlay 
+          muted 
+          playsInline 
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
 
   // Loading splash
   if (loading) {
