@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Auto-runs before every commit. Keeps the locked Xyrenis logo consistent.
+bash scripts/verify-logo.sh || exit 1
