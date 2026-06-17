@@ -91,9 +91,8 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-[212px] bg-[var(--color-x-surface)] border-r border-[var(--color-x-border)] flex flex-col z-40 select-none">
       {/* Logo */}
-      <div className="flex flex-col items-center justify-center gap-0.5 py-4 px-3 border-b border-[var(--color-x-border)]">
+      <div className="flex items-center justify-center py-4 px-3 border-b border-[var(--color-x-border)]">
         <img src="/logo.svg?v=3" alt="Xyrenis" className="h-14 w-auto object-contain" />
-        <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color: 'var(--color-x-text-muted)' }}>Where Work Makes Sense</span>
       </div>
 
       {/* Workspace Selector */}
