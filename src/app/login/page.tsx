@@ -119,6 +119,8 @@ export default function LoginPage() {
             <p className="text-sm leading-relaxed" style={{ color: '#a0b0c8' }}>
               Project governance, portfolio intelligence, AI copilot, and workforce planning — unified in one platform.
             </p>
+          </div>
+
           <div className="mt-10 flex flex-col gap-5">
             {[
               { icon: '◎', label: 'Portfolio Intelligence', desc: 'Real-time health across all programs' },
