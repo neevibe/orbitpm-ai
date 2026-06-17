@@ -243,9 +243,11 @@ export default function LandingPage() {
         transition: 'all .3s ease',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.svg?v=3" alt="Xyrenis" style={{ height: 52, width: 'auto', objectFit: 'contain' }} />
-          </div>
+          <a href="#" style={{ display: 'flex', alignItems: 'center', transition: 'opacity .2s ease' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
+            <img src="/logo-mark.png" alt="Xyrenis" style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block' }} />
+          </a>
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: 30 }}>
             {['Features', 'Solutions', 'Resources', 'Pricing'].map(l => (
               <a key={l} href={`#${l.toLowerCase()}`} style={navLink}
@@ -470,7 +472,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 30, marginBottom: 34 }}>
             <div style={{ maxWidth: 280 }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
-                <img src="/logo.svg?v=2" alt="Xyrenis" style={{ height: 32, width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block' }} />
               </div>
               <p style={{ fontSize: 13, color: '#7e93ad', lineHeight: 1.6 }}>The AI-powered Enterprise Work Operating System.</p>
             </div>

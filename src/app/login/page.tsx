@@ -117,7 +117,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col justify-between w-[500px] flex-shrink-0 px-16 py-12" style={{ background: 'linear-gradient(135deg, #0f1623 0%, #1a2638 100%)' }}>
         <div className="flex flex-col gap-8">
           <div className="flex items-start logo-anim">
-            <img src="/logo.svg?v=3" alt="Xyrenis Logo" className="h-24 w-auto object-contain" />
+            <img src="/logo-mark-white.png" alt="Xyrenis Logo" className="h-14 w-auto object-contain" />
           </div>
 
           <div className="headline-anim">
@@ -155,7 +155,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px] form-anim">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <img src="/logo.svg?v=3" alt="Xyrenis" className="h-16 w-auto object-contain" />
+            <img src="/logo-mark-white.png" alt="Xyrenis" className="h-11 w-auto object-contain" />
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">

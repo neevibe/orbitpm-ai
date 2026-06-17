@@ -91,8 +91,8 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-[212px] bg-[var(--color-x-surface)] border-r border-[var(--color-x-border)] flex flex-col z-40 select-none">
       {/* Logo */}
-      <div className="flex items-center justify-center py-4 px-3 border-b border-[var(--color-x-border)]">
-        <img src="/logo.svg?v=3" alt="Xyrenis" className="h-14 w-auto object-contain" />
+      <div className="h-[52px] flex items-center px-4 border-b border-[var(--color-x-border)]">
+        <img src="/logo-mark.png" alt="Xyrenis" className="w-[168px] h-auto object-contain transition-opacity duration-200 hover:opacity-75" />
       </div>
 
       {/* Workspace Selector */}
