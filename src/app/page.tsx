@@ -242,9 +242,10 @@ export default function LandingPage() {
         borderBottom: `1px solid ${scrolled ? '#eef1f6' : 'transparent'}`,
         transition: 'all .3s ease',
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.svg?v=2" alt="Xyrenis" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0 }}>
+            <img src="/logo.svg?v=3" alt="Xyrenis" style={{ height: 52, width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', color: '#94a3b8', marginTop: -2, textTransform: 'uppercase' }}>Where Work Makes Sense</span>
           </div>
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: 30 }}>
             {['Features', 'Solutions', 'Resources', 'Pricing'].map(l => (

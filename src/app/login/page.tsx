@@ -116,8 +116,9 @@ export default function LoginPage() {
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-[500px] flex-shrink-0 px-16 py-12" style={{ background: 'linear-gradient(135deg, #0f1623 0%, #1a2638 100%)' }}>
         <div className="flex flex-col gap-8">
-          <div className="flex items-start logo-anim">
-            <img src="/logo.svg?v=3" alt="Xyrenis Logo" className="h-20 w-auto object-contain" />
+          <div className="flex flex-col gap-1 logo-anim">
+            <img src="/logo.svg?v=3" alt="Xyrenis Logo" className="h-24 w-auto object-contain" />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#e86c2d', textTransform: 'uppercase' }}>Where Work Makes Sense</span>
           </div>
 
           <div className="headline-anim">
