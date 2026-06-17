@@ -53,7 +53,7 @@ export default function ChangePasswordPage() {
       <div className="w-full max-w-[420px]">
         {/* Logo */}
         <div className="flex items-center gap-2.5 mb-10">
-          <img src="/logo.svg?v=2" alt="Xyrenis" className="h-10 w-auto object-contain" />
+          <img src="/logo-mark-white.png" alt="Xyrenis" className="h-9 w-auto object-contain" />
         </div>
 
         {/* Welcome banner */}

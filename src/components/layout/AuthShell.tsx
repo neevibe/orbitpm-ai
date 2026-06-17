@@ -91,7 +91,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ background: '#0f1623' }}>
         <div className="flex flex-col items-center gap-4">
-          <img src="/logo.svg?v=2" alt="Xyrenis" className="h-16 w-auto object-contain animate-pulse" />
+          <img src="/logo-mark-white.png" alt="Xyrenis" className="h-12 w-auto object-contain animate-pulse" />
           <p className="text-[13px] font-medium" style={{ color: '#8ca4c0' }}>Loading Xyrenis…</p>
         </div>
       </div>
