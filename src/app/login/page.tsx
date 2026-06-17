@@ -104,14 +104,23 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0f1623' }}>
+      <style>{`
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .logo-anim { animation: slideInLeft 0.8s ease-out; }
+        .headline-anim { animation: slideInUp 0.8s ease-out 0.15s both; }
+        .features-anim { animation: fadeIn 0.8s ease-out 0.3s both; }
+        .form-anim { animation: slideInUp 0.8s ease-out 0.2s both; }
+      `}</style>
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-[500px] flex-shrink-0 px-16 py-12" style={{ background: 'linear-gradient(135deg, #0f1623 0%, #1a2638 100%)' }}>
         <div className="flex flex-col gap-8">
-          <div className="flex items-start">
+          <div className="flex items-start logo-anim">
             <img src="/logo.svg?v=3" alt="Xyrenis Logo" className="h-20 w-auto object-contain" />
           </div>
 
-          <div>
+          <div className="headline-anim">
             <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#e86c2d' }}>Enterprise Platform</p>
             <h1 className="text-[42px] font-bold text-white leading-tight mb-4">
               Manage projects.<br />Manage them<br /><span style={{ color: '#e86c2d' }}>brilliantly.</span>
@@ -121,7 +130,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-10 flex flex-col gap-5">
+          <div className="mt-10 flex flex-col gap-5 features-anim">
             {[
               { icon: '◎', label: 'Portfolio Intelligence', desc: 'Real-time health across all programs' },
               { icon: '⬡', label: 'AI Copilot', desc: 'Proactive insights and risk detection' },
@@ -143,7 +152,7 @@ export default function LoginPage() {
 
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-[400px] form-anim">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
             <img src="/logo.svg?v=3" alt="Xyrenis" className="h-16 w-auto object-contain" />
