@@ -10,9 +10,30 @@ const supabaseAnonKey =
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
   }
 });
 
 export const isSupabaseConfigured = () => {
   return supabaseUrl.length > 0 && supabaseAnonKey.length > 0;
 };
+
+/**
+ * Return a VALID access token for authed API calls, refreshing it first if the
+ * stored one is expired or about to expire. `getSession()` alone can hand back a
+ * stale token (the background refresh timer may not have fired if the tab slept),
+ * which the server then rejects as "Invalid or expired session". Returns null if
+ * there is no recoverable session (caller should send the user to log in).
+ */
+export async function getAccessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+  if (!session) return null;
+  const expiresInMs = (session.expires_at ?? 0) * 1000 - Date.now();
+  if (expiresInMs < 60_000) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    return refreshed.session?.access_token ?? null;
+  }
+  return session.access_token;
+}

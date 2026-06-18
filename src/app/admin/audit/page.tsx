@@ -6,7 +6,7 @@ import {
   Users, UserCheck, LogIn, ShieldX, KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/supabase';
 
 interface AuditRow {
   id: string;
@@ -80,8 +80,7 @@ export default function AuditDashboardPage() {
   const [status, setStatus] = useState('');
 
   const authedFetch = useCallback(async (qs: string) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
+    const token = await getAccessToken();
     return fetch(`/api/audit${qs}`, { headers: { Authorization: `Bearer ${token ?? ''}` } });
   }, []);
 

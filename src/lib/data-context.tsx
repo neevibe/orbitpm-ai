@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { supabase, isSupabaseConfigured } from './supabase';
+import { supabase, isSupabaseConfigured, getAccessToken } from './supabase';
 import { useAuth } from './auth-context';
 import { generateProjectId, daysUntil } from './utils';
 import {
@@ -21,11 +21,10 @@ import {
  */
 async function persistProjectMutation(body: Record<string, unknown>) {
   try {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token || '';
+    const token = await getAccessToken();
     await fetch('/api/projects', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
       body: JSON.stringify(body),
     });
   } catch (err) {

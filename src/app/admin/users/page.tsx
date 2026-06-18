@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShieldAlert, Search, Check, Loader2, UserCog, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/supabase';
 
 interface AdminUser {
   id: string;
@@ -47,8 +47,7 @@ export default function UserManagementPage() {
   const [savedId, setSavedId] = useState<string | null>(null);
 
   const authedFetch = useCallback(async (init?: RequestInit) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
+    const token = await getAccessToken();
     return fetch('/api/admin/users', {
       ...init,
       headers: { ...(init?.headers || {}), Authorization: `Bearer ${token ?? ''}`, 'Content-Type': 'application/json' },
