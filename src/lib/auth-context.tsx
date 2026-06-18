@@ -88,11 +88,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
-      setSession(data.session);
       if (data.session) {
-        const { data: fresh } = await supabase.auth.getUser();
-        setUser(fresh.user ?? data.session.user);
+        // Validate the stored session against the server. If the access token is
+        // dead, try ONE refresh; if that also fails the session is unusable, so
+        // sign out cleanly — otherwise the app would let the user in with a dead
+        // token and every authed call would 401 ("Invalid or expired session").
+        const { data: fresh, error } = await supabase.auth.getUser();
+        if (!error && fresh.user) {
+          setSession(data.session);
+          setUser(fresh.user);
+        } else {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          if (refreshed.session) {
+            const { data: u } = await supabase.auth.getUser();
+            setSession(refreshed.session);
+            setUser(u.user ?? refreshed.session.user);
+          } else {
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+          }
+        }
       } else {
+        setSession(null);
         setUser(null);
       }
       setLoading(false);
