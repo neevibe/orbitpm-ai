@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShieldAlert, Search, Check, Loader2, UserCog, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { getAccessToken } from '@/lib/supabase';
+import { getAccessToken, signOutAndRelogin } from '@/lib/supabase';
 
 interface AdminUser {
   id: string;
@@ -59,6 +59,7 @@ export default function UserManagementPage() {
     setError(null);
     try {
       const res = await authedFetch();
+      if (res.status === 401) { await signOutAndRelogin(); return; }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load users');
       setUsers(json.users);

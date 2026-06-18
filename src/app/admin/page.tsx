@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { getAccessToken } from '@/lib/supabase';
+import { getAccessToken, signOutAndRelogin } from '@/lib/supabase';
 import { BIAL_EMPLOYEES, DEPARTMENTS } from '@/lib/employee-data';
 
 interface PersistentAuditRow {
@@ -95,6 +95,7 @@ export default function AdminPage() {
       try {
         const token = await getAccessToken();
         const res = await fetch('/api/audit?limit=200', { headers: { Authorization: `Bearer ${token ?? ''}` } });
+        if (res.status === 401) { await signOutAndRelogin(); return; }
         const json = await res.json();
         if (cancelled) return;
         setPersistentAudit(Array.isArray(json.rows) ? json.rows : []);

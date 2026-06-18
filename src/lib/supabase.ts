@@ -37,3 +37,14 @@ export async function getAccessToken(): Promise<string | null> {
   }
   return session.access_token;
 }
+
+/**
+ * Last-resort recovery when an authed API call still returns 401 (the stored
+ * session is dead and couldn't be refreshed). Clears the bad session and sends
+ * the user to log in cleanly, instead of leaving them on a page that shows
+ * "Invalid or expired session".
+ */
+export async function signOutAndRelogin(): Promise<void> {
+  try { await supabase.auth.signOut(); } catch { /* ignore */ }
+  if (typeof window !== 'undefined') window.location.href = '/login';
+}

@@ -6,7 +6,7 @@ import {
   Users, UserCheck, LogIn, ShieldX, KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { getAccessToken } from '@/lib/supabase';
+import { getAccessToken, signOutAndRelogin } from '@/lib/supabase';
 
 interface AuditRow {
   id: string;
@@ -95,6 +95,7 @@ export default function AuditDashboardPage() {
       if (status) params.set('status', status);
       if (search) params.set('search', search);
       const res = await authedFetch(`?${params.toString()}`);
+      if (res.status === 401) { await signOutAndRelogin(); return; }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load audit log');
       setRows(json.rows || []);
