@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FolderKanban, Briefcase, Users2,
   BookOpen, Sparkles, BarChart3, Zap, Puzzle,
   ShieldCheck, ChevronDown, AlertTriangle, Link2,
-  Settings, Search, Plane, UserCog
+  Settings, Search, Plane, UserCog, Activity
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useData } from '@/lib/data-context';
@@ -59,6 +59,7 @@ const workspaces = [
 
 // Admin-only items, appended to the Administration group for CCO / admins.
 const adminOnlyItem = { name: 'User Management', href: '/admin/users', icon: UserCog, accent: '#e86c2d' };
+const adminOnlyAudit = { name: 'Audit & Activity', href: '/admin/audit', icon: Activity, accent: '#0ea5e9' };
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -80,7 +81,7 @@ export default function Sidebar() {
   }, []);
 
   const nav = isSuperAdmin
-    ? workspaces.map(ws => (ws.items.some(i => i.href === '/admin') ? { ...ws, items: [...ws.items, adminOnlyItem] } : ws))
+    ? workspaces.map(ws => (ws.items.some(i => i.href === '/admin') ? { ...ws, items: [...ws.items, adminOnlyItem, adminOnlyAudit] } : ws))
     : workspaces;
 
   const isActive = (href: string) => {

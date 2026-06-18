@@ -14,6 +14,25 @@ import {
   type Department,
 } from './mock-data';
 
+/**
+ * POST a project/risk mutation to the server, attaching the caller's Supabase
+ * access token so the persistent audit trail can attribute the change to the
+ * real signed-in user (not a hardcoded name). Fire-and-forget; never throws.
+ */
+async function persistProjectMutation(body: Record<string, unknown>) {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token || '';
+    await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error('Error persisting mutation:', err);
+  }
+}
+
 // ============================================
 // TYPES
 // ============================================
@@ -274,11 +293,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }).catch(err => console.error('Error syncing project to local Excel:', err));
 
     if (isSupabaseConfigured()) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', project: newProject }),
-      }).catch(err => console.error('Error saving new project to database:', err));
+      persistProjectMutation({ action: 'create', project: newProject, audit: { entityName: newProject.name } });
     }
     return id;
   }, [projects, logAudit, notify, canModifyDepartment]);
@@ -308,13 +323,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       
       if (isSupabaseConfigured()) {
-        fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'update', project: { id }, updates }),
-        }).catch(err => console.error('Error updating project in database:', err));
+        persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } });
       }
-      
+
       updatedProj = { ...p, ...updates };
       return updatedProj;
     }));
@@ -405,11 +416,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: now } : p));
     if (isSupabaseConfigured()) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'archive', project: { id } }),
-      }).catch(err => console.error('Error archiving project in database:', err));
+      persistProjectMutation({ action: 'archive', project: { id }, audit: { entityName: project?.name } });
     }
   }, [projects, logAudit, notify, canModifyDepartment]);
 
@@ -436,11 +443,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false, archivedAt: undefined } : p));
     if (isSupabaseConfigured()) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'restore', project: { id } }),
-      }).catch(err => console.error('Error restoring project in database:', err));
+      persistProjectMutation({ action: 'restore', project: { id }, audit: { entityName: project?.name } });
     }
   }, [projects, logAudit, notify, canModifyDepartment]);
 
@@ -465,11 +468,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setProjects(prev => prev.filter(p => p.id !== id));
     setRisks(prev => prev.filter(r => r.projectId !== id));
     if (isSupabaseConfigured()) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', project: { id } }),
-      }).catch(err => console.error('Error purging project from database:', err));
+      persistProjectMutation({ action: 'delete', project: { id }, audit: { entityName: project?.name } });
     }
   }, [projects, logAudit, notify, canModifyDepartment]);
 
@@ -500,11 +499,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     logAudit({ action: 'create', entityType: 'risk', entityId: id, entityName: risk.description, changes: {} });
     notify('Risk Added', `New ${risk.impact} impact risk: ${risk.description.substring(0, 50)}...`, risk.impact === 'High' ? 'critical' : 'warning');
     if (isSupabaseConfigured()) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_risk', project: { id, ...risk } }),
-      }).catch(err => console.error('Error saving new risk to database:', err));
+      persistProjectMutation({ action: 'create_risk', project: { id, ...risk }, audit: { entityName: risk.description } });
     }
   }, [risks.length, logAudit, notify]);
 
@@ -513,11 +508,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (r.id !== id) return r;
       logAudit({ action: 'update', entityType: 'risk', entityId: id, entityName: r.description, changes: {} });
       if (isSupabaseConfigured()) {
-        fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'update_risk', project: { id }, updates }),
-        }).catch(err => console.error('Error updating risk in database:', err));
+        persistProjectMutation({ action: 'update_risk', project: { id }, updates, audit: { entityName: r.description } });
       }
       return { ...r, ...updates };
     }));
@@ -528,11 +519,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (risk) logAudit({ action: 'delete', entityType: 'risk', entityId: id, entityName: risk.description, changes: {} });
     setRisks(prev => prev.filter(r => r.id !== id));
     if (isSupabaseConfigured()) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete_risk', project: { id } }),
-      }).catch(err => console.error('Error deleting risk from database:', err));
+      persistProjectMutation({ action: 'delete_risk', project: { id }, audit: { entityName: risk?.description } });
     }
   }, [risks, logAudit]);
 

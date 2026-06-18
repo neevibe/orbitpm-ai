@@ -1,14 +1,27 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ShieldCheck, Users, KeyRound, Activity, Database, FileSpreadsheet,
   Upload, Download, Palette, Bell, Globe, Clock, Check, AlertCircle, Loader2,
   Search, RefreshCw, ChevronRight, Eye, Edit3, UserPlus,
-  Shield, UserCheck, UserX, X,
+  Shield, UserCheck, UserX, X, ExternalLink,
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { supabase } from '@/lib/supabase';
 import { BIAL_EMPLOYEES, DEPARTMENTS } from '@/lib/employee-data';
+
+interface PersistentAuditRow {
+  id: string;
+  actor_name: string | null;
+  actor_email: string | null;
+  action: string;
+  module: string | null;
+  entity_name: string | null;
+  status: string | null;
+  created_at: string;
+}
 
 const tabs = [
   { id: 'users', label: 'Users & Roles', icon: Users },
@@ -50,7 +63,7 @@ function buildUsers(): UserRecord[] {
 }
 
 export default function AdminPage() {
-  const { projects, risks, departments, auditLog, importProjects } = useData();
+  const { projects, risks, departments, importProjects } = useData();
   const [activeTab, setActiveTab] = useState('users');
   const [importStatus, setImportStatus] = useState<null | { type: 'success' | 'error'; message: string }>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -66,6 +79,33 @@ export default function AdminPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Permission>('view');
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
+
+  // Persistent audit trail (survives reloads) — loaded from the server when the tab opens.
+  const [persistentAudit, setPersistentAudit] = useState<PersistentAuditRow[]>([]);
+  const [auditTableReady, setAuditTableReady] = useState(true);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== 'audit') return;
+    let cancelled = false;
+    (async () => {
+      setAuditLoading(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token || '';
+        const res = await fetch('/api/audit?limit=200', { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json();
+        if (cancelled) return;
+        setPersistentAudit(Array.isArray(json.rows) ? json.rows : []);
+        setAuditTableReady(json.tableReady !== false);
+      } catch {
+        if (!cancelled) { setPersistentAudit([]); setAuditTableReady(true); }
+      } finally {
+        if (!cancelled) setAuditLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   const filteredUsers = useMemo(() => users.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -328,29 +368,46 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Audit Log */}
+      {/* Audit Log — persistent, server-backed (survives reloads) */}
       {activeTab === 'audit' && (
         <div className="space-y-3 animate-fade-in">
+          {!auditTableReady && (
+            <div className="px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-[12px] text-amber-800">
+              <strong>Audit table not found.</strong> Run <code className="font-mono">supabase/migrations/0002_audit_log.sql</code> in the Supabase SQL editor to start capturing a permanent activity trail.
+            </div>
+          )}
           <div className="x-card-flush">
             <div className="px-4 py-3 border-b border-[var(--color-x-border)] flex items-center justify-between">
-              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)]">Activity Log</h3>
-              <span className="text-[11px] text-[var(--color-x-text-muted)]">{auditLog.length} entries</span>
+              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-2">
+                Activity Log
+                {auditLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--color-x-text-muted)]" />}
+              </h3>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-[var(--color-x-text-muted)]">{persistentAudit.length} entries</span>
+                <Link href="/admin/audit" className="text-[11px] text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium">
+                  Full dashboard <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
-            {auditLog.length > 0 ? (
+            {persistentAudit.length > 0 ? (
               <div className="divide-y divide-[var(--color-x-border)]/50 max-h-[500px] overflow-y-auto">
-                {auditLog.map(entry => (
-                  <div key={entry.id} className="px-4 py-3 hover:bg-[var(--color-x-bg)] transition-colors">
-                    <div className="flex items-center gap-2">
-                      <span className={`x-badge text-[9px] ${entry.action === 'create' ? 'x-badge-green' : entry.action === 'delete' ? 'x-badge-red' : 'x-badge-blue'}`}>{entry.action}</span>
-                      <span className="text-[12px] text-[var(--color-x-text)]">{entry.entityName}</span>
-                      <span className="text-[10px] text-[var(--color-x-text-muted)] ml-auto flex items-center gap-1"><Clock className="w-3 h-3" />{entry.timestamp.toLocaleString()}</span>
+                {persistentAudit.map(entry => {
+                  const verb = entry.action.split('.')[1] || entry.action;
+                  const badge = verb.includes('create') ? 'x-badge-green' : verb.includes('delete') ? 'x-badge-red' : 'x-badge-blue';
+                  return (
+                    <div key={entry.id} className="px-4 py-3 hover:bg-[var(--color-x-bg)] transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className={`x-badge text-[9px] ${badge}`}>{entry.action}</span>
+                        <span className="text-[12px] text-[var(--color-x-text)]">{entry.entity_name || '—'}</span>
+                        <span className="text-[10px] text-[var(--color-x-text-muted)] ml-auto flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(entry.created_at).toLocaleString()}</span>
+                      </div>
+                      <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1">{entry.actor_name || entry.actor_email || 'Unknown user'} · {entry.module || 'system'}</p>
                     </div>
-                    <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1">{entry.user} · {entry.entityType}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="p-12 text-center"><Activity className="w-8 h-8 text-gray-300 mx-auto mb-2" /><p className="text-[12px] text-[var(--color-x-text-muted)]">No audit entries yet.</p></div>
+              <div className="p-12 text-center"><Activity className="w-8 h-8 text-gray-300 mx-auto mb-2" /><p className="text-[12px] text-[var(--color-x-text-muted)]">{auditLoading ? 'Loading activity…' : auditTableReady ? 'No activity recorded yet. Changes you make will appear here permanently.' : 'Run the migration to start capturing activity.'}</p></div>
             )}
           </div>
         </div>

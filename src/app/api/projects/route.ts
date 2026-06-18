@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { recordAudit, actorFromToken } from '@/lib/audit';
+
+// Maps the mutation action to a persistent audit action + module.
+const AUDIT_MAP: Record<string, { action: string; module: string; entityType: string }> = {
+  create:      { action: 'project.create',  module: 'projects', entityType: 'project' },
+  update:      { action: 'project.update',  module: 'projects', entityType: 'project' },
+  archive:     { action: 'project.archive', module: 'projects', entityType: 'project' },
+  restore:     { action: 'project.restore', module: 'projects', entityType: 'project' },
+  delete:      { action: 'project.delete',  module: 'projects', entityType: 'project' },
+  split:       { action: 'project.split',   module: 'projects', entityType: 'project' },
+  create_risk: { action: 'risk.create',     module: 'risks',    entityType: 'risk' },
+  update_risk: { action: 'risk.update',     module: 'risks',    entityType: 'risk' },
+  delete_risk: { action: 'risk.delete',     module: 'risks',    entityType: 'risk' },
+};
 
 // Fallbacks mirror src/lib/supabase.ts so the client never gets an empty URL at
 // build time (createClient('') throws "supabaseUrl is required" while Next.js
@@ -85,7 +99,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, project, updates, originalId, splits } = body;
+    const { action, project, updates, originalId, splits, audit } = body;
 
     // Fetch default organization ID
     const { data: orgs } = await supabase.from('organizations').select('id');
@@ -241,6 +255,30 @@ export async function POST(request: NextRequest) {
         archived_at: new Date().toISOString()
       }).eq('risk_code', project.id);
       if (error) throw error;
+    }
+
+    // ---- persistent audit trail (best-effort, never blocks the mutation) ----
+    const map = AUDIT_MAP[action];
+    if (map) {
+      const actor = await actorFromToken((request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim());
+      const changes: Record<string, { old: unknown; new: unknown }> | undefined = audit?.changes;
+      const previousValue = changes
+        ? Object.fromEntries(Object.entries(changes).map(([k, v]) => [k, v.old]))
+        : null;
+      const newValue = changes
+        ? Object.fromEntries(Object.entries(changes).map(([k, v]) => [k, v.new]))
+        : (action === 'create' || action === 'create_risk' ? project : updates ?? null);
+      await recordAudit({
+        actor,
+        action: map.action,
+        module: map.module,
+        entityType: map.entityType,
+        entityId: project?.id || originalId || null,
+        entityName: audit?.entityName || project?.name || project?.description || null,
+        previousValue,
+        newValue,
+        request,
+      });
     }
 
     return NextResponse.json({ success: true });
