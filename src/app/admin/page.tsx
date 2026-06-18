@@ -9,6 +9,7 @@ import {
   Shield, UserCheck, UserX, X, ExternalLink,
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { BIAL_EMPLOYEES, DEPARTMENTS } from '@/lib/employee-data';
 
@@ -64,6 +65,7 @@ function buildUsers(): UserRecord[] {
 
 export default function AdminPage() {
   const { projects, risks, departments, importProjects } = useData();
+  const { isSuperAdmin, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('users');
   const [importStatus, setImportStatus] = useState<null | { type: 'success' | 'error'; message: string }>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -185,6 +187,20 @@ export default function AdminPage() {
     } catch { setImportStatus({ type: 'error', message: 'Failed to read file' }); }
     setIsImporting(false); if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  /* ---- access gate: Administration is Super Admin only ---- */
+  if (authLoading) return null;
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-4">
+          <Shield className="w-7 h-7 text-red-500" />
+        </div>
+        <h1 className="text-[18px] font-bold text-[#0f172a]">Access restricted</h1>
+        <p className="text-[13px] text-[#64748b] mt-1 max-w-sm">The Administration area is available to Super Admin accounts only.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="x-page space-y-5">

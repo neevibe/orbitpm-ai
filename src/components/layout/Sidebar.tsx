@@ -64,7 +64,11 @@ const adminOnlyAudit = { name: 'Audit & Activity', href: '/admin/audit', icon: A
 export default function Sidebar() {
   const pathname = usePathname();
   const { kpi } = useData();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, user, role } = useAuth();
+
+  const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'User';
+  const userInitials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const roleLabel = isSuperAdmin ? 'Super Admin' : (role && role !== 'user' ? role.replace(/_/g, ' ') : 'Member');
 
   const [companyName, setCompanyName] = useState('Xyrenis Enterprise');
   const [initials, setInitials] = useState('XY');
@@ -80,9 +84,11 @@ export default function Sidebar() {
     }
   }, []);
 
+  // The entire Administration section (the group containing /admin) is visible to
+  // Super Admins only. Everyone else never sees it in the nav.
   const nav = isSuperAdmin
     ? workspaces.map(ws => (ws.items.some(i => i.href === '/admin') ? { ...ws, items: [...ws.items, adminOnlyItem, adminOnlyAudit] } : ws))
-    : workspaces;
+    : workspaces.filter(ws => !ws.items.some(i => i.href === '/admin'));
 
   const isActive = (href: string) => {
     if (href === '/command-center') return pathname === '/' || pathname === '/command-center' || pathname === '/dashboard';
@@ -154,14 +160,24 @@ export default function Sidebar() {
 
       {/* User */}
       <div className="p-3 border-t border-[var(--color-x-border)]">
-        <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white">NP</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight">Neeraj Prakash</p>
-            <p className="text-[10px] text-[var(--color-x-text-muted)]">Super Admin</p>
-          </div>
-          <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
-        </Link>
+        {(() => {
+          const chip = (
+            <>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white">{userInitials}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight truncate">{fullName}</p>
+                <p className="text-[10px] text-[var(--color-x-text-muted)] capitalize">{roleLabel}</p>
+              </div>
+              <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
+            </>
+          );
+          // Only Super Admins can reach the Administration area from the profile chip.
+          return isSuperAdmin ? (
+            <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">{chip}</Link>
+          ) : (
+            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg">{chip}</div>
+          );
+        })()}
       </div>
     </aside>
   );
