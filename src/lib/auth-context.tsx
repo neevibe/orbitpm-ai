@@ -151,40 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const emailLower = email.trim().toLowerCase();
 
-    // Demo/Admin bypass — try Supabase first, then fall back to mock session
-    if (emailLower === 'demo@xyrenis.com' || emailLower === 'neeraj.p@bialairport.com') {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (!error && data?.session) {
-        return { error: null };
-      }
-      // Mock session fallback
-      const mockUser = {
-        id: '00000000-0000-0000-0000-000000000001',
-        aud: 'authenticated',
-        role: 'authenticated',
-        email: emailLower,
-        user_metadata: {
-          role: 'admin',
-          permission: 'admin',
-          full_name: emailLower === 'neeraj.p@bialairport.com' ? 'Neeraj Prakash' : 'Demo Executive',
-          department: 'CCO',
-          employee_code: emailLower === 'neeraj.p@bialairport.com' ? '102754' : 'DEMO100',
-          must_change_password: false,
-        },
-        app_metadata: {},
-        created_at: new Date().toISOString(),
-      };
-      setUser(mockUser as any);
-      setSession({
-        access_token: 'mock_admin_token',
-        token_type: 'bearer',
-        expires_in: 3600,
-        refresh_token: 'mock_admin_refresh',
-        user: mockUser,
-      } as any);
-      return { error: null };
-    }
-
+    // Real Supabase auth only. (The old "mock session" fallback for admin/demo
+    // accounts created a fake 'mock_admin_token' that the server rejects — it
+    // made the UI look logged-in while every authed API call 401'd. Removed.)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       logAuthEvent('auth.login_failed', { email: emailLower });
