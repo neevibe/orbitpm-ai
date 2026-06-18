@@ -44,7 +44,9 @@ export default function ProjectsPage() {
       const matchDept = selectedDept === 'All' || p.department === selectedDept;
       const matchPriority = priorityFilter === 'All' || p.priority === priorityFilter;
       return matchSearch && matchStatus && matchDept && matchPriority;
-    });
+    })
+    // Default ordering: by serial number (ID), natural sort so PRX_2 < PRX_10.
+    .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
   }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter]);
 
   const deptGroups = useMemo(() => {
@@ -272,10 +274,10 @@ export default function ProjectsPage() {
                     {/* Project Rows */}
                     {!isCollapsed && (
                       <div className="bg-[var(--color-x-surface)] overflow-x-auto">
-                        <table className="x-table w-full table-fixed min-w-[880px]">
+                        <table className="x-table w-full table-fixed min-w-[940px]">
                           <thead>
                             <tr>
-                              <th className="w-20 pl-5">ID</th>
+                              <th className="w-32 pl-5">ID</th>
                               <th>Project Name</th>
                               <th className="w-36">Owner</th>
                               <th className="w-28">Status</th>
@@ -287,7 +289,7 @@ export default function ProjectsPage() {
                           <tbody>
                             {deptProjects.map(p => (
                               <tr key={p.id} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
-                                <td className="pl-5 font-mono text-[11px] text-[var(--color-x-text-muted)]">{p.id}</td>
+                                <td className="pl-5 pr-3 font-mono text-[11px] text-[var(--color-x-text-muted)] whitespace-nowrap truncate" title={p.id}>{p.id}</td>
                                 <td>
                                   <div className="flex items-center gap-2.5 min-w-0">
                                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
