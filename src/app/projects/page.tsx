@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
+import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
 
@@ -41,7 +42,9 @@ export default function ProjectsPage() {
       const q = search.toLowerCase();
       const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q);
       const matchStatus = statusFilter === 'All' || p.status === statusFilter;
-      const matchDept = selectedDept === 'All' || p.department === selectedDept;
+      // Fold CBB→BASL etc. so filtering matches the displayed vertical.
+      const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
+      const matchDept = selectedDept === 'All' || vertical === selectedDept;
       const matchPriority = priorityFilter === 'All' || p.priority === priorityFilter;
       return matchSearch && matchStatus && matchDept && matchPriority;
     })
@@ -52,13 +55,22 @@ export default function ProjectsPage() {
   const deptGroups = useMemo(() => {
     const groups: Record<string, Project[]> = {};
     filtered.forEach(p => {
-      if (!groups[p.department]) groups[p.department] = [];
-      groups[p.department].push(p);
+      const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
+      if (!groups[vertical]) groups[vertical] = [];
+      groups[vertical].push(p);
     });
     return groups;
   }, [filtered]);
 
-  const deptList = useMemo(() => departments.map(d => d.name).sort(), [departments]);
+  // Canonical verticals from org-structure (CBB folded into BASL), plus any
+  // legacy department names still present in the data that aren't covered.
+  const deptList = useMemo(() => {
+    const known = new Set(TOP_LEVEL_DEPARTMENTS);
+    const extra = departments
+      .map(d => resolveHierarchy(d.name).vertical)
+      .filter(v => !known.has(v));
+    return [...TOP_LEVEL_DEPARTMENTS, ...Array.from(new Set(extra))];
+  }, [departments]);
 
   const toggleCollapse = (dept: string) => {
     setCollapsedDepts(prev => {
@@ -112,7 +124,7 @@ export default function ProjectsPage() {
             <span className="ml-auto text-[11px] font-mono">{activeProjects.length}</span>
           </button>
           {deptList.map(dept => {
-            const count = activeProjects.filter(p => p.department === dept).length;
+            const count = activeProjects.filter(p => resolveHierarchy(p.department, p.subdivision).vertical === dept).length;
             const isSelected = selectedDept === dept;
             return (
               <button
@@ -123,7 +135,7 @@ export default function ProjectsPage() {
                 <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
                   <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-indigo-600' : 'bg-[var(--color-x-text-muted)] opacity-50'}`} />
                 </div>
-                <span className="truncate flex-1">{dept}</span>
+                <span className="truncate flex-1">{departmentDisplayName(dept)}</span>
                 <span className={`ml-auto text-[11px] font-mono ${isSelected ? 'text-indigo-500' : 'text-[var(--color-x-text-muted)]'}`}>{count}</span>
               </button>
             );
@@ -253,6 +265,7 @@ export default function ProjectsPage() {
               )}
               {Object.entries(deptGroups).map(([dept, deptProjects]) => {
                 const isCollapsed = collapsedDepts.has(dept);
+                const subs = Array.from(new Set(deptProjects.map(p => p.subdivision).filter(Boolean))) as string[];
                 return (
                   <div key={dept} className="x-card-flush shadow-sm">
                     {/* Department Header */}
@@ -261,7 +274,14 @@ export default function ProjectsPage() {
                         {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                       </div>
                       <div className="w-3 h-3 rounded-full flex-shrink-0 bg-indigo-500" />
-                      <span className="text-[14px] font-bold text-[var(--color-x-text)]">{dept}</span>
+                      <span className="text-[14px] font-bold text-[var(--color-x-text)] group/dept relative" title={subs.length ? `Subdivisions: ${subs.join(', ')}` : undefined}>
+                        {departmentDisplayName(dept)}
+                        {subs.length > 0 && (
+                          <span className="ml-2 hidden group-hover/dept:inline-flex gap-1 align-middle">
+                            {subs.map(s => <span key={s} className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">{s}</span>)}
+                          </span>
+                        )}
+                      </span>
                       <span className="text-[12px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{deptProjects.length} projects</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); openNew(dept); }}
@@ -294,6 +314,9 @@ export default function ProjectsPage() {
                                   <div className="flex items-center gap-2.5 min-w-0">
                                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
                                     <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
+                                    {p.subdivision && (
+                                      <span className="flex-shrink-0 text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5" title={`${departmentDisplayName(resolveHierarchy(p.department, p.subdivision).vertical)} → ${p.subdivision}`}>{p.subdivision}</span>
+                                    )}
                                   </div>
                                 </td>
                                 <td className="truncate" title={p.owner}>{p.owner}</td>

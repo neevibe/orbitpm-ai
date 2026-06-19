@@ -14,9 +14,14 @@ export default function WorkforcePage() {
   
   const colors = ['from-indigo-500 to-purple-500', 'from-blue-500 to-cyan-500', 'from-emerald-400 to-teal-500', 'from-amber-400 to-orange-500', 'from-pink-500 to-rose-500'];
   
+  // Workload counts only ACTIVE work: anything not Completed/Cancelled/Archived
+  // (i.e. In Progress, Delayed, Not Started/pending-dependency, On Hold).
+  const countsAsWorkload = (p: typeof projects[number]) =>
+    !p.archived && p.status !== 'Completed' && (p.status as string) !== 'Cancelled';
+
   projects.forEach(p => {
     if (!p.owner) return;
-    const isActive = p.status === 'In Progress' || p.status === 'Delayed';
+    const isActive = countsAsWorkload(p);
     if (!teamMap.has(p.owner)) {
       const parts = p.owner.split(' ');
       const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0].substring(0, 2);
@@ -36,10 +41,13 @@ export default function WorkforcePage() {
   });
 
   const team = Array.from(teamMap.values()).sort((a, b) => b.active - a.active);
-  
-  const overloaded = team.filter(t => t.active >= 4).length;
-  const atCapacity = team.filter(t => t.active === 3).length;
-  const available = team.filter(t => t.active < 3).length;
+
+  // Capacity bands: 0–7 Healthy · 8–10 Moderate · 11+ Overloaded
+  const OVERLOAD_THRESHOLD = 11;
+  const MODERATE_THRESHOLD = 8;
+  const overloaded = team.filter(t => t.active >= OVERLOAD_THRESHOLD).length;
+  const atCapacity = team.filter(t => t.active >= MODERATE_THRESHOLD && t.active < OVERLOAD_THRESHOLD).length;
+  const available = team.filter(t => t.active < MODERATE_THRESHOLD).length;
 
   const workloadData = team.slice(0, 10).map(t => ({
     name: t.name.split(' ')[0],
@@ -60,9 +68,9 @@ export default function WorkforcePage() {
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Total Team', value: team.length, icon: UserSquare2, accent: '#6366f1' },
-          { label: 'Overloaded (>3)', value: overloaded, icon: AlertCircle, accent: '#ef4444' },
-          { label: 'At Capacity (3)', value: atCapacity, icon: Clock, accent: '#f59e0b' },
-          { label: 'Available (<3)', value: available, icon: CheckCircle2, accent: '#10b981' },
+          { label: 'Overloaded (11+)', value: overloaded, icon: AlertCircle, accent: '#ef4444' },
+          { label: 'Moderate (8–10)', value: atCapacity, icon: Clock, accent: '#f59e0b' },
+          { label: 'Healthy (0–7)', value: available, icon: CheckCircle2, accent: '#10b981' },
         ].map((m, i) => (
           <div key={m.label} className={`x-metric animate-slide-up stagger-${i + 1}`} style={{ '--metric-accent': m.accent } as React.CSSProperties}>
             <m.icon className="w-4 h-4 mb-2" style={{ color: m.accent }} />
@@ -94,7 +102,7 @@ export default function WorkforcePage() {
             {team.slice(0, 6).map(t => (
               <div key={t.name} className="flex items-center justify-between p-2 rounded-lg bg-[var(--color-x-bg)]">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${t.active >= 4 ? 'bg-red-500' : t.active === 3 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${t.active >= 11 ? 'bg-red-500' : t.active >= 8 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                   <span className="text-[12px] font-medium text-[var(--color-x-text)] truncate">{t.name}</span>
                 </div>
                 <span className="text-[11px] font-bold text-[var(--color-x-text-secondary)]">{t.active} <span className="font-normal text-[var(--color-x-text-muted)]">/ {t.total}</span></span>
@@ -118,7 +126,8 @@ export default function WorkforcePage() {
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.avatarColor} flex items-center justify-center text-[12px] font-bold text-white shadow-sm`}>
                   {t.initials}
                 </div>
-                {t.active >= 4 && <span className="x-badge x-badge-red text-[9px]">Overloaded</span>}
+                {t.active >= 11 && <span className="x-badge x-badge-red text-[9px]">🔴 Overloaded</span>}
+                {t.active >= 8 && t.active < 11 && <span className="x-badge x-badge-amber text-[9px]">Moderate</span>}
               </div>
               <h4 className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{t.name}</h4>
               <p className="text-[11px] text-[var(--color-x-text-muted)] truncate mb-3">{t.dept}</p>
@@ -128,7 +137,7 @@ export default function WorkforcePage() {
                 <span className="font-bold text-[var(--color-x-text)]">{t.active} <span className="text-[var(--color-x-text-muted)] font-normal">active</span></span>
               </div>
               <div className="x-progress">
-                <div className={`x-progress-bar ${t.active >= 4 ? 'bg-red-500' : t.active === 3 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min((t.active / 5) * 100, 100)}%` }} />
+                <div className={`x-progress-bar ${t.active >= 11 ? 'bg-red-500' : t.active >= 8 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min((t.active / 12) * 100, 100)}%` }} />
               </div>
             </button>
           ))}
