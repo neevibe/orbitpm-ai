@@ -13,7 +13,7 @@ import {
 import React, { useState } from 'react';
 import { Project } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatINR, formatINRCompact } from '@/lib/utils';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
@@ -49,6 +49,16 @@ export default function CommandCenter() {
   const pctComplete = kpi.totalProjects > 0 ? Math.round((kpi.completed / kpi.totalProjects) * 100) : 0;
   const avgProgress = projects.length > 0 ? Math.round(projects.reduce((a, p) => a + p.progress, 0) / projects.length) : 0;
   const highRisks = risks.filter(r => r.impact === 'High' && r.status === 'Open');
+
+  // Portfolio financial rollup (₹). Projects without values contribute 0.
+  const fin = projects.reduce(
+    (acc, p) => ({
+      budget: acc.budget + (p.budget || 0),
+      expected: acc.expected + (p.expectedValue || 0),
+      actual: acc.actual + (p.actualValue || 0),
+    }),
+    { budget: 0, expected: 0, actual: 0 },
+  );
 
   // Owner workload
   const ownerCounts: Record<string, number> = {};
@@ -158,6 +168,21 @@ export default function CommandCenter() {
             <p className="x-metric-value">{m.value}</p>
             <p className="x-metric-label">{m.label}</p>
           </button>
+        ))}
+      </div>
+
+      {/* Financial value rollup (₹) */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Total Portfolio Budget', value: fin.budget, color: '#6366f1', bg: 'from-indigo-50/60' },
+          { label: 'Expected Revenue / Savings', value: fin.expected, color: '#10b981', bg: 'from-emerald-50/60' },
+          { label: 'Actual Value Delivered', value: fin.actual, color: '#f59e0b', bg: 'from-amber-50/60' },
+        ].map(f => (
+          <div key={f.label} className={`x-card p-4 bg-gradient-to-br ${f.bg} to-transparent`}>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-x-text-muted)] mb-1">{f.label}</p>
+            <p className="text-[22px] font-bold" style={{ color: f.color }}>{formatINRCompact(f.value)}</p>
+            <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">{formatINR(f.value)}</p>
+          </div>
         ))}
       </div>
 

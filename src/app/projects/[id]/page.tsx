@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, DollarSign, ListTodo, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
-import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils';
+import { formatDate, getStatusColor, getPriorityColor, formatINR } from '@/lib/utils';
+import { departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
 import type { Project, Allocation } from '@/lib/mock-data';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
@@ -139,7 +140,7 @@ export default function ProjectDetailPage() {
       <div className="grid grid-cols-5 gap-4">
         {[
           { icon: User, label: 'Owner', value: project.owner, color: 'text-indigo-500', editable: true, key: 'owner' },
-          { icon: Building2, label: 'Department', value: project.department, color: 'text-purple-500' },
+          { icon: Building2, label: 'Department', value: departmentDisplayName(resolveHierarchy(project.department, project.subdivision).vertical) + (project.subdivision ? ` → ${project.subdivision}` : ''), color: 'text-purple-500' },
           { icon: Calendar, label: 'Start Date', value: formatDate(project.startDate), color: 'text-emerald-500' },
           { icon: Target, label: 'Target Date', value: formatDate(project.targetDate), color: 'text-amber-500' },
           { icon: AlertTriangle, label: 'Open Risks', value: `${projectRisks.filter(r => r.status === 'Open').length}`, color: 'text-red-500' },
@@ -148,6 +149,20 @@ export default function ProjectDetailPage() {
             <div className="flex items-center gap-2 mb-2"><item.icon className={`w-4 h-4 ${item.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{item.label}</span></div>
             {isEditing && item.editable ? <input value={(editForm as any)[item.key!] || ''} onChange={e => setEditForm(f => ({ ...f, [item.key!]: e.target.value }))} className="x-input" />
               : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{item.value || '—'}</p>}
+          </div>
+        ))}
+      </div>
+
+      {/* Financial value (₹) */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Project Budget', value: project.budget, color: 'text-indigo-600', accent: 'border-indigo-100 bg-indigo-50/40' },
+          { label: 'Expected Revenue / Savings', value: project.expectedValue, color: 'text-emerald-600', accent: 'border-emerald-100 bg-emerald-50/40' },
+          { label: 'Actual Value Delivered', value: project.actualValue, color: 'text-amber-600', accent: 'border-amber-100 bg-amber-50/40' },
+        ].map(f => (
+          <div key={f.label} className={`x-card p-4 border ${f.accent}`}>
+            <div className="flex items-center gap-2 mb-1.5"><DollarSign className={`w-4 h-4 ${f.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{f.label}</span></div>
+            <p className={`text-[18px] font-bold ${f.color}`}>{formatINR(f.value)}</p>
           </div>
         ))}
       </div>
