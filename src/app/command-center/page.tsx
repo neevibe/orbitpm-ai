@@ -29,7 +29,11 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 export default function CommandCenter() {
   const router = useRouter();
   const { projects, risks, departments, kpi, updateProject } = useData();
-  const [selectedMetric, setSelectedMetric] = useState<{ label: string; filter: (p: Project) => boolean } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<{
+    type: 'status' | 'priority' | 'department' | 'health' | 'kpi' | 'ai';
+    label: string;
+    filterFn: (p: Project) => boolean;
+  } | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editForm, setEditForm] = useState<Partial<Project>>({});
   const [isEditing, setIsEditing] = useState(false);
@@ -46,35 +50,115 @@ export default function CommandCenter() {
     setSelectedProject(prev => prev ? { ...prev, ...editForm } : prev);
     setIsEditing(false);
   };
-  // Compute metrics
-  const pctComplete = kpi.totalProjects > 0 ? Math.round((kpi.completed / kpi.totalProjects) * 100) : 0;
-  const avgProgress = projects.length > 0 ? Math.round(projects.reduce((a, p) => a + p.progress, 0) / projects.length) : 0;
-  const highRisks = risks.filter(r => r.impact === 'High' && r.status === 'Open');
 
-  // Portfolio financial rollup (₹). Projects without values contribute 0.
-  const fin = projects.reduce(
-    (acc, p) => ({
-      total: acc.total + (p.totalBudget || 0),
-      utilized: acc.utilized + (p.utilizedBudget || 0),
-    }),
-    { total: 0, utilized: 0 },
-  );
+  // Base list of active (non-archived) projects
+  const activeProjects = React.useMemo(() => projects.filter(p => !p.archived), [projects]);
+
+  // Derived filtered projects list based on the active filter
+  const filteredProjects = React.useMemo(() => {
+    if (!activeFilter) return activeProjects;
+    return activeProjects.filter(activeFilter.filterFn);
+  }, [activeProjects, activeFilter]);
+
+  // Compute metrics based on filtered projects
+  const pctComplete = filteredProjects.length > 0
+    ? Math.round((filteredProjects.filter(p => p.status === 'Completed').length / filteredProjects.length) * 100)
+    : 0;
+
+  const avgProgress = filteredProjects.length > 0
+    ? Math.round(filteredProjects.reduce((a, p) => a + p.progress, 0) / filteredProjects.length)
+    : 0;
+
+  // Filtered open risks associated with the filtered projects
+  const highRisks = React.useMemo(() => {
+    return risks.filter(r => r.impact === 'High' && r.status === 'Open' && filteredProjects.some(p => p.id === r.projectId));
+  }, [risks, filteredProjects]);
+
+  // Portfolio financial rollup (₹) for filtered projects.
+  const fin = React.useMemo(() => {
+    return filteredProjects.reduce(
+      (acc, p) => ({
+        total: acc.total + (p.totalBudget || 0),
+        utilized: acc.utilized + (p.utilizedBudget || 0),
+      }),
+      { total: 0, utilized: 0 },
+    );
+  }, [filteredProjects]);
   const finBalance = fin.total - fin.utilized;
 
-  // Owner workload
-  const ownerCounts: Record<string, number> = {};
-  projects.filter(p => p.status === 'In Progress').forEach(p => { ownerCounts[p.owner] = (ownerCounts[p.owner] || 0) + 1; });
-  const overloaded = Object.entries(ownerCounts).filter(([, c]) => c >= 4).sort((a, b) => b[1] - a[1]);
+  // Owner workload computed from filtered projects
+  const ownerCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredProjects.filter(p => p.status === 'In Progress').forEach(p => {
+      counts[p.owner] = (counts[p.owner] || 0) + 1;
+    });
+    return counts;
+  }, [filteredProjects]);
 
-  // Status pie
+  const overloaded = React.useMemo(() => {
+    return Object.entries(ownerCounts)
+      .filter(([, c]) => c >= 4)
+      .sort((a, b) => b[1] - a[1]);
+  }, [ownerCounts]);
+
+  // Health filters map
+  const healthFilters = React.useMemo(() => ({
+    'On Track': (p: Project) => p.status !== 'Delayed' && p.status !== 'On Hold' && !risks.some(r => r.projectId === p.id && r.status === 'Open'),
+    'At Risk': (p: Project) => p.status === 'On Hold' || risks.some(r => r.projectId === p.id && r.status === 'Open'),
+    'Delayed': (p: Project) => p.status === 'Delayed'
+  }), [risks]);
+
+  // Local dynamically computed KPIs for KPI cards
+  const localKpi = React.useMemo(() => {
+    // If filtering by KPI card, keep metrics showing overall portfolio metrics or filtered
+    const sourceProjects = activeFilter?.type === 'kpi' ? activeProjects : filteredProjects;
+
+    const totalProjects = sourceProjects.length;
+    const inProgress = sourceProjects.filter(p => p.status === 'In Progress').length;
+    const completed = sourceProjects.filter(p => p.status === 'Completed').length;
+    const delayed = sourceProjects.filter(p => p.status === 'Delayed').length;
+    const notStarted = sourceProjects.filter(p => p.status === 'Not Started').length;
+    const onHold = sourceProjects.filter(p => p.status === 'On Hold').length;
+
+    const critical = sourceProjects.filter(p => p.priority === 'Critical').length;
+    const high = sourceProjects.filter(p => p.priority === 'High').length;
+    const medium = sourceProjects.filter(p => p.priority === 'Medium').length;
+    const low = sourceProjects.filter(p => p.priority === 'Low').length;
+
+    const openRisks = risks.filter(r => r.status === 'Open' && sourceProjects.some(p => p.id === r.projectId)).length;
+
+    const stuckProjects = sourceProjects.filter(p => {
+      if (p.status === 'Completed' || p.dismissedFromStuck) return false;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isDelayed = p.status === 'Delayed';
+      const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+      return isDelayed || isOverdue;
+    }).length;
+
+    return {
+      totalProjects,
+      inProgress,
+      completed,
+      delayed,
+      notStarted,
+      onHold,
+      critical,
+      high,
+      medium,
+      low,
+      openRisks,
+      stuckProjects
+    };
+  }, [activeProjects, filteredProjects, risks, activeFilter]);
+
   // Portfolio Health calculations
   const healthData = React.useMemo(() => {
+    const sourceProjects = activeFilter?.type === 'health' ? activeProjects : filteredProjects;
     let onTrack = 0;
     let atRisk = 0;
     let delayed = 0;
 
-    projects.forEach(p => {
-      if (p.archived) return;
+    sourceProjects.forEach(p => {
       const hasOpenRisks = risks.some(r => r.projectId === p.id && r.status === 'Open');
       if (p.status === 'Delayed') {
         delayed++;
@@ -90,59 +174,138 @@ export default function CommandCenter() {
       { name: 'At Risk', value: atRisk, color: '#f59e0b' },
       { name: 'Delayed', value: delayed, color: '#ef4444' },
     ].filter(d => d.value > 0);
-  }, [projects, risks]);
+  }, [activeProjects, filteredProjects, risks, activeFilter]);
 
   // Department chart
-  const deptChartData = departments.slice(0, 7).map(d => ({
-    name: d.name.length > 14 ? d.name.substring(0, 12) + '…' : d.name,
-    active: d.inProgress,
-    done: d.completed,
-    pending: d.notStarted,
-    delayed: d.delayed,
-    total: d.total,
-  }));
+  const deptChartData = React.useMemo(() => {
+    const sourceProjects = activeFilter?.type === 'department' ? activeProjects : filteredProjects;
+    return departments.slice(0, 7).map(d => {
+      const deptProjects = sourceProjects.filter(p => p.department === d.name);
+      return {
+        name: d.name.length > 14 ? d.name.substring(0, 12) + '…' : d.name,
+        fullName: d.name,
+        active: deptProjects.filter(p => p.status === 'In Progress').length,
+        done: deptProjects.filter(p => p.status === 'Completed').length,
+        delayed: deptProjects.filter(p => p.status === 'Delayed').length,
+        pending: deptProjects.filter(p => p.status === 'Not Started' || p.status === 'On Hold').length,
+        total: deptProjects.length,
+      };
+    });
+  }, [departments, activeProjects, filteredProjects, activeFilter]);
 
   // Status distribution data for vertical BarChart
-  const statusDistributionData = [
-    { name: 'Not Started', count: kpi.notStarted, color: '#9ca3af' },
-    { name: 'In Progress', count: kpi.inProgress, color: '#3b82f6' },
-    { name: 'On Hold', count: kpi.onHold, color: '#f59e0b' },
-    { name: 'Delayed', count: kpi.delayed, color: '#ef4444' },
-    { name: 'Completed', count: kpi.completed, color: '#10b981' },
-  ];
+  const statusDistributionData = React.useMemo(() => {
+    const sourceProjects = activeFilter?.type === 'status' ? activeProjects : filteredProjects;
+    return [
+      { name: 'Not Started', count: sourceProjects.filter(p => p.status === 'Not Started').length, color: '#9ca3af' },
+      { name: 'In Progress', count: sourceProjects.filter(p => p.status === 'In Progress').length, color: '#3b82f6' },
+      { name: 'On Hold', count: sourceProjects.filter(p => p.status === 'On Hold').length, color: '#f59e0b' },
+      { name: 'Delayed', count: sourceProjects.filter(p => p.status === 'Delayed').length, color: '#ef4444' },
+      { name: 'Completed', count: sourceProjects.filter(p => p.status === 'Completed').length, color: '#10b981' },
+    ];
+  }, [activeProjects, filteredProjects, activeFilter]);
 
-  // Priority breakdown for radial
-  const priorityRadial = [
-    { name: 'Critical', value: kpi.critical, fill: '#ef4444' },
-    { name: 'High', value: kpi.high, fill: '#f97316' },
-    { name: 'Medium', value: kpi.medium, fill: '#eab308' },
-    { name: 'Low', value: kpi.low, fill: '#22c55e' },
-  ].filter(d => d.value > 0);
+  // Priority breakdown for radial/progress lines
+  const priorityRadial = React.useMemo(() => {
+    const sourceProjects = activeFilter?.type === 'priority' ? activeProjects : filteredProjects;
+    const critical = sourceProjects.filter(p => p.priority === 'Critical').length;
+    const high = sourceProjects.filter(p => p.priority === 'High').length;
+    const medium = sourceProjects.filter(p => p.priority === 'Medium').length;
+    const low = sourceProjects.filter(p => p.priority === 'Low').length;
+
+    return [
+      { name: 'Critical', value: critical, fill: '#ef4444' },
+      { name: 'High', value: high, fill: '#f97316' },
+      { name: 'Medium', value: medium, fill: '#eab308' },
+      { name: 'Low', value: low, fill: '#22c55e' },
+    ].filter(d => d.value > 0);
+  }, [activeProjects, filteredProjects, activeFilter]);
 
   // Stuck projects: delayed status OR (targetDate < Today and status !== Completed)
-  const stuckProjects = projects.filter(p => {
-    if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const isDelayed = p.status === 'Delayed';
-    const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
-    return isDelayed || isOverdue;
-  }).sort((a, b) => {
-    const da = daysUntil(a.targetDate) ?? 999;
-    const db = daysUntil(b.targetDate) ?? 999;
-    return da - db;
-  }).slice(0, 5);
+  const stuckProjects = React.useMemo(() => {
+    return filteredProjects.filter(p => {
+      if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isDelayed = p.status === 'Delayed';
+      const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+      return isDelayed || isOverdue;
+    }).sort((a, b) => {
+      const da = daysUntil(a.targetDate) ?? 999;
+      const db = daysUntil(b.targetDate) ?? 999;
+      return da - db;
+    }).slice(0, 5);
+  }, [filteredProjects]);
 
   // AI insights
   const aiInsights = React.useMemo(() => {
-    const items: { severity: 'critical' | 'warning' | 'info' | 'success'; title: string; desc: string }[] = [];
-    if (kpi.stuckProjects > 0) items.push({ severity: 'critical', title: `${kpi.stuckProjects} high-priority projects at 0%`, desc: 'Require immediate owner intervention' });
-    if (kpi.delayed > 0) items.push({ severity: 'warning', title: `${kpi.delayed} project${kpi.delayed > 1 ? 's' : ''} delayed`, desc: 'Timeline slippage detected across portfolio' });
-    if (overloaded.length > 0) items.push({ severity: 'warning', title: `${overloaded.length} team member${overloaded.length > 1 ? 's' : ''} overloaded`, desc: `${overloaded[0]?.[0]} carrying ${overloaded[0]?.[1]} active projects` });
-    if (highRisks.length > 0) items.push({ severity: 'critical', title: `${highRisks.length} high-impact risks open`, desc: 'Escalation review recommended this week' });
-    if (pctComplete > 10) items.push({ severity: 'success', title: `${pctComplete}% portfolio completion`, desc: `${kpi.completed} projects delivered successfully` });
-    if (items.length === 0) items.push({ severity: 'info', title: 'All systems operational', desc: 'No critical alerts at this time' });
+    const items: {
+      severity: 'critical' | 'warning' | 'info' | 'success';
+      title: string;
+      desc: string;
+      filterFn: (p: Project) => boolean;
+    }[] = [];
+
+    if (localKpi.stuckProjects > 0) {
+      items.push({
+        severity: 'critical',
+        title: `${localKpi.stuckProjects} high-priority projects stuck`,
+        desc: 'Timeline slip or overdue target date detected',
+        filterFn: (p: Project) => {
+          if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
+          const todayStr = new Date().toISOString().split('T')[0];
+          const isDelayed = p.status === 'Delayed';
+          const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+          return isDelayed || isOverdue;
+        }
+      });
+    }
+
+    if (localKpi.delayed > 0) {
+      items.push({
+        severity: 'warning',
+        title: `${localKpi.delayed} project${localKpi.delayed > 1 ? 's' : ''} delayed`,
+        desc: 'Timeline slippage detected across portfolio',
+        filterFn: (p: Project) => p.status === 'Delayed'
+      });
+    }
+
+    if (overloaded.length > 0) {
+      items.push({
+        severity: 'warning',
+        title: `${overloaded.length} team member${overloaded.length > 1 ? 's' : ''} overloaded`,
+        desc: `${overloaded[0]?.[0]} carrying ${overloaded[0]?.[1]} active projects`,
+        filterFn: (p: Project) => p.owner === overloaded[0]?.[0]
+      });
+    }
+
+    if (highRisks.length > 0) {
+      items.push({
+        severity: 'critical',
+        title: `${highRisks.length} high-impact risks open`,
+        desc: 'Escalation review recommended this week',
+        filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open' && r.impact === 'High')
+      });
+    }
+
+    if (pctComplete > 10) {
+      items.push({
+        severity: 'success',
+        title: `${pctComplete}% portfolio completion`,
+        desc: `${localKpi.completed} projects delivered successfully`,
+        filterFn: (p: Project) => p.status === 'Completed'
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({
+        severity: 'info',
+        title: 'All systems operational',
+        desc: 'No critical alerts at this time',
+        filterFn: (p: Project) => true
+      });
+    }
     return items;
-  }, [kpi, overloaded, highRisks, pctComplete]);
+  }, [localKpi, overloaded, highRisks, pctComplete, risks]);
 
   const tooltipStyle = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: '8px 12px' };
 
@@ -171,32 +334,51 @@ export default function CommandCenter() {
       {/* Hero KPI Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, accent: '#6366f1', trend: null, filter: () => true },
-          { label: 'Active', value: kpi.inProgress, icon: Rocket, accent: '#3b82f6', trend: { dir: 'up', pct: '12%' }, filter: (p: Project) => p.status === 'In Progress' },
-          { label: 'Completed', value: kpi.completed, icon: CheckCircle2, accent: '#10b981', trend: { dir: 'up', pct: `${pctComplete}%` }, filter: (p: Project) => p.status === 'Completed' },
-          { label: 'Delayed', value: kpi.delayed, icon: XCircle, accent: '#ef4444', trend: kpi.delayed > 0 ? { dir: 'down', pct: `${kpi.delayed}` } : null, filter: (p: Project) => p.status === 'Delayed' },
-          { label: 'Avg Progress', value: `${avgProgress}%`, icon: Target, accent: '#8b5cf6', trend: null, filter: (p: Project) => p.progress > 0 && p.progress < 100 },
-          { label: 'Open Risks', value: kpi.openRisks, icon: Shield, accent: '#f59e0b', trend: kpi.openRisks > 3 ? { dir: 'down', pct: `${kpi.openRisks}` } : null, isRisks: true },
-        ].map((m, i) => (
-          <button 
-            key={m.label} 
-            onClick={() => !m.isRisks && m.filter && setSelectedMetric({ label: m.label, filter: m.filter as (p: Project) => boolean })}
-            className={`x-metric animate-slide-up stagger-${i + 1} text-left hover:scale-[1.02] hover:shadow-md transition-all cursor-pointer`} 
-            style={{ '--metric-accent': m.accent } as React.CSSProperties}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <m.icon className="w-4 h-4" style={{ color: m.accent }} />
-              {m.trend && (
-                <span className={`x-metric-trend ${m.trend.dir === 'up' ? 'up' : 'down'}`}>
-                  {m.trend.dir === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                  {m.trend.pct}
-                </span>
-              )}
-            </div>
-            <p className="x-metric-value">{m.value}</p>
-            <p className="x-metric-label">{m.label}</p>
-          </button>
-        ))}
+          { label: 'Total Projects', value: localKpi.totalProjects, icon: BarChart3, accent: '#6366f1', filterType: 'all', filterFn: () => true },
+          { label: 'Active', value: localKpi.inProgress, icon: Rocket, accent: '#3b82f6', trend: { dir: 'up', pct: '12%' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
+          { label: 'Completed', value: localKpi.completed, icon: CheckCircle2, accent: '#10b981', trend: { dir: 'up', pct: `${pctComplete}%` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
+          { label: 'Delayed', value: localKpi.delayed, icon: XCircle, accent: '#ef4444', trend: localKpi.delayed > 0 ? { dir: 'down', pct: `${localKpi.delayed}` } : null, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
+          { label: 'Avg Progress', value: `${avgProgress}%`, icon: Target, accent: '#8b5cf6', trend: null, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
+          { label: 'Open Risks', value: localKpi.openRisks, icon: Shield, accent: '#f59e0b', trend: localKpi.openRisks > 3 ? { dir: 'down', pct: `${localKpi.openRisks}` } : null, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
+        ].map((m, i) => {
+          const isSelected = activeFilter?.type === 'kpi' && activeFilter.label === m.label;
+          const isDimmed = activeFilter && !isSelected && !(activeFilter.type === 'kpi' && m.filterType === 'all');
+          
+          return (
+            <button 
+              key={m.label} 
+              onClick={() => {
+                if (m.filterType === 'all') {
+                  setActiveFilter(null);
+                } else if (isSelected) {
+                  setActiveFilter(null);
+                } else {
+                  setActiveFilter({
+                    type: 'kpi',
+                    label: m.label,
+                    filterFn: m.filterFn
+                  });
+                }
+              }}
+              className={`x-metric animate-slide-up stagger-${i + 1} text-left transition-all cursor-pointer ${
+                isSelected ? 'ring-2 ring-indigo-500 scale-[1.03] shadow-md bg-[var(--color-x-surface)] border-indigo-200' : 'hover:scale-[1.02] hover:shadow-md'
+              } ${isDimmed ? 'opacity-40' : 'opacity-100'}`} 
+              style={{ '--metric-accent': m.accent } as React.CSSProperties}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <m.icon className="w-4 h-4" style={{ color: m.accent }} />
+                {m.trend && (
+                  <span className={`x-metric-trend ${m.trend.dir === 'up' ? 'up' : 'down'}`}>
+                    {m.trend.dir === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {m.trend.pct}
+                  </span>
+                )}
+              </div>
+              <p className="x-metric-value">{m.value}</p>
+              <p className="x-metric-label">{m.label}</p>
+            </button>
+          );
+        })}
       </div>
 
 
@@ -213,25 +395,46 @@ export default function CommandCenter() {
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">AI Recommendations</h3>
             </div>
             <div className="space-y-2">
-              {aiInsights.map((insight, i) => (
-                <div key={i} className={`p-3 rounded-lg border transition-all hover:shadow-sm ${
-                  insight.severity === 'critical' ? 'bg-red-50/60 border-red-100' :
-                  insight.severity === 'warning' ? 'bg-amber-50/60 border-amber-100' :
-                  insight.severity === 'success' ? 'bg-emerald-50/60 border-emerald-100' : 'bg-blue-50/60 border-blue-100'
-                }`}>
-                  <div className="flex items-start gap-2">
-                    <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      insight.severity === 'critical' ? 'bg-red-500' :
-                      insight.severity === 'warning' ? 'bg-amber-500' :
-                      insight.severity === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
-                    }`} />
-                    <div>
-                      <p className="text-[12px] font-semibold text-[var(--color-x-text)]">{insight.title}</p>
-                      <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">{insight.desc}</p>
+              {aiInsights.map((insight, i) => {
+                const isSelected = activeFilter?.type === 'ai' && activeFilter.label === insight.title;
+                const isDimmed = activeFilter?.type === 'ai' && activeFilter.label !== insight.title;
+
+                return (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      if (isSelected) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'ai',
+                          label: insight.title,
+                          filterFn: insight.filterFn
+                        });
+                      }
+                    }}
+                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                      isSelected ? 'ring-2 ring-indigo-500 scale-[1.01] shadow-md bg-white border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
+                    } ${isDimmed ? 'opacity-40' : 'opacity-100'} ${
+                      insight.severity === 'critical' ? 'bg-red-50/60 border-red-100 hover:bg-red-50' :
+                      insight.severity === 'warning' ? 'bg-amber-50/60 border-amber-100 hover:bg-amber-50' :
+                      insight.severity === 'success' ? 'bg-emerald-50/60 border-emerald-100 hover:bg-emerald-50' : 'bg-blue-50/60 border-blue-100 hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                        insight.severity === 'critical' ? 'bg-red-500' :
+                        insight.severity === 'warning' ? 'bg-amber-500' :
+                        insight.severity === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
+                      }`} />
+                      <div>
+                        <p className="text-[12px] font-semibold text-[var(--color-x-text)]">{insight.title}</p>
+                        <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">{insight.desc}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -285,10 +488,10 @@ export default function CommandCenter() {
               </div>
             </div>
           )}
-        </div>
+         </div>
 
         {/* Center — Charts */}
-        <div className="col-span-12 lg:col-span-5 space-y-3">
+        <div className="col-span-12 lg:col-span-4 space-y-4">
           {/* Project Status Distribution */}
           <div className="x-card p-5">
             <div className="flex items-center justify-between mb-3">
@@ -301,9 +504,29 @@ export default function CommandCenter() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} allowDecimals={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={false} />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
-                  {statusDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                  {statusDistributionData.map((entry, index) => {
+                    const isSelected = activeFilter?.type === 'status' && activeFilter.label === entry.name;
+                    const isDimmed = activeFilter?.type === 'status' && activeFilter.label !== entry.name;
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        cursor="pointer"
+                        opacity={isDimmed ? 0.35 : 1}
+                        onClick={() => {
+                          if (isSelected) {
+                            setActiveFilter(null);
+                          } else {
+                            setActiveFilter({
+                              type: 'status',
+                              label: entry.name,
+                              filterFn: (p) => p.status === entry.name
+                            });
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -315,40 +538,120 @@ export default function CommandCenter() {
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-blue-500" /> Department Breakdown</h3>
             </div>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={deptChartData} layout="vertical" margin={{ left: 0 }}>
+              <BarChart
+                data={deptChartData}
+                layout="vertical"
+                margin={{ left: 0 }}
+                onClick={(state) => {
+                  if (state && state.activeLabel) {
+                    const deptName = String(state.activeLabel);
+                    const deptObj = deptChartData.find(d => d.name === deptName || d.fullName === deptName);
+                    const fullName = deptObj ? deptObj.fullName : deptName;
+                    
+                    if (activeFilter?.type === 'department' && activeFilter.label === fullName) {
+                      setActiveFilter(null);
+                    } else {
+                      setActiveFilter({
+                        type: 'department',
+                        label: fullName,
+                        filterFn: (p) => p.department === fullName
+                      });
+                    }
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={100} />
                 <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active" />
-                <Bar dataKey="done" stackId="a" fill="#10b981" name="Done" />
-                <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed" />
-                <Bar dataKey="pending" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} name="Pending" />
+                <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active">
+                  {deptChartData.map((entry, index) => (
+                    <Cell key={`cell-act-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                  ))}
+                </Bar>
+                <Bar dataKey="done" stackId="a" fill="#10b981" name="Done">
+                  {deptChartData.map((entry, index) => (
+                    <Cell key={`cell-done-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                  ))}
+                </Bar>
+                <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed">
+                  {deptChartData.map((entry, index) => (
+                    <Cell key={`cell-del-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                  ))}
+                </Bar>
+                <Bar dataKey="pending" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} name="Pending">
+                  {deptChartData.map((entry, index) => (
+                    <Cell key={`cell-pend-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Right col — Status + Priority + Overloaded */}
-        <div className="col-span-12 lg:col-span-3 space-y-3">
+        <div className="col-span-12 lg:col-span-4 space-y-4">
           {/* Portfolio Health */}
           <div className="x-card p-5">
             <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-purple-500" /> Portfolio Health</h3>
             <ResponsiveContainer width="100%" height={140}>
               <PieChart>
                 <Pie data={healthData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={0}>
-                  {healthData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  {healthData.map((entry, i) => {
+                    const isSelected = activeFilter?.type === 'health' && activeFilter.label === entry.name;
+                    const isDimmed = activeFilter?.type === 'health' && activeFilter.label !== entry.name;
+                    return (
+                      <Cell
+                        key={i}
+                        fill={entry.color}
+                        cursor="pointer"
+                        opacity={isDimmed ? 0.35 : 1}
+                        onClick={() => {
+                          if (isSelected) {
+                            setActiveFilter(null);
+                          } else {
+                            setActiveFilter({
+                              type: 'health',
+                              label: entry.name,
+                              filterFn: healthFilters[entry.name as 'On Track' | 'At Risk' | 'Delayed']
+                            });
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
               </PieChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
-              {healthData.map(h => (
-                <div key={h.name} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: h.color }} />
-                  <span className="text-[10px] text-[var(--color-x-text-muted)]">{h.name}</span>
-                  <span className="text-[10px] font-bold text-[var(--color-x-text)] ml-auto">{h.value}</span>
-                </div>
-              ))}
+              {healthData.map(h => {
+                const isSelected = activeFilter?.type === 'health' && activeFilter.label === h.name;
+                const isDimmed = activeFilter?.type === 'health' && activeFilter.label !== h.name;
+                return (
+                  <div
+                    key={h.name}
+                    onClick={() => {
+                      if (isSelected) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'health',
+                          label: h.name,
+                          filterFn: healthFilters[h.name as 'On Track' | 'At Risk' | 'Delayed']
+                        });
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 cursor-pointer p-1 rounded hover:bg-slate-50 transition-all ${
+                      isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20' : ''
+                    } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
+                  >
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: h.color }} />
+                    <span className="text-[10px] text-[var(--color-x-text-muted)]">{h.name}</span>
+                    <span className="text-[10px] font-bold text-[var(--color-x-text)] ml-auto">{h.value}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -357,9 +660,27 @@ export default function CommandCenter() {
             <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
             <div className="space-y-2.5">
               {priorityRadial.map(p => {
-                const pct = kpi.totalProjects > 0 ? Math.round((p.value / kpi.totalProjects) * 100) : 0;
+                const pct = filteredProjects.length > 0 ? Math.round((p.value / filteredProjects.length) * 100) : 0;
+                const isSelected = activeFilter?.type === 'priority' && activeFilter.label === p.name;
+                const isDimmed = activeFilter?.type === 'priority' && activeFilter.label !== p.name;
                 return (
-                  <div key={p.name}>
+                  <div
+                    key={p.name}
+                    onClick={() => {
+                      if (isSelected) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'priority',
+                          label: p.name,
+                          filterFn: (project) => project.priority === p.name
+                        });
+                      }
+                    }}
+                    className={`p-1.5 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
+                      isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20' : ''
+                    } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.name}</span>
                       <span className="text-[11px] font-bold text-[var(--color-x-text)]">{p.value} <span className="font-normal text-[var(--color-x-text-muted)]">({pct}%)</span></span>
@@ -369,17 +690,76 @@ export default function CommandCenter() {
                 );
               })}
             </div>
-          </div>
-
+          </div>     
         </div>
       </div>
+
+      {/* Filtered Projects Section (Full Width, replaces blocking modals) */}
+      {activeFilter && (
+        <div className="x-card p-5 border-indigo-200 bg-indigo-50/10 space-y-4 animate-fade-in">
+          <div className="flex items-center justify-between border-b border-[var(--color-x-border)] pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-100 border border-indigo-200 text-[10px] font-bold text-indigo-700 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /> Filter Active
+              </span>
+              <div>
+                <h3 className="text-[14px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5">
+                  {activeFilter.label} Projects
+                </h3>
+                <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">Showing {filteredProjects.length} of {activeProjects.length} projects matching this criteria</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveFilter(null)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-[11px] font-bold hover:bg-indigo-50 transition-colors shadow-xs cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" /> Clear Filter
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredProjects.map(p => (
+              <div
+                key={p.id}
+                onClick={() => openPanel(p)}
+                className="p-4 bg-white border border-[var(--color-x-border)] hover:border-indigo-300 hover:shadow-md rounded-xl transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] font-mono text-[var(--color-x-text-muted)] bg-slate-50 px-1.5 py-0.5 rounded">{p.id}</span>
+                    <span className={`x-status-${p.status.toLowerCase().replace(' ', '-')} text-[9px]`}>{p.status}</span>
+                  </div>
+                  <h4 className="text-[13.5px] font-semibold text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors line-clamp-1">{p.name}</h4>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--color-x-border)] text-[10.5px] text-[var(--color-x-text-muted)]">
+                  <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {p.owner}</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${p.progress}%` }} />
+                    </div>
+                    <span className="font-bold text-[var(--color-x-text)]">{p.progress}%</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filteredProjects.length === 0 && (
+              <div className="col-span-full py-12 text-center text-[13px] text-[var(--color-x-text-muted)]">
+                No projects match the active filter. Click "Clear Filter" to view all.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Milestones / Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="x-card p-5">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-indigo-500" /> Upcoming Milestones</h3>
           <div className="space-y-2">
-            {projects.filter(p => p.targetDate && p.status !== 'Completed').sort((a, b) => new Date(a.targetDate || '').getTime() - new Date(b.targetDate || '').getTime()).slice(0, 6).map(p => (
+            {filteredProjects.filter(p => p.targetDate && p.status !== 'Completed').sort((a, b) => new Date(a.targetDate || '').getTime() - new Date(b.targetDate || '').getTime()).slice(0, 6).map(p => (
               <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">
                 <span className="text-[10px] font-mono text-[var(--color-x-text-muted)] w-16 flex-shrink-0">{p.targetDate ? new Date(p.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}</span>
                 <div className="flex-1 min-w-0">
@@ -411,47 +791,6 @@ export default function CommandCenter() {
           </div>
         </div>
       </div>
-
-      {/* KPI Drilldown Modal */}
-      {selectedMetric && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden animate-slide-up">
-            <div className="px-6 py-4 border-b border-[var(--color-x-border)] flex items-center justify-between bg-[var(--color-x-bg)]">
-              <div>
-                <h2 className="text-[16px] font-bold text-[var(--color-x-text)]">{selectedMetric.label} Projects</h2>
-                <p className="text-[12px] text-[var(--color-x-text-muted)]">Showing projects matching this criteria</p>
-              </div>
-              <button onClick={() => setSelectedMetric(null)} className="p-2 rounded-full hover:bg-black/5 text-[var(--color-x-text-muted)] transition-colors">
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {projects.filter(selectedMetric.filter).map(p => (
-                <a key={p.id} href={`/projects/${p.id}`} className="flex items-center gap-4 p-3 rounded-xl hover:bg-[var(--color-x-bg)] transition-all border border-transparent hover:border-[var(--color-x-border)] group">
-                  <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-500' : 'bg-blue-500'}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-[var(--color-x-text-muted)]">
-                      <span className="font-mono bg-[var(--color-x-surface-hover)] px-1.5 py-0.5 rounded">{p.id}</span>
-                      <span>{p.department}</span>
-                      <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {p.owner}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`x-status-${p.status.toLowerCase().replace(' ', '-')} text-[10px]`}>{p.status}</span>
-                    <span className="text-[12px] font-bold text-[var(--color-x-text-secondary)]">{p.progress}%</span>
-                  </div>
-                </a>
-              ))}
-              {projects.filter(selectedMetric.filter).length === 0 && (
-                <div className="text-center py-12 text-[var(--color-x-text-muted)]">
-                  <p>No projects match this criteria.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quick Edit Side Panel */}
       {selectedProject && (
