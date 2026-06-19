@@ -7,7 +7,7 @@ import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
-import { departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
+import { departmentDisplayName, resolveHierarchy, TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import type { Project, Allocation, ClassifiedDependency } from '@/lib/mock-data';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
@@ -147,33 +147,120 @@ export default function ProjectDetailPage() {
       </div>
 
       <div className="grid grid-cols-5 gap-4">
-        {[
-          { icon: User, label: 'Owner', value: project.owner, color: 'text-indigo-500', editable: true, key: 'owner' },
-          { icon: Building2, label: 'Department', value: departmentDisplayName(resolveHierarchy(project.department, project.subdivision).vertical) + (resolveHierarchy(project.department, project.subdivision).subdivision ? ` ↳ ${resolveHierarchy(project.department, project.subdivision).subdivision}` : ''), color: 'text-purple-500' },
-          { icon: Calendar, label: 'Start Date', value: formatDate(project.startDate), color: 'text-emerald-500' },
-          { icon: Target, label: 'Target Date', value: formatDate(project.targetDate), color: 'text-amber-500' },
-          { icon: AlertTriangle, label: 'Open Risks', value: `${projectRisks.filter(r => r.status === 'Open').length}`, color: 'text-red-500' },
-        ].map(item => (
-          <div key={item.label} className="x-card p-4 hover:border-indigo-200 transition-colors">
-            <div className="flex items-center gap-2 mb-2"><item.icon className={`w-4 h-4 ${item.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{item.label}</span></div>
-            {isEditing && item.editable ? <input value={(editForm as any)[item.key!] || ''} onChange={e => setEditForm(f => ({ ...f, [item.key!]: e.target.value }))} className="x-input" />
-              : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{item.value || '—'}</p>}
-          </div>
-        ))}
+        {/* Owner */}
+        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+          <div className="flex items-center gap-2 mb-2"><User className="w-4 h-4 text-indigo-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Owner</span></div>
+          {isEditing
+            ? <input value={editForm.owner || ''} onChange={e => setEditForm(f => ({ ...f, owner: e.target.value }))} className="x-input py-1.5 text-[13px]" placeholder="Project owner" />
+            : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{project.owner || '—'}</p>}
+        </div>
+
+        {/* Department + Subdivision */}
+        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+          <div className="flex items-center gap-2 mb-2"><Building2 className="w-4 h-4 text-purple-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Department</span></div>
+          {isEditing ? (
+            <div className="space-y-1.5">
+              <select
+                value={editForm.department ?? project.department}
+                onChange={e => setEditForm(f => ({ ...f, department: e.target.value, subdivision: null }))}
+                className="x-input py-1.5 text-[12px] w-full"
+              >
+                {TOP_LEVEL_DEPARTMENTS.map(d => (
+                  <option key={d} value={d}>{departmentDisplayName(d)}</option>
+                ))}
+              </select>
+              {hasSubdivisions(editForm.department ?? project.department) && (
+                <select
+                  value={editForm.subdivision ?? project.subdivision ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, subdivision: e.target.value || null }))}
+                  className="x-input py-1.5 text-[12px] w-full"
+                >
+                  <option value="">Select subdivision…</option>
+                  {getSubdivisions(editForm.department ?? project.department).map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          ) : (
+            (() => {
+              const h = resolveHierarchy(project.department, project.subdivision);
+              return (
+                <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">
+                  {h.verticalDisplay}{h.subdivision ? ` ↳ ${h.subdivision}` : ''}
+                </p>
+              );
+            })()
+          )}
+        </div>
+
+        {/* Start Date */}
+        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+          <div className="flex items-center gap-2 mb-2"><Calendar className="w-4 h-4 text-emerald-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Start Date</span></div>
+          {isEditing
+            ? <input type="date" value={editForm.startDate ?? project.startDate ?? ''} onChange={e => setEditForm(f => ({ ...f, startDate: e.target.value }))} className="x-input py-1.5 text-[12px]" />
+            : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.startDate) || '—'}</p>}
+        </div>
+
+        {/* Target Date */}
+        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+          <div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-amber-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Target Date</span></div>
+          {isEditing
+            ? <input type="date" value={editForm.targetDate ?? project.targetDate ?? ''} onChange={e => setEditForm(f => ({ ...f, targetDate: e.target.value }))} className="x-input py-1.5 text-[12px]" />
+            : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.targetDate) || '—'}</p>}
+        </div>
+
+        {/* Open Risks (computed) */}
+        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+          <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-red-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Open Risks</span></div>
+          <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{projectRisks.filter(r => r.status === 'Open').length}</p>
+        </div>
       </div>
 
       {/* Financial management (₹) */}
       <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total Budget', value: project.totalBudget ?? null, color: 'text-indigo-600', accent: 'border-indigo-100 bg-indigo-50/40' },
-          { label: 'Utilized Budget', value: project.utilizedBudget ?? null, color: 'text-amber-600', accent: 'border-amber-100 bg-amber-50/40' },
-          { label: 'Balance Budget', value: (project.totalBudget != null || project.utilizedBudget != null) ? (project.totalBudget || 0) - (project.utilizedBudget || 0) : null, color: 'text-emerald-600', accent: 'border-emerald-100 bg-emerald-50/40' },
-        ].map(f => (
-          <div key={f.label} className={`x-card p-4 border ${f.accent}`}>
-            <div className="flex items-center gap-2 mb-1.5"><IndianRupee className={`w-4 h-4 ${f.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{f.label}</span></div>
-            <p className={`text-[18px] font-bold ${f.color}`}>{formatINR(f.value)}</p>
-          </div>
-        ))}
+        {/* Total Budget */}
+        <div className="x-card p-4 border border-indigo-100 bg-indigo-50/40">
+          <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-indigo-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Total Budget</span></div>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editForm.totalBudget != null ? String(editForm.totalBudget) : ''}
+              onChange={e => setEditForm(f => ({ ...f, totalBudget: parseINR(e.target.value) }))}
+              placeholder="e.g. 25,00,000 or 2.5 Cr"
+              className="x-input py-1 text-[14px] font-bold text-indigo-600 bg-white"
+            />
+          ) : (
+            <p className="text-[18px] font-bold text-indigo-600">{formatINR(project.totalBudget ?? null)}</p>
+          )}
+        </div>
+
+        {/* Utilized Budget */}
+        <div className="x-card p-4 border border-amber-100 bg-amber-50/40">
+          <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-amber-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Utilized Budget</span></div>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editForm.utilizedBudget != null ? String(editForm.utilizedBudget) : ''}
+              onChange={e => setEditForm(f => ({ ...f, utilizedBudget: parseINR(e.target.value) }))}
+              placeholder="e.g. 15,00,000"
+              className="x-input py-1 text-[14px] font-bold text-amber-600 bg-white"
+            />
+          ) : (
+            <p className="text-[18px] font-bold text-amber-600">{formatINR(project.utilizedBudget ?? null)}</p>
+          )}
+        </div>
+
+        {/* Balance Budget (always computed) */}
+        <div className="x-card p-4 border border-emerald-100 bg-emerald-50/40">
+          <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-emerald-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Balance Budget</span></div>
+          {(() => {
+            const total = (isEditing ? editForm.totalBudget : project.totalBudget) ?? null;
+            const used = (isEditing ? editForm.utilizedBudget : project.utilizedBudget) ?? null;
+            const bal = (total != null || used != null) ? (total || 0) - (used || 0) : null;
+            return <p className="text-[18px] font-bold text-emerald-600">{formatINR(bal)}</p>;
+          })()}
+        </div>
       </div>
 
       <div className="x-card p-5">

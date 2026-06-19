@@ -503,12 +503,12 @@ export default function ProjectsPage() {
                                       </div>
                                     </td>
                                     <td className="pr-5 text-right">
-                                      {p.isDependencyMirror ? (
+{p.isDependencyMirror ? (
                                         <span
-                                          title={`Mirrored from ${p.originalDepartment} via a dependency. Manage the original from ${p.originalDepartment}.`}
-                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-600"
+                                          title={`Mirrored from ${departmentDisplayName(p.originalDepartment || '')} via a dependency. Manage the original from ${departmentDisplayName(p.originalDepartment || '')}.`}
+                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-600 whitespace-nowrap"
                                         >
-                                          ↳ from {p.originalDepartment}
+                                          ↳ Mirror
                                         </span>
                                       ) : (
                                         <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
