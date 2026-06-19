@@ -120,6 +120,19 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // PROVIDER
 // ============================================
 
+function normalizeDeptName(d: string | null | undefined): string {
+  if (!d) return '';
+  const s = d.toLowerCase().trim();
+  if (s.startsWith('digital')) return 'Digital & Data';
+  if (s.startsWith('advertis')) return 'Advertising & Marketing';
+  if (s.startsWith('duty') || s === 'dutyfree') return 'Duty Free';
+  if (s.startsWith('commercial')) return 'Commercial Development';
+  if (s.startsWith('oper')) return 'Operations';
+  if (s === 'basl') return 'BASL';
+  if (s === 'cbb' || s === 'ccb' || s.startsWith('amen')) return 'BASL';
+  return d;
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   // Department-scoped write permissions (super admins / CCO can modify everything).
   const { canModifyDepartment } = useAuth();
@@ -192,8 +205,49 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Merge any custom departments added by user
   const [customDepartments, setCustomDepartments] = useState<{ name: string; color: string }[]>([]);
 
+  // Memoized projects list including virtual duplicates for cross-department dependencies
+  const projectsWithDuplicates = React.useMemo(() => {
+    const active = projects.filter(p => !p.archived);
+    const list: Project[] = [...active];
+
+    active.forEach(proj => {
+      if (proj.classifiedDependencies) {
+        proj.classifiedDependencies.forEach(dep => {
+          let targetDept = '';
+          let assignedOwner = '';
+          if (dep.kind === 'internal') {
+            targetDept = dep.department || '';
+            assignedOwner = dep.owners?.[0] || '';
+          } else if (dep.kind === 'external' && dep.externalScope === 'within_bial') {
+            targetDept = dep.department || '';
+          }
+
+          targetDept = normalizeDeptName(targetDept);
+          const sourceDept = normalizeDeptName(proj.department);
+
+          if (targetDept && targetDept !== sourceDept) {
+            const alreadyExists = list.some(item => 
+              item.id === proj.id && 
+              item.department === targetDept && 
+              item.owner === (assignedOwner || proj.owner)
+            );
+            if (!alreadyExists) {
+              list.push({
+                ...proj,
+                department: targetDept,
+                owner: assignedOwner || proj.owner,
+              });
+            }
+          }
+        });
+      }
+    });
+
+    return list;
+  }, [projects]);
+
   const departments: Department[] = React.useMemo(() => {
-    const activeProjects = projects.filter(p => !p.archived);
+    const activeProjects = projectsWithDuplicates;
     const allDeptNames = new Set([
       ...Object.keys(departmentColors),
       ...customDepartments.map(d => d.name),
@@ -609,7 +663,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      projects: projects.filter(p => !p.archived),
+      projects: projectsWithDuplicates,
       archivedProjects: projects.filter(p => p.archived),
       departments,
       risks,

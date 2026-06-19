@@ -477,7 +477,7 @@ export default function ProjectsPage() {
                               </thead>
                               <tbody>
                                 {group.projects.map(p => (
-                                  <tr key={p.id} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
+                                  <tr key={`${p.id}-${p.department}-${p.owner}`} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
                                     <td className="pl-5 pr-3 font-mono text-[11px] text-[var(--color-x-text-muted)] whitespace-nowrap truncate" title={p.id}>{p.id}</td>
                                     <td>
                                       <div className="flex items-center gap-2.5 min-w-0">
@@ -547,7 +547,7 @@ export default function ProjectsPage() {
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto px-1 pb-4">
                       {cols.map(p => (
-                        <div key={p.id} onClick={() => goToDetail(p.id)} className="x-card p-4 hover:border-indigo-400 cursor-pointer group">
+                        <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => goToDetail(p.id)} className="x-card p-4 hover:border-indigo-400 cursor-pointer group">
                           <div className="flex items-center justify-between mb-2">
                             <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
                             <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
@@ -608,7 +608,7 @@ export default function ProjectsPage() {
                     const wp = (Math.max(1, em - sm + 1) / 12) * 100;
                     const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#6366f1';
                     return (
-                      <div key={p.id} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
+                      <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
                         <div className="w-80 flex-shrink-0 pr-5 truncate">
                           <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
                           <div className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1.5 flex-wrap mt-0.5">

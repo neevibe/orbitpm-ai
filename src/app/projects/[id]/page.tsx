@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, DollarSign, ListTodo, Plus } from 'lucide-react';
+import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, IndianRupee, ListTodo, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
 import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
@@ -169,7 +169,7 @@ export default function ProjectDetailPage() {
           { label: 'Balance Budget', value: (project.totalBudget != null || project.utilizedBudget != null) ? (project.totalBudget || 0) - (project.utilizedBudget || 0) : null, color: 'text-emerald-600', accent: 'border-emerald-100 bg-emerald-50/40' },
         ].map(f => (
           <div key={f.label} className={`x-card p-4 border ${f.accent}`}>
-            <div className="flex items-center gap-2 mb-1.5"><DollarSign className={`w-4 h-4 ${f.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{f.label}</span></div>
+            <div className="flex items-center gap-2 mb-1.5"><IndianRupee className={`w-4 h-4 ${f.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{f.label}</span></div>
             <p className={`text-[18px] font-bold ${f.color}`}>{formatINR(f.value)}</p>
           </div>
         ))}
@@ -257,7 +257,7 @@ export default function ProjectDetailPage() {
             )}
             
             <div className="x-card p-5 border-emerald-100">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-emerald-500" /> Financials (₹)</h3>
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><IndianRupee className="w-4 h-4 text-emerald-500" /> Financials (₹)</h3>
               {isEditing ? (
                 <div className="space-y-3">
                   <div>

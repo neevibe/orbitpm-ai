@@ -35,6 +35,10 @@ export interface ClassifiedDependency {
   externalParty?: string;
   externalCategory?: string;
   description?: string;
+  status?: 'Pending' | 'In Progress' | 'Resolved' | 'Blocked';
+  priority?: 'High' | 'Medium' | 'Low';
+  dueDate?: string;
+  notes?: string;
 }
 
 export interface Project {

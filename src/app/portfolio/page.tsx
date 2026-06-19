@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useData } from '@/lib/data-context';
 import { Briefcase, Activity, Target, PieChart, TrendingUp, AlertTriangle, Plus, ShieldCheck } from 'lucide-react';
+import { formatINRCompact } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   ScatterChart, Scatter, ZAxis, Cell
@@ -10,14 +11,35 @@ import {
 export default function PortfolioPage() {
   const { projects, risks, departments, kpi } = useData();
 
-  const [budgets, setBudgets] = useState<any[]>([]);
   const [okrs, setOkrs] = useState<any[]>([]);
   
   // Example "isAdmin" toggle just to demonstrate Admin control visually for MVP
   const [isAdmin] = useState(true); 
 
-  // Compute total investment from budgets if they exist
-  const totalInvestment = budgets.reduce((acc, b) => acc + b.allocated, 0);
+  // Group projects by department to calculate spent / remaining budget dynamically
+  const budgets = React.useMemo(() => {
+    const deptBudgets: Record<string, { name: string; spent: number; remaining: number; total: number }> = {};
+    projects.forEach(p => {
+      // Exclude virtual duplicate projects to avoid doubling budget calculation
+      if ((p as any).isDuplicateDependency) return;
+
+      const dept = p.department;
+      if (!deptBudgets[dept]) {
+        deptBudgets[dept] = { name: dept, spent: 0, remaining: 0, total: 0 };
+      }
+      deptBudgets[dept].spent += p.utilizedBudget || 0;
+      deptBudgets[dept].total += p.totalBudget || 0;
+      deptBudgets[dept].remaining = Math.max(0, deptBudgets[dept].total - deptBudgets[dept].spent);
+    });
+    return Object.values(deptBudgets).filter(b => b.total > 0);
+  }, [projects]);
+
+  const totalInvestment = React.useMemo(() => {
+    return projects.reduce((acc, p) => {
+      if ((p as any).isDuplicateDependency) return acc;
+      return acc + (p.totalBudget || 0);
+    }, 0);
+  }, [projects]);
 
   // 5x5 Risk Matrix Data
   const riskImpactMap: Record<string, number> = { 'Low': 1, 'Medium': 2, 'High': 3, 'Critical': 4, 'Severe': 5 };
@@ -59,7 +81,7 @@ export default function PortfolioPage() {
       {/* Strategic Metrics Row */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total Investment', value: budgets.length ? `$${totalInvestment}M` : '$0M', icon: PieChart, accent: '#8b5cf6', sub: 'Allocated budget' },
+          { label: 'Total Investment', value: formatINRCompact(totalInvestment), icon: PieChart, accent: '#8b5cf6', sub: 'Allocated budget' },
           { label: 'Programs', value: departments.length, icon: Target, accent: '#3b82f6', sub: 'Business units' },
           { label: 'Active Execution', value: kpi.inProgress, icon: Activity, accent: '#10b981', sub: 'In progress' },
           { label: 'Portfolio Health', value: kpi.totalProjects > 0 ? `${Math.round((kpi.completed / kpi.totalProjects) * 100)}%` : '0%', icon: TrendingUp, accent: '#6366f1', sub: 'Overall completion' },

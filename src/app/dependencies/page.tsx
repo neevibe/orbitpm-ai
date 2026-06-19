@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link2, Plus, X, Save, User, Building2, AlertCircle, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { BIAL_EMPLOYEES } from '@/lib/employee-data';
 
 interface Dependency {
   id: string;
@@ -14,28 +15,55 @@ interface Dependency {
   status: 'Pending' | 'In Progress' | 'Resolved' | 'Blocked';
   priority: 'High' | 'Medium' | 'Low';
   dueDate: string;
-  createdDate: string;
   notes: string;
 }
 
-// Initial sample dependencies
-const initialDependencies: Dependency[] = [
-  { id: 'DEP-001', projectId: 'PRDIGI_03', projectName: 'Payment Gateway Enhancement', description: 'Retail POS integration API ready', assignedType: 'department', assignedTo: 'Duty Free', status: 'Pending', priority: 'High', dueDate: '2026-06-15', createdDate: '2026-05-01', notes: 'Pilot with new device scheduled for 15th May' },
-  { id: 'DEP-002', projectId: 'PRDIGI_06', projectName: 'CRM for Pulse Rewards Members', description: 'CRM platform vendor selection completed', assignedType: 'user', assignedTo: 'Musthaq Ahamed', status: 'In Progress', priority: 'High', dueDate: '2026-05-30', createdDate: '2026-04-15', notes: 'Proposal ready for leadership review' },
-  { id: 'DEP-003', projectId: 'PRDIGI_08', projectName: 'Retail Click and Collect', description: 'App stability testing in low-network zones', assignedType: 'user', assignedTo: 'Ajay Rao', status: 'Pending', priority: 'High', dueDate: '2026-06-01', createdDate: '2026-04-20', notes: '' },
-  { id: 'DEP-004', projectId: 'PROPR_01', projectName: 'Academy relaunch', description: 'RFQ vendor response evaluation', assignedType: 'department', assignedTo: 'Operations', status: 'In Progress', priority: 'Medium', dueDate: '2026-05-20', createdDate: '2026-05-01', notes: 'Go-live target May 11' },
-  { id: 'DEP-005', projectId: 'PROPR_03', projectName: 'ISO final certification process', description: 'Internal audit completion sign-off', assignedType: 'user', assignedTo: 'Rohan', status: 'Pending', priority: 'High', dueDate: '2026-07-31', createdDate: '2026-05-01', notes: '' },
-  { id: 'DEP-006', projectId: 'PRDIGI_14', projectName: 'AI Chatbot for Navigation', description: 'LLM guardrail and fallback routing implementation', assignedType: 'user', assignedTo: 'Musthaq Ahamed', status: 'In Progress', priority: 'High', dueDate: '2026-07-15', createdDate: '2026-04-15', notes: 'Hallucination risk mitigation needed' },
-  { id: 'DEP-007', projectId: 'PRCOMDEV_15', projectName: 'New Brand Partnership Framework', description: 'Legal team template contracts approval', assignedType: 'department', assignedTo: 'Commercial Development', status: 'Pending', priority: 'Medium', dueDate: '2026-06-30', createdDate: '2026-05-01', notes: '' },
-  { id: 'DEP-008', projectId: 'PRDIGI_01', projectName: 'DBS Bank Integration', description: 'DBS API sandbox access credentials', assignedType: 'department', assignedTo: 'Digital & Data', status: 'Blocked', priority: 'High', dueDate: '2026-05-31', createdDate: '2026-04-01', notes: 'Waiting on DBS technical team response' },
-];
+function getEmployeeDepartment(name: string): string | null {
+  const emp = BIAL_EMPLOYEES.find(e => e.name.toLowerCase() === name.toLowerCase());
+  if (!emp) return null;
+  const dept = emp.department.toLowerCase();
+  if (dept.startsWith('digital')) return 'Digital & Data';
+  if (dept.startsWith('advertis')) return 'Advertising & Marketing';
+  if (dept.startsWith('duty') || dept === 'dutyfree') return 'Duty Free';
+  if (dept.startsWith('commercial')) return 'Commercial Development';
+  if (dept.startsWith('oper')) return 'Operations';
+  if (dept === 'basl') return 'BASL';
+  if (dept === 'cbb' || dept === 'ccb' || dept.startsWith('amen')) return 'BASL';
+  return emp.department;
+}
 
 export default function DependenciesPage() {
-  const { projects } = useData();
-  const [dependencies, setDependencies] = useState<Dependency[]>(initialDependencies);
+  const { projects, updateProject } = useData();
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
   const [assignFilter, setAssignFilter] = useState('All');
+
+  // Compute dependencies dynamically from all valid projects in the store
+  const dependencies = useMemo(() => {
+    const list: Dependency[] = [];
+    projects.forEach(proj => {
+      // Exclude virtual duplicate projects to avoid duplicates in this view
+      if ((proj as any).isDuplicateDependency) return;
+
+      if (proj.classifiedDependencies) {
+        proj.classifiedDependencies.forEach(dep => {
+          list.push({
+            id: dep.id,
+            projectId: proj.id,
+            projectName: proj.name,
+            description: dep.description || '',
+            assignedType: (dep.owners && dep.owners.length > 0) ? 'user' : 'department',
+            assignedTo: (dep.owners && dep.owners.length > 0) ? dep.owners[0] : (dep.department || ''),
+            status: (dep.status || 'Pending') as Dependency['status'],
+            priority: (dep.priority || 'Medium') as Dependency['priority'],
+            dueDate: dep.dueDate || '',
+            notes: dep.notes || '',
+          });
+        });
+      }
+    });
+    return list;
+  }, [projects]);
 
   const pending = dependencies.filter(d => d.status === 'Pending').length;
   const inProgress = dependencies.filter(d => d.status === 'In Progress').length;
@@ -58,18 +86,45 @@ export default function DependenciesPage() {
     e.preventDefault();
     if (!form.projectId || !form.description || !form.assignedTo) return;
     const project = projects.find(p => p.id === form.projectId);
-    setDependencies(prev => [{
-      ...form,
-      id: `DEP-${String(prev.length + 1).padStart(3, '0')}`,
-      projectName: project?.name || '',
-      createdDate: new Date().toISOString().split('T')[0],
-    }, ...prev]);
+    if (!project) return;
+
+    // Resolve target department & owners list
+    let targetDept = '';
+    let ownersList: string[] = [];
+    if (form.assignedType === 'department') {
+      targetDept = form.assignedTo;
+    } else {
+      ownersList = [form.assignedTo];
+      targetDept = getEmployeeDepartment(form.assignedTo) || project.department;
+    }
+
+    const newDepItem = {
+      id: `DEP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      kind: 'internal' as const,
+      department: targetDept,
+      owners: ownersList,
+      description: form.description,
+      status: form.status,
+      priority: form.priority,
+      dueDate: form.dueDate,
+      notes: form.notes,
+    };
+
+    const updatedDeps = [...(project.classifiedDependencies || []), newDepItem];
+    updateProject(project.id, { classifiedDependencies: updatedDeps });
+
     setShowModal(false);
     setForm({ projectId: '', description: '', assignedType: 'user', assignedTo: '', status: 'Pending', priority: 'Medium', dueDate: '', notes: '' });
   };
 
-  const updateStatus = (id: string, newStatus: Dependency['status']) => {
-    setDependencies(prev => prev.map(d => d.id === id ? { ...d, status: newStatus } : d));
+  const updateStatus = (depId: string, newStatus: Dependency['status']) => {
+    const project = projects.find(p => p.classifiedDependencies?.some(d => d.id === depId));
+    if (project && project.classifiedDependencies) {
+      const updatedDeps = project.classifiedDependencies.map(d => 
+        d.id === depId ? { ...d, status: newStatus } : d
+      );
+      updateProject(project.id, { classifiedDependencies: updatedDeps });
+    }
   };
 
   const statusColor = (s: string) => {
