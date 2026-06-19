@@ -408,7 +408,7 @@ export default function DepartmentsPage() {
           <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 16 }}>
             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} width={130} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar dataKey="In Progress" stackId="a" fill="#3b82f6" />
             <Bar dataKey="Completed" stackId="a" fill="#10b981" />
             <Bar dataKey="Not Started" stackId="a" fill="#e2e8f0" />

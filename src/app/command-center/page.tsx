@@ -299,7 +299,7 @@ export default function CommandCenter() {
               <BarChart data={statusDistributionData}>
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} allowDecimals={false} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
+                <Tooltip contentStyle={tooltipStyle} cursor={false} />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
                   {statusDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -318,7 +318,7 @@ export default function CommandCenter() {
               <BarChart data={deptChartData} layout="vertical" margin={{ left: 0 }}>
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={100} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
+                <Tooltip contentStyle={tooltipStyle} cursor={false} />
                 <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active" />
                 <Bar dataKey="done" stackId="a" fill="#10b981" name="Done" />
                 <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed" />
