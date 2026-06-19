@@ -66,6 +66,10 @@ export interface Project {
   archived?: boolean;
   archivedAt?: string;
   dismissedFromStuck?: boolean;
+  /** True when this is a virtual cross-department mirror created from a dependency. Read-only. */
+  isDependencyMirror?: boolean;
+  /** When isDependencyMirror=true, the department that owns the canonical project. */
+  originalDepartment?: string;
   financials?: {
     budget: number;
     spent: number;

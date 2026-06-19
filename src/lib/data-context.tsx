@@ -236,6 +236,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 ...proj,
                 department: targetDept,
                 owner: assignedOwner || proj.owner,
+                isDependencyMirror: true,
+                originalDepartment: sourceDept,
               });
             }
           }

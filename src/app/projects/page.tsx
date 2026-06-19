@@ -503,19 +503,28 @@ export default function ProjectsPage() {
                                       </div>
                                     </td>
                                     <td className="pr-5 text-right">
-                                      <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title="Quick Edit"><Edit2 className="w-4 h-4" /></button>
-                                        <div className="relative" onClick={e => e.stopPropagation()}>
-                                          <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
-                                          {openMenuId === p.id && (
-                                            <div className="absolute right-0 top-10 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl py-1 w-40 animate-scale-in">
-                                              <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-amber-600 hover:bg-amber-50">Archive Project</button>
-                                              <div className="border-t border-[var(--color-x-border)] my-1" />
-                                              <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
-                                            </div>
-                                          )}
+                                      {p.isDependencyMirror ? (
+                                        <span
+                                          title={`Mirrored from ${p.originalDepartment} via a dependency. Manage the original from ${p.originalDepartment}.`}
+                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-600"
+                                        >
+                                          ↳ from {p.originalDepartment}
+                                        </span>
+                                      ) : (
+                                        <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                          <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title="Quick Edit"><Edit2 className="w-4 h-4" /></button>
+                                          <div className="relative" onClick={e => e.stopPropagation()}>
+                                            <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
+                                            {openMenuId === p.id && (
+                                              <div className="absolute right-0 top-10 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl py-1 w-40 animate-scale-in">
+                                                <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-amber-600 hover:bg-amber-50">Archive Project</button>
+                                                <div className="border-t border-[var(--color-x-border)] my-1" />
+                                                <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
+                                      )}
                                     </td>
                                   </tr>
                                 ))}
