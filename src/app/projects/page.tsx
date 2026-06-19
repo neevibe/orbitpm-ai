@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
-import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
+import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
 import DepartmentLabel from '@/components/DepartmentLabel';
@@ -80,7 +80,7 @@ export default function ProjectsPage() {
     // For bottleneck calculations
     const ownerCounts: Record<string, number> = {};
     activeProjects.forEach(ap => {
-      const countsAsWorkload = !ap.archived && ap.status !== 'Completed' && ap.status !== 'Cancelled';
+      const countsAsWorkload = !ap.archived && ap.status !== 'Completed' && (ap.status as string) !== 'Cancelled';
       if (countsAsWorkload && ap.owner) {
         ownerCounts[ap.owner] = (ownerCounts[ap.owner] || 0) + 1;
       }
@@ -221,7 +221,7 @@ export default function ProjectsPage() {
                 </button>
                 {isSelected && subdivisions.length > 0 && (
                   <div className="pl-6 space-y-0.5 border-l border-indigo-100/50 ml-5 my-0.5">
-                    {subdivisions.map(sub => {
+                    {subdivisions.map((sub: string) => {
                       const subCount = activeProjects.filter(p => {
                         const h = resolveHierarchy(p.department, p.subdivision);
                         return h.vertical === dept && h.subdivision === sub;
@@ -399,7 +399,7 @@ export default function ProjectsPage() {
                   const groups: { name: string | null; projects: Project[] }[] = [];
 
                   // Add each standard subdivision
-                  subdivisionsOfDept.forEach(sub => {
+                  subdivisionsOfDept.forEach((sub: string) => {
                     const subProjects = deptProjects.filter(p => {
                       const h = resolveHierarchy(p.department, p.subdivision);
                       return h.subdivision === sub;
@@ -455,7 +455,7 @@ export default function ProjectsPage() {
                                 <div className="flex items-center gap-3">
                                   <span className="text-[11px] font-medium text-[var(--color-x-text-muted)] bg-white px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{group.projects.length} projects</span>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); openNew(dept, group.name === 'General / Other' ? undefined : group.name); }}
+                                    onClick={(e) => { e.stopPropagation(); openNew(dept, (group.name === 'General / Other' || !group.name) ? undefined : group.name); }}
                                     className="text-[11px] text-indigo-600 hover:text-indigo-850 font-semibold flex items-center gap-0.5"
                                   >
                                     <Plus className="w-3 h-3" /> Add
