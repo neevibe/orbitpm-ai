@@ -33,9 +33,11 @@ export default function ProjectsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [selectedDept, setSelectedDept] = useState<string>('All');
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
+  const [newProjectSub, setNewProjectSub] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   const [stuckFilter, setStuckFilter] = useState(false);
@@ -55,6 +57,12 @@ export default function ProjectsPage() {
     const dept = searchParams.get('department');
     if (dept) {
       setSelectedDept(dept);
+    }
+    const sub = searchParams.get('subdivision');
+    if (sub) {
+      setSelectedSub(sub);
+    } else {
+      setSelectedSub(null);
     }
     const q = searchParams.get('search');
     if (q) {
@@ -85,6 +93,7 @@ export default function ProjectsPage() {
       // Fold CBB→BASL etc. so filtering matches the displayed vertical.
       const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
       const matchDept = selectedDept === 'All' || vertical === selectedDept;
+      const matchSub = !selectedSub || p.subdivision === selectedSub;
       const matchPriority = priorityFilter === 'All' || p.priority === priorityFilter;
 
       // Query param overrides
@@ -109,7 +118,7 @@ export default function ProjectsPage() {
         if (!hasBottleneck) return false;
       }
 
-      return matchSearch && matchStatus && matchDept && matchPriority;
+      return matchSearch && matchStatus && matchDept && matchSub && matchPriority;
     })
     // Default ordering: by serial number (ID), natural sort so PRX_2 < PRX_10.
     .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
@@ -143,9 +152,10 @@ export default function ProjectsPage() {
     });
   };
 
-  const openNew = (dept?: string) => {
+  const openNew = (dept?: string, sub?: string) => {
     setEditProject(null);
     setNewProjectDept(dept || null);
+    setNewProjectSub(sub || null);
     setShowModal(true);
   };
 
@@ -179,7 +189,10 @@ export default function ProjectsPage() {
         </div>
         <div className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2">
           <button
-            onClick={() => setSelectedDept('All')}
+            onClick={() => {
+              setSelectedDept('All');
+              setSelectedSub(null);
+            }}
             className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${selectedDept === 'All' ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
           >
             <FolderOpen className={`w-4 h-4 flex-shrink-0 ${selectedDept === 'All' ? 'text-indigo-600' : 'text-[var(--color-x-text-muted)]'}`} />
@@ -189,18 +202,45 @@ export default function ProjectsPage() {
           {deptList.map(dept => {
             const count = activeProjects.filter(p => resolveHierarchy(p.department, p.subdivision).vertical === dept).length;
             const isSelected = selectedDept === dept;
+            const subdivisions = getSubdivisions(dept);
             return (
-              <button
-                key={dept}
-                onClick={() => setSelectedDept(dept)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${isSelected ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
-              >
-                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                  <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-indigo-600' : 'bg-[var(--color-x-text-muted)] opacity-50'}`} />
-                </div>
-                <span className="truncate flex-1">{departmentDisplayName(dept)}</span>
-                <span className={`ml-auto text-[11px] font-mono ${isSelected ? 'text-indigo-500' : 'text-[var(--color-x-text-muted)]'}`}>{count}</span>
-              </button>
+              <div key={dept} className="space-y-0.5">
+                <button
+                  key={dept}
+                  onClick={() => {
+                    setSelectedDept(dept);
+                    setSelectedSub(null);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${isSelected && !selectedSub ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
+                >
+                  <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                    <span className={`w-2 h-2 rounded-full ${isSelected && !selectedSub ? 'bg-indigo-600' : 'bg-[var(--color-x-text-muted)] opacity-50'}`} />
+                  </div>
+                  <span className="truncate flex-1">{departmentDisplayName(dept)}</span>
+                  <span className={`ml-auto text-[11px] font-mono ${isSelected && !selectedSub ? 'text-indigo-500' : 'text-[var(--color-x-text-muted)]'}`}>{count}</span>
+                </button>
+                {isSelected && subdivisions.length > 0 && (
+                  <div className="pl-6 space-y-0.5 border-l border-indigo-100/50 ml-5 my-0.5">
+                    {subdivisions.map(sub => {
+                      const subCount = activeProjects.filter(p => {
+                        const h = resolveHierarchy(p.department, p.subdivision);
+                        return h.vertical === dept && h.subdivision === sub;
+                      }).length;
+                      const isSubSelected = selectedSub === sub;
+                      return (
+                        <button
+                          key={sub}
+                          onClick={() => setSelectedSub(sub)}
+                          className={`w-full text-left px-2.5 py-1 rounded-md text-[12px] flex items-center gap-2 transition-all ${isSubSelected ? 'bg-indigo-50/60 text-indigo-600 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
+                        >
+                          <span className="truncate flex-1">{sub}</span>
+                          <span className={`text-[10px] font-mono ${isSubSelected ? 'text-indigo-500 font-bold' : 'text-[var(--color-x-text-muted)]'}`}>{subCount}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -281,7 +321,7 @@ export default function ProjectsPage() {
           </button>
           {/* New Project */}
           <button
-            onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined)}
+            onClick={() => openNew(selectedDept !== 'All' ? selectedDept : undefined, selectedSub || undefined)}
             className="x-btn x-btn-primary flex-shrink-0"
             style={{ height: 32, fontSize: 13, padding: '0 12px' }}
           >
@@ -347,7 +387,40 @@ export default function ProjectsPage() {
               )}
               {Object.entries(deptGroups).map(([dept, deptProjects]) => {
                 const isCollapsed = collapsedDepts.has(dept);
-                const subs = Array.from(new Set(deptProjects.map(p => p.subdivision).filter(Boolean))) as string[];
+                const hasSubs = hasSubdivisions(dept);
+                const subdivisionsOfDept = getSubdivisions(dept);
+
+                // Group projects by subdivision
+                const subdivisionGroups = (() => {
+                  if (!hasSubs) {
+                    return [{ name: null, projects: deptProjects }];
+                  }
+
+                  const groups: { name: string | null; projects: Project[] }[] = [];
+
+                  // Add each standard subdivision
+                  subdivisionsOfDept.forEach(sub => {
+                    const subProjects = deptProjects.filter(p => {
+                      const h = resolveHierarchy(p.department, p.subdivision);
+                      return h.subdivision === sub;
+                    });
+                    if (subProjects.length > 0) {
+                      groups.push({ name: sub, projects: subProjects });
+                    }
+                  });
+
+                  // Add "General / No Subdivision" projects (projects without subdivision or whose subdivision is not in our list)
+                  const otherProjects = deptProjects.filter(p => {
+                    const h = resolveHierarchy(p.department, p.subdivision);
+                    return !h.subdivision || !subdivisionsOfDept.includes(h.subdivision);
+                  });
+                  if (otherProjects.length > 0) {
+                    groups.push({ name: 'General / Other', projects: otherProjects });
+                  }
+
+                  return groups;
+                })();
+
                 return (
                   <div key={dept} className="x-card-flush shadow-sm">
                     {/* Department Header */}
@@ -356,13 +429,8 @@ export default function ProjectsPage() {
                         {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                       </div>
                       <div className="w-3 h-3 rounded-full flex-shrink-0 bg-indigo-500" />
-                      <span className="text-[14px] font-bold text-[var(--color-x-text)] group/dept relative" title={subs.length ? `Subdivisions: ${subs.join(', ')}` : undefined}>
+                      <span className="text-[14px] font-bold text-[var(--color-x-text)]">
                         {departmentDisplayName(dept)}
-                        {subs.length > 0 && (
-                          <span className="ml-2 hidden group-hover/dept:inline-flex gap-1 align-middle">
-                            {subs.map(s => <span key={s} className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">{s}</span>)}
-                          </span>
-                        )}
                       </span>
                       <span className="text-[12px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{deptProjects.length} projects</span>
                       <button
@@ -375,70 +443,88 @@ export default function ProjectsPage() {
 
                     {/* Project Rows */}
                     {!isCollapsed && (
-                      <div className="bg-[var(--color-x-surface)] overflow-x-auto">
-                        <table className="x-table w-full table-fixed min-w-[940px]">
-                          <thead>
-                            <tr>
-                              <th className="w-32 pl-5">ID</th>
-                              <th>Project Name</th>
-                              <th className="w-36">Owner</th>
-                              <th className="w-28">Status</th>
-                              <th className="w-24">Priority</th>
-                              <th className="w-36">Progress</th>
-                              <th className="w-24 text-right pr-5"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {deptProjects.map(p => (
-                              <tr key={p.id} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
-                                <td className="pl-5 pr-3 font-mono text-[11px] text-[var(--color-x-text-muted)] whitespace-nowrap truncate" title={p.id}>{p.id}</td>
-                                <td>
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
-                                    <div className="min-w-0">
-                                      <span className="block font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
-                                      {p.subdivision && (
-                                        <span className="block text-[11px] text-[var(--color-x-text-muted)] truncate">↳ {p.subdivision}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="truncate" title={p.owner}>{p.owner}</td>
-                                <td>
-                                  <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{p.status}</span>
-                                </td>
-                                <td>
-                                  <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
-                                </td>
-                                <td>
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-2 bg-[var(--color-x-bg)] rounded-full overflow-hidden border border-[var(--color-x-border)]">
-                                      <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${p.progress}%` }} />
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-[var(--color-x-text-secondary)] w-8 text-right">{p.progress}%</span>
-                                  </div>
-                                </td>
-                                <td className="pr-5 text-right">
-                                  <div className={`flex items-center justify-end gap-1 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                                    <div className="relative" onClick={e => e.stopPropagation()}>
-                                      <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors"><MoreVertical className="w-4 h-4" /></button>
-                                      {openMenuId === p.id && (
-                                        <div className="absolute right-0 top-8 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl py-1 w-40 animate-scale-in">
-                                          <button onClick={() => { goToDetail(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]">View Details</button>
-                                          <button onClick={() => { openEdit(p); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]">Edit Project</button>
-                                          <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-amber-600 hover:bg-amber-50">Archive Project</button>
-                                          <div className="border-t border-[var(--color-x-border)] my-1" />
-                                          <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
+                      <div className="bg-[var(--color-x-surface)] divide-y divide-[var(--color-x-border)]">
+                        {subdivisionGroups.map((group, gi) => (
+                          <div key={group.name || `no-sub-${gi}`} className="overflow-x-auto">
+                            {group.name && (
+                              <div className="px-5 py-2.5 bg-[#f8fafc] border-b border-[var(--color-x-border)] flex items-center justify-between">
+                                <span className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                  {group.name}
+                                </span>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[11px] font-medium text-[var(--color-x-text-muted)] bg-white px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{group.projects.length} projects</span>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); openNew(dept, group.name === 'General / Other' ? undefined : group.name); }}
+                                    className="text-[11px] text-indigo-600 hover:text-indigo-850 font-semibold flex items-center gap-0.5"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            <table className="x-table w-full table-fixed min-w-[940px]">
+                              <thead>
+                                <tr>
+                                  <th className="w-32 pl-5">ID</th>
+                                  <th>Project Name</th>
+                                  <th className="w-36">Owner</th>
+                                  <th className="w-28">Status</th>
+                                  <th className="w-24">Priority</th>
+                                  <th className="w-36">Progress</th>
+                                  <th className="w-24 text-right pr-5"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {group.projects.map(p => (
+                                  <tr key={p.id} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
+                                    <td className="pl-5 pr-3 font-mono text-[11px] text-[var(--color-x-text-muted)] whitespace-nowrap truncate" title={p.id}>{p.id}</td>
+                                    <td>
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
+                                        <div className="min-w-0">
+                                          <span className="block font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
                                         </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                      </div>
+                                    </td>
+                                    <td className="truncate" title={p.owner}>{p.owner}</td>
+                                    <td>
+                                      <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{p.status}</span>
+                                    </td>
+                                    <td>
+                                      <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
+                                    </td>
+                                    <td>
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-2 bg-[var(--color-x-bg)] rounded-full overflow-hidden border border-[var(--color-x-border)]">
+                                          <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${p.progress}%` }} />
+                                        </div>
+                                        <span className="text-[11px] font-semibold text-[var(--color-x-text-secondary)] w-8 text-right">{p.progress}%</span>
+                                      </div>
+                                    </td>
+                                    <td className="pr-5 text-right">
+                                      <div className={`flex items-center justify-end gap-1 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                        <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                        <div className="relative" onClick={e => e.stopPropagation()}>
+                                          <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                                          {openMenuId === p.id && (
+                                            <div className="absolute right-0 top-8 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl py-1 w-40 animate-scale-in">
+                                              <button onClick={() => { goToDetail(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]">View Details</button>
+                                              <button onClick={() => { openEdit(p); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)]">Edit Project</button>
+                                              <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-amber-600 hover:bg-amber-50">Archive Project</button>
+                                              <div className="border-t border-[var(--color-x-border)] my-1" />
+                                              <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -556,9 +642,15 @@ export default function ProjectsPage() {
 
       <ProjectModal
         isOpen={showModal}
-        onClose={() => { setShowModal(false); setEditProject(null); setNewProjectDept(null); }}
+        onClose={() => {
+          setShowModal(false);
+          setEditProject(null);
+          setNewProjectDept(null);
+          setNewProjectSub(null);
+        }}
         editProject={editProject}
         defaultDepartment={newProjectDept || undefined}
+        defaultSubdivision={newProjectSub || undefined}
       />
     </div>
   );

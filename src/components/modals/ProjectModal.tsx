@@ -17,12 +17,13 @@ interface Props {
   onClose: () => void;
   editProject?: Project | null;
   defaultDepartment?: string;
+  defaultSubdivision?: string;
 }
 
 const statusOptions = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On Hold'] as const;
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'] as const;
 
-export default function ProjectModal({ isOpen, onClose, editProject, defaultDepartment }: Props) {
+export default function ProjectModal({ isOpen, onClose, editProject, defaultDepartment, defaultSubdivision }: Props) {
   const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
   const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
 
@@ -74,6 +75,9 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     } else {
       const dept = defaultDepartment || deptNames[0] || '';
       const empty = makeEmpty(dept);
+      if (defaultSubdivision) {
+        empty.subdivision = defaultSubdivision;
+      }
       setForm(empty);
       setDeps([]);
       setAutoId(generateProjectId(dept, allProjectIds));
