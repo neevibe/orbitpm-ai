@@ -135,7 +135,25 @@ function normalizeDeptName(d: string | null | undefined): string {
 
 export function DataProvider({ children }: { children: ReactNode }) {
   // Department-scoped write permissions (super admins / CCO can modify everything).
-  const { canModifyDepartment } = useAuth();
+  const { canModifyDepartment, user } = useAuth();
+  const currentUserName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'A user';
+
+  // Find every other department that is referenced by a project's
+  // classifiedDependencies, so cross-department side-effects (like delete
+  // notifications) can fan out to the right inboxes.
+  const collectDependentDepartments = useCallback((project: Project | undefined): string[] => {
+    if (!project?.classifiedDependencies?.length) return [];
+    const sourceDept = normalizeDeptName(project.department);
+    const set = new Set<string>();
+    project.classifiedDependencies.forEach(dep => {
+      let target = '';
+      if (dep.kind === 'internal') target = dep.department || '';
+      else if (dep.kind === 'external' && dep.externalScope === 'within_bial') target = dep.department || '';
+      target = normalizeDeptName(target);
+      if (target && target !== sourceDept) set.add(target);
+    });
+    return Array.from(set);
+  }, []);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
@@ -463,6 +481,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: false, new: true } } });
       notify('Project Archived', `${project.name} moved to history. Can be restored anytime.`, 'info');
 
+      // Fan out a notification to every department that had a mirror of this
+      // project via a dependency, so dependent teams aren't surprised when the
+      // shadow row disappears from their list.
+      collectDependentDepartments(project).forEach(dept => {
+        notify(
+          `Linked project archived (${dept})`,
+          `${currentUserName} archived "${project.name}" in ${project.department}. The dependency mirror in ${dept} has been removed.`,
+          'warning',
+        );
+      });
+
       // Sync local Excel
       fetch('/api/sync-local-excel', {
         method: 'POST',
@@ -475,7 +504,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured()) {
       persistProjectMutation({ action: 'archive', project: { id }, audit: { entityName: project?.name } });
     }
-  }, [projects, logAudit, notify, canModifyDepartment]);
+  }, [projects, logAudit, notify, canModifyDepartment, collectDependentDepartments, currentUserName]);
 
   // deleteProject now archives instead of deleting (for safety)
   const deleteProject = archiveProject;
@@ -515,6 +544,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       logAudit({ action: 'delete', entityType: 'project', entityId: id, entityName: project.name, changes: {} });
       notify('Project Permanently Deleted', `${project.name} has been permanently removed.`, 'warning');
 
+      // Fan out a notification to every department that depended on this
+      // project so they know who removed it and from where.
+      collectDependentDepartments(project).forEach(dept => {
+        notify(
+          `Linked project deleted (${dept})`,
+          `${currentUserName} permanently deleted "${project.name}" from ${project.department}. The dependency mirror in ${dept} has been removed.`,
+          'critical',
+        );
+      });
+
       // Sync local Excel
       fetch('/api/sync-local-excel', {
         method: 'POST',
@@ -527,7 +566,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured()) {
       persistProjectMutation({ action: 'delete', project: { id }, audit: { entityName: project?.name } });
     }
-  }, [projects, logAudit, notify, canModifyDepartment]);
+  }, [projects, logAudit, notify, canModifyDepartment, collectDependentDepartments, currentUserName]);
 
   // ============================================
   // DEPARTMENT CRUD
