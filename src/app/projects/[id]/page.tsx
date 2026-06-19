@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, IndianRupee, ListTodo, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
+import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
 import { departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
-import type { Project, Allocation } from '@/lib/mock-data';
+import type { Project, Allocation, ClassifiedDependency } from '@/lib/mock-data';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
@@ -321,152 +322,13 @@ export default function ProjectDetailPage() {
         <div className="x-card p-5 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Target className="w-4 h-4 text-indigo-500" /> Dependency Management Framework</h3>
-            <button onClick={() => {
-              const newDep = { id: Math.random().toString(36).substring(2), description: 'New Dependency', allocations: [] };
-              updateProject(project.id, { detailedDependencies: [...(project.detailedDependencies || []), newDep] });
-            }} className="x-btn x-btn-primary flex items-center gap-2 py-1.5 px-3 text-[11px]"><Plus className="w-3.5 h-3.5" /> Add Dependency</button>
           </div>
-          
-          {(project.detailedDependencies || []).length > 0 ? (
-            <div className="space-y-4">
-              {project.detailedDependencies!.map(dep => (
-                <div key={dep.id} className="p-4 rounded-xl border border-[var(--color-x-border)] bg-[var(--color-x-bg)]">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <input 
-                        type="text" 
-                        value={dep.description}
-                        onChange={e => {
-                          const newDeps = project.detailedDependencies!.map(d => d.id === dep.id ? { ...d, description: e.target.value } : d);
-                          updateProject(project.id, { detailedDependencies: newDeps });
-                        }}
-                        className="text-[14px] font-bold text-[var(--color-x-text)] bg-transparent border-b border-transparent hover:border-[var(--color-x-border)] focus:border-indigo-500 outline-none w-full pb-0.5 transition-colors" 
-                        placeholder="Dependency Description (e.g., API Integration from IT)"
-                      />
-                    </div>
-                    <button 
-                      onClick={() => updateProject(project.id, { detailedDependencies: project.detailedDependencies!.filter(d => d.id !== dep.id) })}
-                      className="p-1.5 text-[var(--color-x-text-muted)] hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  {/* Dependency Allocation Area */}
-                  <div className="pl-4 border-l-2 border-indigo-100 mt-2 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider">Stakeholder Ownership Split</span>
-                      <button 
-                        onClick={() => {
-                          const newDeps = [...project.detailedDependencies!];
-                          const dIdx = newDeps.findIndex(d => d.id === dep.id);
-                          newDeps[dIdx].allocations.push({ id: Math.random().toString(36).substring(2), type: 'department', target: '', percentage: 0 });
-                          updateProject(project.id, { detailedDependencies: newDeps });
-                        }}
-                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800"
-                      >
-                        + Assign Owner
-                      </button>
-                    </div>
-                    
-                    {dep.allocations.length > 0 ? (
-                      <div className="space-y-2">
-                        {/* Visual Bar */}
-                        <div className="flex w-full h-2 rounded-full overflow-hidden border border-[var(--color-x-border)]">
-                          {dep.allocations.map((a, i) => (
-                            <div key={a.id} className={`${['bg-indigo-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-blue-500'][i % 5]}`} style={{ width: `${a.percentage}%` }} title={`${a.target} (${a.percentage}%)`} />
-                          ))}
-                        </div>
-                        {/* Allocation Rows */}
-                        {dep.allocations.map((alloc, aIdx) => (
-                          <div key={alloc.id} className="flex items-center gap-2">
-                            <select 
-                              value={alloc.type} 
-                              onChange={e => {
-                                const newDeps = [...project.detailedDependencies!];
-                                const dIdx = newDeps.findIndex(d => d.id === dep.id);
-                                newDeps[dIdx].allocations[aIdx].type = e.target.value as 'individual' | 'department';
-                                updateProject(project.id, { detailedDependencies: newDeps });
-                              }}
-                              className="x-input py-1 px-2 text-[11px] w-28 bg-white"
-                            >
-                              <option value="individual">Individual</option>
-                              <option value="department">Department</option>
-                            </select>
-                            
-                            {alloc.type === 'department' ? (
-                              <select 
-                                value={alloc.target}
-                                onChange={e => {
-                                  const newDeps = [...project.detailedDependencies!];
-                                  const dIdx = newDeps.findIndex(d => d.id === dep.id);
-                                  newDeps[dIdx].allocations[aIdx].target = e.target.value;
-                                  updateProject(project.id, { detailedDependencies: newDeps });
-                                }}
-                                className="x-input py-1 px-2 text-[11px] flex-1 bg-white"
-                              >
-                                <option value="">Select Department...</option>
-                                {departments.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
-                              </select>
-                            ) : (
-                              <input 
-                                type="text" 
-                                value={alloc.target}
-                                onChange={e => {
-                                  const newDeps = [...project.detailedDependencies!];
-                                  const dIdx = newDeps.findIndex(d => d.id === dep.id);
-                                  newDeps[dIdx].allocations[aIdx].target = e.target.value;
-                                  updateProject(project.id, { detailedDependencies: newDeps });
-                                }}
-                                placeholder="Person Name"
-                                className="x-input py-1 px-2 text-[11px] flex-1 bg-white"
-                              />
-                            )}
-                            
-                            <div className="flex items-center gap-1">
-                              <input 
-                                type="number" 
-                                min="0" max="100" 
-                                value={alloc.percentage}
-                                onChange={e => {
-                                  const newDeps = [...project.detailedDependencies!];
-                                  const dIdx = newDeps.findIndex(d => d.id === dep.id);
-                                  newDeps[dIdx].allocations[aIdx].percentage = Number(e.target.value);
-                                  updateProject(project.id, { detailedDependencies: newDeps });
-                                }}
-                                className="x-input py-1 px-2 text-[11px] w-14 text-right bg-white"
-                              />
-                              <span className="text-[11px] font-bold text-[var(--color-x-text-muted)]">%</span>
-                            </div>
-                            
-                            <button 
-                              onClick={() => {
-                                const newDeps = [...project.detailedDependencies!];
-                                const dIdx = newDeps.findIndex(d => d.id === dep.id);
-                                newDeps[dIdx].allocations = newDeps[dIdx].allocations.filter(a => a.id !== alloc.id);
-                                updateProject(project.id, { detailedDependencies: newDeps });
-                              }}
-                              className="p-1 text-[var(--color-x-text-muted)] hover:text-red-500"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-[var(--color-x-text-muted)] italic">No ownership allocated yet. Split the responsibility above.</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10 bg-[var(--color-x-bg)] rounded-xl border border-dashed border-[var(--color-x-border)]">
-              <Target className="w-8 h-8 text-[var(--color-x-text-muted)] opacity-50 mx-auto mb-2" />
-              <p className="text-[13px] font-bold text-[var(--color-x-text)]">No dependencies</p>
-              <p className="text-[12px] text-[var(--color-x-text-secondary)] mt-1 max-w-sm mx-auto">Track cross-department and individual dependencies with precise percentage-based ownership splits.</p>
-            </div>
-          )}
+
+          <DependencyBuilder
+            value={project.classifiedDependencies || []}
+            onChange={(deps: ClassifiedDependency[]) => updateProject(project.id, { classifiedDependencies: deps })}
+            readOnly={false}
+          />
         </div>
       )}
 
