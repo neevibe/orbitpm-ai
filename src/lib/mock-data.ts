@@ -16,10 +16,33 @@ export interface DetailedDependency {
   allocations: Allocation[];
 }
 
+/**
+ * v2 dependency classification (for analytics + clearer ownership).
+ *   internal              → on another internal department's employees
+ *   external/within_bial  → on a BIAL function outside Commercial (Finance/ICT/…)
+ *   external/outside_bial → on a third party (vendor/govt/consultant/…, free text)
+ */
+export interface ClassifiedDependency {
+  id: string;
+  kind: 'internal' | 'external';
+  /** external only: where the dependency sits */
+  externalScope?: 'within_bial' | 'outside_bial';
+  /** internal: the department the dependency is on. within_bial: the BIAL function. */
+  department?: string;
+  /** internal: one or more employees the work depends on. */
+  owners?: string[];
+  /** outside_bial: free-text party (e.g. "Acme Vendor"), plus optional category. */
+  externalParty?: string;
+  externalCategory?: string;
+  description?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   department: string;
+  /** v2: optional sub-department within the vertical (e.g. Operations → Retail). */
+  subdivision?: string | null;
   owner: string;
   status: 'In Progress' | 'Not Started' | 'Completed' | 'Delayed' | 'On Hold';
   progress: number;
@@ -43,6 +66,12 @@ export interface Project {
     budget: number;
     spent: number;
   };
+  /** v2 financial valuation (INR). All optional; mandatory only at creation-time UI. */
+  budget?: number | null;            // Project Budget (₹)
+  expectedValue?: number | null;     // Expected Revenue / Savings (₹)
+  actualValue?: number | null;       // Actual Value Delivered (₹)
+  /** v2 classified dependencies (internal/external) for analytics. */
+  classifiedDependencies?: ClassifiedDependency[];
   tasks?: {
     id: string;
     name: string;

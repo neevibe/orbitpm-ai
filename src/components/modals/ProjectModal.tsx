@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { X, Save, Trash2, Wand2, Lock } from 'lucide-react';
+import { X, Save, Trash2, Wand2, Lock, IndianRupee, AlertCircle } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { generateProjectId } from '@/lib/utils';
+import { generateProjectId, parseINR, formatINRCompact } from '@/lib/utils';
+import {
+  TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions, departmentDisplayName,
+} from '@/lib/org-structure';
 import NotesLog from '@/components/NotesLog';
-import type { Project } from '@/lib/mock-data';
+import DependencyBuilder from '@/components/modals/DependencyBuilder';
+import type { Project, ClassifiedDependency } from '@/lib/mock-data';
 
 interface Props {
   isOpen: boolean;
@@ -22,33 +26,39 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
   const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
 
-  // Non-super-admins may only pick their own department when creating.
+  // Canonical verticals (org-structure config). Non-super-admins are limited to
+  // departments they may modify.
   const deptNames = useMemo(() => {
-    const all = departments.map(d => d.name);
-    if (isSuperAdmin) return all;
-    return all.filter(d => canModifyDepartment(d));
-  }, [departments, isSuperAdmin, canModifyDepartment]);
+    if (isSuperAdmin) return TOP_LEVEL_DEPARTMENTS;
+    return TOP_LEVEL_DEPARTMENTS.filter(d => canModifyDepartment(d));
+  }, [isSuperAdmin, canModifyDepartment]);
 
   const allProjectIds = useMemo(() => projects.map(p => p.id), [projects]);
 
   const makeEmpty = (dept?: string) => ({
     id: '', name: '', department: dept || (isSuperAdmin ? deptNames[0] : userDepartment) || deptNames[0] || '',
+    subdivision: '',
     owner: '', status: 'Not Started' as Project['status'], progress: 0,
     priority: 'Medium' as Project['priority'],
     startDate: '', targetDate: '',
     risks: '', objective: '', notes: '',
     projectDependencies: '', supportTeam: '', kpi: '',
+    budget: '', expectedValue: '', actualValue: '',
   });
 
   const [form, setForm] = useState(makeEmpty());
+  const [deps, setDeps] = useState<ClassifiedDependency[]>([]);
   const [autoId, setAutoId] = useState('');
+  const [errors, setErrors] = useState<string[]>([]);
 
   // Sync form when modal opens / edit project changes
   useEffect(() => {
     if (!isOpen) return;
+    setErrors([]);
     if (editProject) {
       setForm({
         id: editProject.id, name: editProject.name, department: editProject.department,
+        subdivision: editProject.subdivision || '',
         owner: editProject.owner, status: editProject.status, progress: editProject.progress,
         priority: editProject.priority, startDate: editProject.startDate || '',
         targetDate: editProject.targetDate || '', risks: editProject.risks || '',
@@ -56,12 +66,17 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
         projectDependencies: editProject.projectDependencies || '',
         supportTeam: editProject.supportTeam || '',
         kpi: editProject.kpi || '',
+        budget: editProject.budget != null ? String(editProject.budget) : '',
+        expectedValue: editProject.expectedValue != null ? String(editProject.expectedValue) : '',
+        actualValue: editProject.actualValue != null ? String(editProject.actualValue) : '',
       });
+      setDeps(editProject.classifiedDependencies || []);
       setAutoId('');
     } else {
       const dept = defaultDepartment || deptNames[0] || '';
       const empty = makeEmpty(dept);
       setForm(empty);
+      setDeps([]);
       setAutoId(generateProjectId(dept, allProjectIds));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,21 +96,54 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     : canModifyDepartment(form.department);
   const readOnly = !canModify;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const subdivisions = getSubdivisions(form.department);
+  const subdivisionRequired = hasSubdivisions(form.department);
+
+  // Mandatory fields are enforced at CREATE time only (existing projects stay
+  // editable without back-filling every new field).
+  const validateForCreate = (): string[] => {
+    const e: string[] = [];
+    if (!form.name.trim()) e.push('Project Name');
+    if (!form.department) e.push('Department');
+    if (subdivisionRequired && !form.subdivision) e.push('Sub-department');
+    if (!form.owner.trim()) e.push('Project Owner');
+    if (!form.priority) e.push('Priority');
+    if (!form.startDate) e.push('Start Date');
+    if (!form.targetDate) e.push('Expected End Date');
+    if (!form.status) e.push('Status');
+    if (parseINR(form.budget) == null) e.push('Project Budget');
+    if (deps.length === 0) e.push('Dependency Details');
+    return e;
+  };
+
+  const handleSubmit = (ev: React.FormEvent) => {
+    ev.preventDefault();
     if (readOnly) return; // defense-in-depth: block writes outside the user's department
     if (!canModifyDepartment(form.department)) return;
-    if (!form.name || !form.department || !form.owner) return;
-    const payload = {
+
+    if (!editProject) {
+      const missing = validateForCreate();
+      if (missing.length > 0) { setErrors(missing); return; }
+    } else if (!form.name || !form.department || !form.owner) {
+      return;
+    }
+    setErrors([]);
+
+    const payload: Partial<Project> = {
       ...form,
       id: editProject ? editProject.id : (form.id || autoId),
+      subdivision: form.subdivision || null,
       startDate: form.startDate || null,
       targetDate: form.targetDate || null,
+      budget: parseINR(form.budget),
+      expectedValue: parseINR(form.expectedValue),
+      actualValue: parseINR(form.actualValue),
+      classifiedDependencies: deps,
     };
     if (editProject) {
       updateProject(editProject.id, payload);
     } else {
-      addProject(payload);
+      addProject(payload as Omit<Project, 'id'> & { id?: string });
     }
     onClose();
   };
@@ -166,13 +214,21 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
               <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Enter project name" required className={inputCls} /></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid ${subdivisionRequired ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
             <div><label className={labelCls}>Department *</label>
-              <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} required disabled={!isSuperAdmin} className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`}>
-                {deptNames.map(d => <option key={d} value={d}>{d}</option>)}
+              <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value, subdivision: '' }))} required disabled={!isSuperAdmin} className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`}>
+                {deptNames.map(d => <option key={d} value={d}>{departmentDisplayName(d)}</option>)}
               </select>
               {!isSuperAdmin && <p className="text-[10px] text-[#94a3b8] mt-1">Locked to your department</p>}
             </div>
+            {subdivisionRequired && (
+              <div><label className={labelCls}>Sub-department *</label>
+                <select value={form.subdivision} onChange={e => setForm(f => ({ ...f, subdivision: e.target.value }))} required className={inputCls}>
+                  <option value="">Select…</option>
+                  {subdivisions.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
             <div><label className={labelCls}>Project Owner *</label>
               <input type="text" value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))} placeholder="Owner name" required className={inputCls} /></div>
           </div>
@@ -197,23 +253,49 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
               <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} className={inputCls} /></div>
           </div>
 
-          {/* New required fields */}
+          {/* Financial value (INR) */}
           <div className="border-t border-[#f1f5f9] pt-4">
-            <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">Team & Dependencies</p>
-            <div className="grid grid-cols-2 gap-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">
+              <IndianRupee className="w-3.5 h-3.5" /> Financial Value (₹)
+            </p>
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className={labelCls}>Support Team</label>
-                <input type="text" value={form.supportTeam} onChange={e => setForm(f => ({ ...f, supportTeam: e.target.value }))}
-                  placeholder="e.g., IT Team, Vendor XYZ" className={inputCls} />
-                <p className="text-[10px] text-[#94a3b8] mt-1">Team members or vendors supporting this project</p>
+                <label className={labelCls}>Project Budget *</label>
+                <input type="text" inputMode="decimal" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                  placeholder="e.g. 2500000 or 2.5 Cr" className={inputCls} />
+                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.budget))}</p>
               </div>
               <div>
-                <label className={labelCls}>Project Dependencies</label>
-                <input type="text" value={form.projectDependencies} onChange={e => setForm(f => ({ ...f, projectDependencies: e.target.value }))}
-                  placeholder="e.g., PRDIGI_03, PROPR_01" className={inputCls} />
-                <p className="text-[10px] text-[#94a3b8] mt-1">Project IDs this project depends on</p>
+                <label className={labelCls}>Expected Revenue / Savings</label>
+                <input type="text" inputMode="decimal" value={form.expectedValue} onChange={e => setForm(f => ({ ...f, expectedValue: e.target.value }))}
+                  placeholder="e.g. 1.2 Cr" className={inputCls} />
+                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.expectedValue))}</p>
+              </div>
+              <div>
+                <label className={labelCls}>Actual Value Delivered</label>
+                <input type="text" inputMode="decimal" value={form.actualValue} onChange={e => setForm(f => ({ ...f, actualValue: e.target.value }))}
+                  placeholder="e.g. 40,00,000" className={inputCls} />
+                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.actualValue))}</p>
               </div>
             </div>
+          </div>
+
+          {/* Team */}
+          <div className="border-t border-[#f1f5f9] pt-4">
+            <div>
+              <label className={labelCls}>Support Team</label>
+              <input type="text" value={form.supportTeam} onChange={e => setForm(f => ({ ...f, supportTeam: e.target.value }))}
+                placeholder="e.g., IT Team, Vendor XYZ" className={inputCls} />
+              <p className="text-[10px] text-[#94a3b8] mt-1">Team members or vendors supporting this project</p>
+            </div>
+          </div>
+
+          {/* Dependency details (classified internal/external) */}
+          <div className="border-t border-[#f1f5f9] pt-4">
+            <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">
+              Dependency Details {!editProject && '*'}
+            </p>
+            <DependencyBuilder value={deps} onChange={setDeps} readOnly={readOnly} />
           </div>
 
           <div><label className={labelCls}>Business Objective</label>
@@ -227,6 +309,16 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
               inputClassName={`${inputCls} flex-1`}
               buttonClassName="flex items-center gap-1 px-3 rounded-lg text-[12px] font-semibold text-white bg-[#e86c2d] whitespace-nowrap" /></div>
           </fieldset>
+
+          {errors.length > 0 && (
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50 border border-red-200">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[12px] font-semibold text-red-700">Please complete the required fields</p>
+                <p className="text-[11px] text-red-600 leading-relaxed">{errors.join(' · ')}</p>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">
             <div>

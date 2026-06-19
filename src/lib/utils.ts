@@ -61,6 +61,44 @@ export function generateProjectId(department: string, existingIds: string[]): st
   return `${prefix}_${next}`;
 }
 
+/**
+ * Format a rupee amount with Indian grouping. e.g. 2500000 → "₹ 25,00,000".
+ * Returns "—" when there is no value.
+ */
+export function formatINR(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) return '—';
+  return '₹ ' + Math.round(amount).toLocaleString('en-IN');
+}
+
+/**
+ * Compact INR using lakh/crore. e.g. 2500000 → "₹ 25 L", 24000000 → "₹ 2.4 Cr".
+ */
+export function formatINRCompact(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) return '—';
+  const abs = Math.abs(amount);
+  if (abs >= 1e7) return `₹ ${trimNum(amount / 1e7)} Cr`;
+  if (abs >= 1e5) return `₹ ${trimNum(amount / 1e5)} L`;
+  if (abs >= 1e3) return `₹ ${trimNum(amount / 1e3)} K`;
+  return '₹ ' + Math.round(amount).toLocaleString('en-IN');
+}
+
+function trimNum(n: number): string {
+  return parseFloat(n.toFixed(2)).toString();
+}
+
+/** Parse a user-typed rupee string ("25,00,000", "₹ 2.4 Cr", "1.5L") to a number. */
+export function parseINR(input: string | number | null | undefined): number | null {
+  if (input === null || input === undefined || input === '') return null;
+  if (typeof input === 'number') return Number.isNaN(input) ? null : input;
+  let s = input.toString().trim().toLowerCase().replace(/₹|,|\s/g, '');
+  let mult = 1;
+  if (s.endsWith('cr')) { mult = 1e7; s = s.slice(0, -2); }
+  else if (s.endsWith('l')) { mult = 1e5; s = s.slice(0, -1); }
+  else if (s.endsWith('k')) { mult = 1e3; s = s.slice(0, -1); }
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? null : n * mult;
+}
+
 export function daysUntil(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
   try {
