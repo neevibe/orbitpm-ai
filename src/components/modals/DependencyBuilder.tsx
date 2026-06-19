@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Users, Building2, Globe } from 'lucide-react';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
 import {
@@ -85,6 +85,21 @@ function DepRow({
     [dep.kind, dep.department],
   );
   const [empOpen, setEmpOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!empOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setEmpOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [empOpen]);
+
   const owners = dep.owners || [];
   const toggleOwner = (name: string) =>
     onUpdate({ owners: owners.includes(name) ? owners.filter(o => o !== name) : [...owners, name] });
@@ -125,7 +140,7 @@ function DepRow({
               {TOP_LEVEL_DEPARTMENTS.map(d => <option key={d} value={d}>{departmentDisplayName(d)}</option>)}
             </select>
           </div>
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Dependent owner(s)</label>
             <button type="button" disabled={readOnly || !dep.department} onClick={() => setEmpOpen(o => !o)}
               className={`${inputCls} text-left flex items-center justify-between disabled:opacity-50`}>
