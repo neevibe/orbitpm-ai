@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import type { Project } from '@/lib/mock-data';
 import { formatDate } from '@/lib/utils';
+import DepartmentLabel from '@/components/DepartmentLabel';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
@@ -48,12 +49,14 @@ export default function DashboardPage() {
   const [editForm, setEditForm] = useState<Partial<Project>>({});
   const [isEditing, setIsEditing] = useState(false);
 
-  // "Stuck projects" = Deadlines reaching in <= 7 days, any priority, not completed, not dismissed
+  // Stuck projects: delayed status OR (targetDate < Today and status !== Completed)
   const stuckProjects = useMemo(() =>
     projects.filter(p => {
       if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
-      const days = daysUntil(p.targetDate);
-      return days !== null && days <= 7;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isDelayed = p.status === 'Delayed';
+      const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+      return isDelayed || isOverdue;
     }).sort((a, b) => {
       const da = daysUntil(a.targetDate) ?? 999;
       const db = daysUntil(b.targetDate) ?? 999;
@@ -141,6 +144,22 @@ export default function DashboardPage() {
     setIsEditing(false);
   };
 
+  const handleCardClick = (filter: string) => {
+    if (filter === 'all') {
+      router.push('/projects?status=All');
+    } else if (filter === 'risks') {
+      router.push('/projects?hasRisks=true');
+    } else if (filter === 'stuck') {
+      router.push('/projects?stuck=true');
+    } else if (filter === 'escalation') {
+      router.push('/projects?escalation=true');
+    } else if (filter === 'bottlenecks') {
+      router.push('/projects?bottlenecks=true');
+    } else {
+      router.push(`/projects?status=${encodeURIComponent(filter)}`);
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fade-in pb-10">
       {/* Header */}
@@ -168,8 +187,8 @@ export default function DashboardPage() {
         {kpiCards.map((card, i) => (
           <button 
             key={card.label} 
-            onClick={() => setActiveFilter(card.filter)}
-            className={`kpi-card group animate-slide-up text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${activeFilter === card.filter ? 'ring-2 ring-indigo-500 bg-white shadow-lg' : ''}`} 
+            onClick={() => handleCardClick(card.filter)}
+            className="kpi-card group animate-slide-up text-left transition-all hover:scale-[1.02] active:scale-[0.98]" 
             style={{ animationDelay: `${i * 40}ms` }}
           >
             <div className="flex items-start justify-between mb-2.5">
@@ -196,8 +215,8 @@ export default function DashboardPage() {
           {ccoCards.map((card) => (
             <button 
               key={card.label} 
-              onClick={() => setActiveFilter(card.filter)}
-              className={`${card.bg} rounded-xl p-4 border transition-all hover:shadow-md active:scale-[0.98] text-left ${activeFilter === card.filter ? 'ring-2 ring-indigo-500 ' + card.border : card.border}`}
+              onClick={() => handleCardClick(card.filter)}
+              className={`${card.bg} rounded-xl p-4 border transition-all hover:shadow-md active:scale-[0.98] text-left ${card.border}`}
             >
               <div className="flex items-center gap-2.5 mb-1.5">
                 <card.icon className={`w-4 h-4 ${card.color}`} />
@@ -237,7 +256,13 @@ export default function DashboardPage() {
                     <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${isOverdue ? 'bg-red-500' : isUrgent ? 'bg-orange-400' : p.status === 'Delayed' ? 'bg-red-400' : 'bg-blue-400'}`} />
                     <div className="min-w-0">
                       <p className="text-[12px] font-bold text-[#1e293b] group-hover:text-indigo-700 transition-colors truncate">{p.name}</p>
-                      <p className="text-[10px] text-[#64748b]">{p.id} · {p.department} · {p.owner}</p>
+                      <div className="flex items-center gap-1.5 text-[10px] text-[#64748b] flex-wrap mt-0.5">
+                        <span className="font-mono">{p.id}</span>
+                        <span>·</span>
+                        <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                        <span>·</span>
+                        <span>{p.owner}</span>
+                      </div>
                       {days !== null && (
                         <p className={`text-[10px] font-bold mt-0.5 ${isOverdue ? 'text-red-600' : isUrgent ? 'text-orange-500' : 'text-amber-600'}`}>
                           {isOverdue ? `⚠️ Overdue by ${Math.abs(days)} days` : `⏰ ${days} day${days !== 1 ? 's' : ''} remaining`}
@@ -555,8 +580,8 @@ export default function DashboardPage() {
 
               {/* Department */}
               <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Department</label>
-                <p className="text-[13px] font-semibold text-[#1e293b]">{selectedProject.department}</p>
+                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Department ↳ Subdivision</label>
+                <DepartmentLabel department={selectedProject.department} subdivision={selectedProject.subdivision} variant="stacked" className="text-[13px]" />
               </div>
 
               {/* Full detail button */}

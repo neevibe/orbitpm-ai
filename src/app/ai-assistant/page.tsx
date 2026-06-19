@@ -96,15 +96,17 @@ export default function AIAssistantPage() {
     if (q.includes('stuck') || q.includes('0%') || q.includes('zero progress') || q.includes('no progress') || q.includes('reaching') || q.includes('deadline')) {
       const list = activePjs.filter(p => {
         if (p.status === 'Completed' || p.dismissedFromStuck) return false;
-        const days = daysUntil(p.targetDate);
-        return days !== null && days <= 7;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isDelayed = p.status === 'Delayed';
+        const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+        return isDelayed || isOverdue;
       });
       if (!list.length) return '✅ No stuck projects — all projects have comfortable timelines or have been dismissed.';
       const rows = list.slice(0, 8).map(p => {
         const d = daysUntil(p.targetDate);
-        return `• **${p.id}** — ${p.name}\n  ⏰ ${d !== null && d < 0 ? `Overdue by ${Math.abs(d)} days` : `${d} days remaining`} · ${p.department} · ${p.owner||'Unassigned'} · Priority: ${p.priority}`;
+        return `• **${p.id}** — ${p.name}\n  ⏰ ${d !== null && d < 0 ? `Overdue by ${Math.abs(d)} days` : `${d !== null ? `${d} days remaining` : 'No deadline set'}`} · ${p.department} · ${p.owner||'Unassigned'} · Priority: ${p.priority}`;
       }).join('\n\n');
-      return `⚠️ **Stuck Projects (Deadlines in ≤ 7 days): ${list.length}**\n\n${rows}${list.length>8?`\n\n...and ${list.length-8} more.`:''}`;
+      return `⚠️ **Stuck Projects (Delayed or Overdue): ${list.length}**\n\n${rows}${list.length>8?`\n\n...and ${list.length-8} more.`:''}`;
     }
 
     // ── SPECIFIC DEPARTMENT ───────────────────────────────────
@@ -174,8 +176,10 @@ export default function AIAssistantPage() {
       const nearDeadline = activePjs.filter(p => { const d = daysUntil(p.targetDate); return d!==null && d>=0 && d<=14 && p.status!=='Completed'; });
       const stuck = activePjs.filter(p => {
         if (p.status === 'Completed' || p.dismissedFromStuck) return false;
-        const d = daysUntil(p.targetDate);
-        return d !== null && d <= 7;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isDelayed = p.status === 'Delayed';
+        const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+        return isDelayed || isOverdue;
       });
       const topRisks = risks.filter(r => r.status==='Open' && r.impact==='High').slice(0,3);
       const deptSummary = [...departments].sort((a,b)=>b.critical-a.critical).slice(0,3).map(d=>`  • ${d.name}: ${d.total} total, ${d.critical} critical`).join('\n');

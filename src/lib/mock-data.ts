@@ -66,10 +66,9 @@ export interface Project {
     budget: number;
     spent: number;
   };
-  /** v2 financial valuation (INR). All optional; mandatory only at creation-time UI. */
-  budget?: number | null;            // Project Budget (₹)
-  expectedValue?: number | null;     // Expected Revenue / Savings (₹)
-  actualValue?: number | null;       // Actual Value Delivered (₹)
+  /** v2 financial tracking (INR). Balance = totalBudget − utilizedBudget (computed). */
+  totalBudget?: number | null;       // Total Budget (₹)
+  utilizedBudget?: number | null;    // Utilized Budget (₹)
   /** v2 classified dependencies (internal/external) for analytics. */
   classifiedDependencies?: ClassifiedDependency[];
   tasks?: {

@@ -1,6 +1,7 @@
 'use client';
 
-import { Zap, Plus, Settings, Play, Pause, MoreVertical, Puzzle } from 'lucide-react';
+import { Zap, Plus, Settings, Play, Pause, MoreVertical, Puzzle, Shield } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 const mockAutomations = [
   { id: '1', name: 'Auto-escalate overdue critical projects', trigger: 'When deadline passes', action: 'Change priority to Critical & notify owner', status: 'Active', runs: 142 },
@@ -10,6 +11,21 @@ const mockAutomations = [
 ];
 
 export default function AutomationsPage() {
+  const { isSuperAdmin, loading: authLoading } = useAuth();
+
+  if (authLoading) return null;
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-4">
+          <Shield className="w-7 h-7 text-red-500" />
+        </div>
+        <h1 className="text-[18px] font-bold text-[#0f172a]">Access restricted</h1>
+        <p className="text-[13px] text-[#64748b] mt-1 max-w-sm">The Automations area is available to Super Admin accounts only.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="x-page space-y-5">
       <div className="flex items-center justify-between">

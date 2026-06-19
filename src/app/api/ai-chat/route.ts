@@ -99,7 +99,13 @@ async function loadData(): Promise<Data> {
     delayed: projects.filter(p => /delay|behind|overdue/i.test(p.status) || (!isCompleted(p.status) && daysUntil(p.targetDate) < 0)).length,
     onHold: projects.filter(p => /hold|paused|blocked/i.test(p.status)).length,
     openRisks: risks.filter(r => !/closed|resolved|mitigated/i.test(r.status)).length,
-    stuck: projects.filter(p => !isCompleted(p.status) && daysUntil(p.targetDate) >= 0 && daysUntil(p.targetDate) <= 7).length,
+    stuck: projects.filter(p => {
+      if (isCompleted(p.status)) return false;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isDelayed = /delay/i.test(p.status);
+      const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+      return isDelayed || isOverdue;
+    }).length,
   };
 
   const counts = new Map<string, number>();
@@ -179,7 +185,7 @@ function heuristicAnswer(message: string, data: Data): string | null {
   // delayed / overdue
   if (/(delay|behind schedule|overdue|slipping|late)/i.test(m)) {
     const delayed = projects.filter(p => /delay|behind|overdue/i.test(p.status) || (!isCompleted(p.status) && daysUntil(p.targetDate) < 0));
-    if (!delayed.length) return `✅ Good news — **no projects are currently delayed**. ${kpi.stuck} have deadlines within the next 7 days, though. Want to see those?`;
+    if (!delayed.length) return `✅ Good news — **no projects are currently delayed**. ${kpi.stuck} are stuck (delayed or overdue), though. Want to see those?`;
     return `🔴 **${delayed.length} delayed projects** (${pct(delayed.length, kpi.total)}% of portfolio):\n\n` +
       cap(delayed).map(line).join('\n') + more(delayed) +
       `\n\nWant me to draft a recovery plan or identify the common bottlenecks?`;
@@ -187,11 +193,19 @@ function heuristicAnswer(message: string, data: Data): string | null {
 
   // stuck / needs attention / escalation
   if (/(stuck|attention|escalat|at risk|deadline|due soon|this week|urgent)/i.test(m)) {
-    const stuck = projects.filter(p => !isCompleted(p.status) && daysUntil(p.targetDate) >= 0 && daysUntil(p.targetDate) <= 7)
-      .sort((a, b) => daysUntil(a.targetDate) - daysUntil(b.targetDate));
-    if (!stuck.length) return `👍 Nothing critical this week — no active projects are due within 7 days.`;
-    return `⚠️ **${stuck.length} projects need attention** (due within 7 days):\n\n` +
-      cap(stuck).map(p => `${line(p)} · **${daysUntil(p.targetDate)}d left**`).join('\n') + more(stuck) +
+    const stuck = projects.filter(p => {
+      if (isCompleted(p.status)) return false;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isDelayed = /delay/i.test(p.status);
+      const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+      return isDelayed || isOverdue;
+    }).sort((a, b) => daysUntil(a.targetDate) - daysUntil(b.targetDate));
+    if (!stuck.length) return `👍 Nothing critical — no active projects are stuck (delayed or overdue).`;
+    return `⚠️ **${stuck.length} projects are stuck** (delayed or overdue):\n\n` +
+      cap(stuck).map(p => {
+        const d = daysUntil(p.targetDate);
+        return `${line(p)} ${d !== Infinity ? (d < 0 ? `· **${Math.abs(d)}d overdue**` : `· **${d}d left**`) : ''}`;
+      }).join('\n') + more(stuck) +
       `\n\nShall I notify the owners or escalate the critical ones?`;
   }
 
@@ -234,7 +248,7 @@ function heuristicAnswer(message: string, data: Data): string | null {
       `• 🔄 In progress: **${kpi.inProgress}**\n` +
       `• ⏸ Not started: **${kpi.notStarted}**\n` +
       `• 🔴 Delayed: **${kpi.delayed}**\n` +
-      `• ⚠️ Due this week: **${kpi.stuck}**\n` +
+      `• ⚠️ Stuck / Overdue: **${kpi.stuck}**\n` +
       `• 🛡️ Open risks: **${kpi.openRisks}**\n\n` +
       `Overall health: **${kpi.delayed > kpi.total * 0.15 ? '🟠 Needs attention' : '🟢 On track'}**. Ask me to drill into any area.`;
   }
@@ -259,7 +273,7 @@ function buildContext(data: Data, user?: { name?: string; department?: string; r
     .join('\n');
   return [
     user ? `## Current user\nName: ${user.name || 'unknown'} · Department: ${user.department || 'unassigned'} · Role: ${user.role || 'user'}` : '',
-    `## Portfolio KPIs (live)\nTotal active: ${kpi.total} · Completed: ${kpi.completed} · In progress: ${kpi.inProgress} · Not started: ${kpi.notStarted} · Delayed: ${kpi.delayed} · Due within 7 days: ${kpi.stuck} · Open risks: ${kpi.openRisks}`,
+    `## Portfolio KPIs (live)\nTotal active: ${kpi.total} · Completed: ${kpi.completed} · In progress: ${kpi.inProgress} · Not started: ${kpi.notStarted} · Delayed: ${kpi.delayed} · Stuck / Overdue: ${kpi.stuck} · Open risks: ${kpi.openRisks}`,
     `## Departments\n${data.departments.join(', ')}`,
     `## Owner workload (active projects)\n${data.workload.slice(0, 20).map(w => `${w.owner}: ${w.active}`).join(' · ')}`,
     `## Projects (code | name | dept | owner | status | priority | progress | due)\n${projLines}`,

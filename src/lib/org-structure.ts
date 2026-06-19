@@ -16,15 +16,45 @@
 //   • "Operations"      → subdivisions: F&B, Retail, Landside Commercial
 //   • "BASL"            → subdivisions: CBB, 080 Lounge & Hotels
 
-/** Subdivisions (sub-departments) available under each vertical. */
+/**
+ * Subdivisions (sub-departments) available under each vertical.
+ * Keyed by the STORED department name (e.g. 'Digital & Data', displayed as
+ * 'Digital Experience').
+ */
 export const SUBDIVISIONS: Record<string, string[]> = {
-  Operations: ['F&B', 'Retail', 'Landside Commercial'],
-  BASL: ['CBB', '080 Lounge & Hotels'],
+  Operations: [
+    'Business Analytics & Contract Management',
+    'F&B',
+    'Retail',
+    'Landside Commercial',
+  ],
+  'Advertising & Marketing': [
+    'Advertising',
+    'Content Management',
+    'Social Media',
+    'Commercial Marketing',
+    'Digital Marketing',
+  ],
+  'Digital & Data': [
+    'Brand Management',
+    'Digital Product',
+    'Digital Strategy',
+    'Omnichannel',
+    'Rewards & Payment',
+  ],
+  BASL: [
+    '080 Lounges & Hotels',
+    'Care by BLR (CBB)',
+    'Gate Z',
+    'Ovetra',
+    'Ovaya',
+  ],
 };
 
 /** Verticals whose UI label differs from the stored department name. */
 export const DEPARTMENT_DISPLAY: Record<string, string> = {
   'Digital & Data': 'Digital Experience',
+  'Advertising & Marketing': 'Advertisement',
 };
 
 /**
@@ -33,7 +63,7 @@ export const DEPARTMENT_DISPLAY: Record<string, string> = {
  * `subdivision` until the data migration runs.
  */
 export const FOLDED_INTO: Record<string, { parent: string; subdivision: string }> = {
-  CBB: { parent: 'BASL', subdivision: 'CBB' },
+  CBB: { parent: 'BASL', subdivision: 'Care by BLR (CBB)' },
 };
 
 /** Canonical top-level verticals, in display order (CBB folded into BASL). */

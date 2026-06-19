@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
+import DepartmentLabel from '@/components/DepartmentLabel';
 
 const STATUS_OPTIONS = ['All', 'In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const PRIORITY_OPTIONS = ['All', 'Critical', 'High', 'Medium', 'Low'];
@@ -22,6 +23,7 @@ function statusDot(status: string) {
 
 export default function ProjectsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -36,21 +38,82 @@ export default function ProjectsPage() {
   const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
+  const [stuckFilter, setStuckFilter] = useState(false);
+  const [hasRisksFilter, setHasRisksFilter] = useState(false);
+  const [escalationFilter, setEscalationFilter] = useState(false);
+  const [bottlenecksFilter, setBottlenecksFilter] = useState(false);
+
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status) {
+      setStatusFilter(status);
+    }
+    const priority = searchParams.get('priority');
+    if (priority) {
+      setPriorityFilter(priority);
+    }
+    const dept = searchParams.get('department');
+    if (dept) {
+      setSelectedDept(dept);
+    }
+    const q = searchParams.get('search');
+    if (q) {
+      setSearch(q);
+    }
+    setStuckFilter(searchParams.get('stuck') === 'true');
+    setHasRisksFilter(searchParams.get('hasRisks') === 'true');
+    setEscalationFilter(searchParams.get('escalation') === 'true');
+    setBottlenecksFilter(searchParams.get('bottlenecks') === 'true');
+  }, [searchParams]);
+
   const filtered = useMemo(() => {
     const pool = tab === 'active' ? activeProjects : archivedProjects;
+    
+    // For bottleneck calculations
+    const ownerCounts: Record<string, number> = {};
+    activeProjects.forEach(ap => {
+      const countsAsWorkload = !ap.archived && ap.status !== 'Completed' && ap.status !== 'Cancelled';
+      if (countsAsWorkload && ap.owner) {
+        ownerCounts[ap.owner] = (ownerCounts[ap.owner] || 0) + 1;
+      }
+    });
+
     return pool.filter(p => {
       const q = search.toLowerCase();
-      const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q);
+      const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q) || (p.subdivision || '').toLowerCase().includes(q);
       const matchStatus = statusFilter === 'All' || p.status === statusFilter;
       // Fold CBB→BASL etc. so filtering matches the displayed vertical.
       const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
       const matchDept = selectedDept === 'All' || vertical === selectedDept;
       const matchPriority = priorityFilter === 'All' || p.priority === priorityFilter;
+
+      // Query param overrides
+      if (stuckFilter) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isDelayed = p.status === 'Delayed';
+        const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+        const isStuck = (isDelayed || isOverdue) && p.status !== 'Completed' && !p.archived;
+        if (!isStuck) return false;
+      }
+      if (hasRisksFilter) {
+        const hasOpenRisks = risks.some(r => r.projectId === p.id && r.status === 'Open');
+        if (!hasOpenRisks) return false;
+      }
+      if (escalationFilter) {
+        const hasOpenRisks = risks.some(r => r.projectId === p.id && r.status === 'Open') || (p.risks && p.risks.length > 0);
+        const needsEscalation = p.priority === 'Critical' && p.status === 'In Progress' && hasOpenRisks;
+        if (!needsEscalation) return false;
+      }
+      if (bottlenecksFilter) {
+        const hasBottleneck = p.owner ? (ownerCounts[p.owner] || 0) >= 3 : false;
+        if (!hasBottleneck) return false;
+      }
+
       return matchSearch && matchStatus && matchDept && matchPriority;
     })
     // Default ordering: by serial number (ID), natural sort so PRX_2 < PRX_10.
     .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
-  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter]);
+  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter, stuckFilter, hasRisksFilter, escalationFilter, bottlenecksFilter, risks]);
 
   const deptGroups = useMemo(() => {
     const groups: Record<string, Project[]> = {};
@@ -184,6 +247,21 @@ export default function ProjectsPage() {
           >
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
           </select>
+          {(stuckFilter || hasRisksFilter || escalationFilter || bottlenecksFilter) && (
+            <button
+              onClick={() => {
+                setStuckFilter(false);
+                setHasRisksFilter(false);
+                setEscalationFilter(false);
+                setBottlenecksFilter(false);
+                router.replace('/projects');
+              }}
+              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100 flex items-center gap-1 cursor-pointer transition-colors"
+              style={{ height: 32 }}
+            >
+              Clear Special Filter
+            </button>
+          )}
 
           {/* View toggle */}
           <div className="flex items-center gap-0.5 ml-auto flex-shrink-0 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-0.5">
@@ -238,7 +316,11 @@ export default function ProjectsPage() {
                         <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'} text-[9px]`}>{p.status}</span>
                       </div>
                       <p className="text-[14px] font-bold text-[var(--color-x-text)] truncate">{p.name}</p>
-                      <p className="text-[12px] text-[var(--color-x-text-secondary)]">{p.department} · {p.owner}</p>
+                      <div className="text-[12px] text-[var(--color-x-text-secondary)] flex items-center gap-1.5 flex-wrap mt-0.5">
+                        <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                        <span>·</span>
+                        <span>{p.owner}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -313,10 +395,12 @@ export default function ProjectsPage() {
                                 <td>
                                   <div className="flex items-center gap-2.5 min-w-0">
                                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
-                                    <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
-                                    {p.subdivision && (
-                                      <span className="flex-shrink-0 text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5" title={`${departmentDisplayName(resolveHierarchy(p.department, p.subdivision).vertical)} → ${p.subdivision}`}>{p.subdivision}</span>
-                                    )}
+                                    <div className="min-w-0">
+                                      <span className="block font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
+                                      {p.subdivision && (
+                                        <span className="block text-[11px] text-[var(--color-x-text-muted)] truncate">↳ {p.subdivision}</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
                                 <td className="truncate" title={p.owner}>{p.owner}</td>
@@ -382,7 +466,10 @@ export default function ProjectsPage() {
                             <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
                             <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
                           </div>
-                          <p className="text-[13px] font-bold text-[var(--color-x-text)] leading-snug mb-3 group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                          <p className="text-[13px] font-bold text-[var(--color-x-text)] leading-snug mb-1 group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                          <div className="mb-2">
+                            <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" className="text-[11px]" />
+                          </div>
                           
                           <div className="flex items-center gap-2 mb-3">
                             <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
@@ -438,7 +525,11 @@ export default function ProjectsPage() {
                       <div key={p.id} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
                         <div className="w-80 flex-shrink-0 pr-5 truncate">
                           <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
-                          <p className="text-[11px] text-[var(--color-x-text-muted)]">{p.owner} · {p.department}</p>
+                          <div className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span>{p.owner}</span>
+                            <span>·</span>
+                            <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                          </div>
                         </div>
                         <div className="flex-1 relative h-7 bg-[var(--color-x-bg)] rounded-md overflow-hidden border border-[var(--color-x-border)]">
                           <div className="absolute inset-0 flex">{Array.from({length:12}).map((_,i) => <div key={i} className="flex-1 border-l border-white/40"/>)}</div>

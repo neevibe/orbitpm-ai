@@ -84,11 +84,14 @@ export default function Sidebar() {
     }
   }, []);
 
-  // The entire Administration section (the group containing /admin) is visible to
-  // Super Admins only. Everyone else never sees it in the nav.
+  // Super-Admin-only destinations: the whole Administration section, plus
+  // Automation and Integration (hidden entirely for normal users — not disabled).
+  const SUPER_ADMIN_ONLY = new Set(['/admin', '/automations', '/integrations']);
   const nav = isSuperAdmin
     ? workspaces.map(ws => (ws.items.some(i => i.href === '/admin') ? { ...ws, items: [...ws.items, adminOnlyItem, adminOnlyAudit] } : ws))
-    : workspaces.filter(ws => !ws.items.some(i => i.href === '/admin'));
+    : workspaces
+        .map(ws => ({ ...ws, items: ws.items.filter(i => !SUPER_ADMIN_ONLY.has(i.href)) }))
+        .filter(ws => ws.items.length > 0);
 
   const isActive = (href: string) => {
     if (href === '/command-center') return pathname === '/' || pathname === '/command-center' || pathname === '/dashboard';

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, DollarSign, ListTodo, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
-import { formatDate, getStatusColor, getPriorityColor, formatINR } from '@/lib/utils';
+import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
 import { departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
 import type { Project, Allocation } from '@/lib/mock-data';
 
@@ -98,10 +98,18 @@ export default function ProjectDetailPage() {
     setIsSplitWizardOpen(false);
   };
 
+  // Dependency section is only shown when a dependency actually exists — no
+  // blank cards, no "No Dependency" placeholder for projects without any.
+  const dependencyCount =
+    (project.classifiedDependencies?.length || 0) +
+    (project.detailedDependencies?.length || 0) +
+    (project.projectDependencies ? 1 : 0);
+  const hasDependencies = dependencyCount > 0;
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'tasks', label: 'Tasks', icon: ListTodo, count: project.tasks?.length || 0 },
-    { id: 'dependencies', label: 'Dependencies', icon: Target, count: project.detailedDependencies?.length || (project.projectDependencies ? 1 : 0) },
+    ...(hasDependencies ? [{ id: 'dependencies', label: 'Dependencies', icon: Target, count: dependencyCount }] : []),
     { id: 'risks', label: 'Risks', icon: AlertTriangle, count: projectRisks.length },
     { id: 'updates', label: 'Updates', icon: MessageSquare },
     { id: 'documents', label: 'Documents', icon: FileText },
@@ -140,7 +148,7 @@ export default function ProjectDetailPage() {
       <div className="grid grid-cols-5 gap-4">
         {[
           { icon: User, label: 'Owner', value: project.owner, color: 'text-indigo-500', editable: true, key: 'owner' },
-          { icon: Building2, label: 'Department', value: departmentDisplayName(resolveHierarchy(project.department, project.subdivision).vertical) + (project.subdivision ? ` → ${project.subdivision}` : ''), color: 'text-purple-500' },
+          { icon: Building2, label: 'Department', value: departmentDisplayName(resolveHierarchy(project.department, project.subdivision).vertical) + (resolveHierarchy(project.department, project.subdivision).subdivision ? ` ↳ ${resolveHierarchy(project.department, project.subdivision).subdivision}` : ''), color: 'text-purple-500' },
           { icon: Calendar, label: 'Start Date', value: formatDate(project.startDate), color: 'text-emerald-500' },
           { icon: Target, label: 'Target Date', value: formatDate(project.targetDate), color: 'text-amber-500' },
           { icon: AlertTriangle, label: 'Open Risks', value: `${projectRisks.filter(r => r.status === 'Open').length}`, color: 'text-red-500' },
@@ -153,12 +161,12 @@ export default function ProjectDetailPage() {
         ))}
       </div>
 
-      {/* Financial value (₹) */}
+      {/* Financial management (₹) */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Project Budget', value: project.budget, color: 'text-indigo-600', accent: 'border-indigo-100 bg-indigo-50/40' },
-          { label: 'Expected Revenue / Savings', value: project.expectedValue, color: 'text-emerald-600', accent: 'border-emerald-100 bg-emerald-50/40' },
-          { label: 'Actual Value Delivered', value: project.actualValue, color: 'text-amber-600', accent: 'border-amber-100 bg-amber-50/40' },
+          { label: 'Total Budget', value: project.totalBudget ?? null, color: 'text-indigo-600', accent: 'border-indigo-100 bg-indigo-50/40' },
+          { label: 'Utilized Budget', value: project.utilizedBudget ?? null, color: 'text-amber-600', accent: 'border-amber-100 bg-amber-50/40' },
+          { label: 'Balance Budget', value: (project.totalBudget != null || project.utilizedBudget != null) ? (project.totalBudget || 0) - (project.utilizedBudget || 0) : null, color: 'text-emerald-600', accent: 'border-emerald-100 bg-emerald-50/40' },
         ].map(f => (
           <div key={f.label} className={`x-card p-4 border ${f.accent}`}>
             <div className="flex items-center gap-2 mb-1.5"><DollarSign className={`w-4 h-4 ${f.color}`} /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">{f.label}</span></div>
@@ -249,33 +257,49 @@ export default function ProjectDetailPage() {
             )}
             
             <div className="x-card p-5 border-emerald-100">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-emerald-500" /> Financials</h3>
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-emerald-500" /> Financials (₹)</h3>
               {isEditing ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[10px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Budget</label>
-                    <input type="number" value={editForm.financials?.budget || project.financials?.budget || 0} onChange={e => setEditForm(f => ({ ...f, financials: { ...f.financials, budget: Number(e.target.value), spent: f.financials?.spent || project.financials?.spent || 0 } }))} className="x-input py-1.5 text-[12px]" />
+                    <label className="block text-[10px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Total Budget</label>
+                    <input type="text" value={editForm.totalBudget != null ? String(editForm.totalBudget) : ''} onChange={e => setEditForm(f => ({ ...f, totalBudget: parseINR(e.target.value) }))} className="x-input py-1.5 text-[12px]" placeholder="e.g. 2500000 or 2.5 Cr" />
+                    <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(String(editForm.totalBudget)))}</p>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Spent</label>
-                    <input type="number" value={editForm.financials?.spent || project.financials?.spent || 0} onChange={e => setEditForm(f => ({ ...f, financials: { ...f.financials, spent: Number(e.target.value), budget: f.financials?.budget || project.financials?.budget || 0 } }))} className="x-input py-1.5 text-[12px]" />
+                    <label className="block text-[10px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Utilized Budget</label>
+                    <input type="text" value={editForm.utilizedBudget != null ? String(editForm.utilizedBudget) : ''} onChange={e => setEditForm(f => ({ ...f, utilizedBudget: parseINR(e.target.value) }))} className="x-input py-1.5 text-[12px]" placeholder="e.g. 15,00,000" />
+                    <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(String(editForm.utilizedBudget)))}</p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-end mb-1">
-                      <span className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase">Budget</span>
-                      <span className="text-[15px] font-bold text-[var(--color-x-text)]">${(project.financials?.budget || 0).toLocaleString()}</span>
+                      <span className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase">Total Budget</span>
+                      <span className="text-[15px] font-bold text-[var(--color-x-text)]">
+                        {project.totalBudget != null ? formatINR(project.totalBudget) : '—'}
+                      </span>
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between items-end mb-1">
-                      <span className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase">Spent</span>
-                      <span className="text-[15px] font-bold text-indigo-600">${(project.financials?.spent || 0).toLocaleString()}</span>
+                      <span className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase">Utilized Budget</span>
+                      <span className="text-[15px] font-bold text-amber-600">
+                        {project.utilizedBudget != null ? formatINR(project.utilizedBudget) : '—'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-end mb-1 border-t border-[var(--color-x-border)] pt-2.5">
+                      <span className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase">Balance Budget</span>
+                      <span className="text-[15px] font-bold text-emerald-600 font-mono">
+                        {project.totalBudget != null || project.utilizedBudget != null
+                          ? formatINR((project.totalBudget || 0) - (project.utilizedBudget || 0))
+                          : '—'}
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-[var(--color-x-bg)] rounded-full overflow-hidden mt-1.5">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(((project.financials?.spent || 0) / (project.financials?.budget || 1)) * 100, 100)}%` }} />
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(((project.utilizedBudget || 0) / (project.totalBudget || 1)) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>

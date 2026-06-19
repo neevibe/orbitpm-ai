@@ -7,7 +7,6 @@
 -- new fields. (Reversible: each column can be dropped.)
 
 alter table public.projects add column if not exists subdivision text;
-alter table public.projects add column if not exists budget numeric;
-alter table public.projects add column if not exists expected_value numeric;
-alter table public.projects add column if not exists actual_value numeric;
+alter table public.projects add column if not exists total_budget numeric;
+alter table public.projects add column if not exists utilized_budget numeric;
 alter table public.projects add column if not exists classified_dependencies jsonb;

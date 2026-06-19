@@ -237,11 +237,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const openRisks = risks.filter(r => r.status === 'Open').length;
     const closedRisks = risks.filter(r => r.status === 'Closed').length;
 
-    // Stuck: targetDate <= 7 days, any priority, status !== Completed, not dismissedFromStuck
+    // Stuck: status === 'Delayed' OR (targetDate < Today and status !== 'Completed')
     const stuckProjects = active.filter(p => {
       if (p.status === 'Completed' || p.dismissedFromStuck) return false;
-      const days = daysUntil(p.targetDate);
-      return days !== null && days <= 7;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isDelayed = p.status === 'Delayed';
+      const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+      return isDelayed || isOverdue;
     }).length;
 
     // Needs escalation: Critical + In Progress + has risks
@@ -254,7 +256,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Owner bottlenecks: owners with 3+ active projects
     const ownerCounts: Record<string, number> = {};
-    active.filter(p => p.status === 'In Progress').forEach(p => {
+    active.filter(p => p.status !== 'Completed' && (p.status as string) !== 'Cancelled').forEach(p => {
       ownerCounts[p.owner] = (ownerCounts[p.owner] || 0) + 1;
     });
     const ownerBottlenecks = Object.values(ownerCounts).filter(c => c >= 3).length;

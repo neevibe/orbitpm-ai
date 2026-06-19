@@ -4,7 +4,7 @@ import { useData } from '@/lib/data-context';
 import {
   Activity, TrendingUp, AlertTriangle, Users, Target, Shield,
   ArrowUpRight, ArrowDownRight, Zap, Clock, BarChart3, Eye,
-  Rocket, CheckCircle2, XCircle, Flame, Calendar, Edit3, Save, X, Trash2
+  Rocket, CheckCircle2, XCircle, Flame, Calendar, Edit3, Save, X, Trash2, Download
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import { Project } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
 import { formatDate, formatINR, formatINRCompact } from '@/lib/utils';
+import DepartmentLabel from '@/components/DepartmentLabel';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
@@ -53,12 +54,12 @@ export default function CommandCenter() {
   // Portfolio financial rollup (₹). Projects without values contribute 0.
   const fin = projects.reduce(
     (acc, p) => ({
-      budget: acc.budget + (p.budget || 0),
-      expected: acc.expected + (p.expectedValue || 0),
-      actual: acc.actual + (p.actualValue || 0),
+      total: acc.total + (p.totalBudget || 0),
+      utilized: acc.utilized + (p.utilizedBudget || 0),
     }),
-    { budget: 0, expected: 0, actual: 0 },
+    { total: 0, utilized: 0 },
   );
+  const finBalance = fin.total - fin.utilized;
 
   // Owner workload
   const ownerCounts: Record<string, number> = {};
@@ -84,11 +85,13 @@ export default function CommandCenter() {
     total: d.total,
   }));
 
-  // Delivery trend (mock months)
-  const trendData = [
-    { month: 'Jan', completed: 5, started: 8 }, { month: 'Feb', completed: 8, started: 12 },
-    { month: 'Mar', completed: 12, started: 18 }, { month: 'Apr', completed: 18, started: 22 },
-    { month: 'May', completed: kpi.completed, started: kpi.inProgress + kpi.completed },
+  // Status distribution data for vertical BarChart
+  const statusDistributionData = [
+    { name: 'Not Started', count: kpi.notStarted, color: '#9ca3af' },
+    { name: 'In Progress', count: kpi.inProgress, color: '#3b82f6' },
+    { name: 'On Hold', count: kpi.onHold, color: '#f59e0b' },
+    { name: 'Delayed', count: kpi.delayed, color: '#ef4444' },
+    { name: 'Completed', count: kpi.completed, color: '#10b981' },
   ];
 
   // Priority breakdown for radial
@@ -99,11 +102,13 @@ export default function CommandCenter() {
     { name: 'Low', value: kpi.low, fill: '#22c55e' },
   ].filter(d => d.value > 0);
 
-  // Stuck projects: deadline within 7 days, any priority, not completed, not dismissed
+  // Stuck projects: delayed status OR (targetDate < Today and status !== Completed)
   const stuckProjects = projects.filter(p => {
     if (p.status === 'Completed' || p.archived || p.dismissedFromStuck) return false;
-    const days = daysUntil(p.targetDate);
-    return days !== null && days <= 7;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isDelayed = p.status === 'Delayed';
+    const isOverdue = p.targetDate ? p.targetDate < todayStr : false;
+    return isDelayed || isOverdue;
   }).sort((a, b) => {
     const da = daysUntil(a.targetDate) ?? 999;
     const db = daysUntil(b.targetDate) ?? 999;
@@ -132,7 +137,13 @@ export default function CommandCenter() {
           <h1 className="x-page-title flex items-center gap-2"><Activity className="w-5 h-5 text-indigo-500" /> Dashboard</h1>
           <p className="x-page-subtitle">Commercial Portfolio · Real-time executive intelligence</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 no-print">
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[12px] font-semibold hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" /> Export PDF
+          </button>
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-600">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
           </span>
@@ -174,9 +185,9 @@ export default function CommandCenter() {
       {/* Financial value rollup (₹) */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total Portfolio Budget', value: fin.budget, color: '#6366f1', bg: 'from-indigo-50/60' },
-          { label: 'Expected Revenue / Savings', value: fin.expected, color: '#10b981', bg: 'from-emerald-50/60' },
-          { label: 'Actual Value Delivered', value: fin.actual, color: '#f59e0b', bg: 'from-amber-50/60' },
+          { label: 'Total Budget', value: fin.total, color: '#6366f1', bg: 'from-indigo-50/60' },
+          { label: 'Utilized Budget', value: fin.utilized, color: '#f59e0b', bg: 'from-amber-50/60' },
+          { label: 'Balance Budget', value: finBalance, color: '#10b981', bg: 'from-emerald-50/60' },
         ].map(f => (
           <div key={f.label} className={`x-card p-4 bg-gradient-to-br ${f.bg} to-transparent`}>
             <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-x-text-muted)] mb-1">{f.label}</p>
@@ -238,8 +249,10 @@ export default function CommandCenter() {
                     <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-400' : 'bg-indigo-400'}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-indigo-600">{p.name}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-[var(--color-x-text-muted)]">
+                      <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-x-text-muted)] flex-wrap">
                         <span className="font-mono">{p.id}</span>
+                        <span>·</span>
+                        <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
                         <span>·</span>
                         <span>{p.owner}</span>
                       </div>
@@ -272,24 +285,23 @@ export default function CommandCenter() {
 
         {/* Center — Charts */}
         <div className="col-span-12 lg:col-span-5 space-y-3">
-          {/* Delivery Forecast */}
+          {/* Project Status Distribution */}
           <div className="x-card p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Delivery Forecast</h3>
-              <span className="text-[10px] text-[var(--color-x-text-muted)]">Last 5 months</span>
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Project Status Distribution</h3>
+              <span className="text-[10px] text-[var(--color-x-text-muted)]">Active Portfolio</span>
             </div>
             <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={trendData}>
-                <defs>
-                  <linearGradient id="gStarted" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6366f1" stopOpacity={0.15} /><stop offset="100%" stopColor="#6366f1" stopOpacity={0.01} /></linearGradient>
-                  <linearGradient id="gCompleted" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.15} /><stop offset="100%" stopColor="#10b981" stopOpacity={0.01} /></linearGradient>
-                </defs>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="started" stroke="#6366f1" strokeWidth={2} fill="url(#gStarted)" name="Cumulative Started" />
-                <Area type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={2} fill="url(#gCompleted)" name="Cumulative Done" />
-              </AreaChart>
+              <BarChart data={statusDistributionData}>
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
+                  {statusDistributionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
 
@@ -355,23 +367,6 @@ export default function CommandCenter() {
             </div>
           </div>
 
-          {/* Overloaded Team Members */}
-          {overloaded.length > 0 && (
-            <div className="x-card p-5 border-amber-200">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-2 flex items-center gap-1.5"><Users className="w-4 h-4 text-amber-500" /> Overloaded</h3>
-              <div className="space-y-1.5">
-                {overloaded.slice(0, 5).map(([name, count]) => (
-                  <div key={name} className="flex items-center gap-2 p-1.5 rounded-md">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
-                      {name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                    </div>
-                    <span className="text-[11px] text-[var(--color-x-text-secondary)] flex-1 truncate">{name}</span>
-                    <span className="x-badge x-badge-amber text-[9px]">{count} active</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -536,8 +531,8 @@ export default function CommandCenter() {
                 ) : <p className="text-[13px] font-semibold text-[#1e293b]">{selectedProject.owner || '—'}</p>}
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Department</label>
-                <p className="text-[13px] font-semibold text-[#1e293b]">{selectedProject.department}</p>
+                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Department ↳ Subdivision</label>
+                <DepartmentLabel department={selectedProject.department} subdivision={selectedProject.subdivision} variant="stacked" className="text-[13px]" />
               </div>
               <button
                 onClick={() => router.push(`/projects/${selectedProject.id}`)}

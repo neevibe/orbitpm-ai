@@ -43,7 +43,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     startDate: '', targetDate: '',
     risks: '', objective: '', notes: '',
     projectDependencies: '', supportTeam: '', kpi: '',
-    budget: '', expectedValue: '', actualValue: '',
+    totalBudget: '', utilizedBudget: '',
   });
 
   const [form, setForm] = useState(makeEmpty());
@@ -66,9 +66,8 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
         projectDependencies: editProject.projectDependencies || '',
         supportTeam: editProject.supportTeam || '',
         kpi: editProject.kpi || '',
-        budget: editProject.budget != null ? String(editProject.budget) : '',
-        expectedValue: editProject.expectedValue != null ? String(editProject.expectedValue) : '',
-        actualValue: editProject.actualValue != null ? String(editProject.actualValue) : '',
+        totalBudget: editProject.totalBudget != null ? String(editProject.totalBudget) : '',
+        utilizedBudget: editProject.utilizedBudget != null ? String(editProject.utilizedBudget) : '',
       });
       setDeps(editProject.classifiedDependencies || []);
       setAutoId('');
@@ -99,9 +98,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   const subdivisions = getSubdivisions(form.department);
   const subdivisionRequired = hasSubdivisions(form.department);
 
-  // Mandatory fields are enforced at CREATE time only (existing projects stay
-  // editable without back-filling every new field).
-  const validateForCreate = (): string[] => {
+  const validateForm = (): string[] => {
     const e: string[] = [];
     if (!form.name.trim()) e.push('Project Name');
     if (!form.department) e.push('Department');
@@ -109,10 +106,8 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     if (!form.owner.trim()) e.push('Project Owner');
     if (!form.priority) e.push('Priority');
     if (!form.startDate) e.push('Start Date');
-    if (!form.targetDate) e.push('Expected End Date');
+    if (!form.targetDate) e.push('End Date');
     if (!form.status) e.push('Status');
-    if (parseINR(form.budget) == null) e.push('Project Budget');
-    if (deps.length === 0) e.push('Dependency Details');
     return e;
   };
 
@@ -121,10 +116,9 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     if (readOnly) return; // defense-in-depth: block writes outside the user's department
     if (!canModifyDepartment(form.department)) return;
 
-    if (!editProject) {
-      const missing = validateForCreate();
-      if (missing.length > 0) { setErrors(missing); return; }
-    } else if (!form.name || !form.department || !form.owner) {
+    const missing = validateForm();
+    if (missing.length > 0) {
+      setErrors(missing);
       return;
     }
     setErrors([]);
@@ -135,9 +129,8 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
       subdivision: form.subdivision || null,
       startDate: form.startDate || null,
       targetDate: form.targetDate || null,
-      budget: parseINR(form.budget),
-      expectedValue: parseINR(form.expectedValue),
-      actualValue: parseINR(form.actualValue),
+      totalBudget: parseINR(form.totalBudget),
+      utilizedBudget: parseINR(form.utilizedBudget),
       classifiedDependencies: deps,
     };
     if (editProject) {
@@ -234,12 +227,12 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div><label className={labelCls}>Status</label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} className={inputCls}>
+            <div><label className={labelCls}>Status *</label>
+              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} required className={inputCls}>
                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
               </select></div>
-            <div><label className={labelCls}>Priority / Criticality</label>
-              <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as any }))} className={inputCls}>
+            <div><label className={labelCls}>Priority / Criticality *</label>
+              <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as any }))} required className={inputCls}>
                 {priorityOptions.map(p => <option key={p} value={p}>{p}</option>)}
               </select></div>
             <div><label className={labelCls}>Progress %</label>
@@ -247,35 +240,36 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={labelCls}>Start Date</label>
-              <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} className={inputCls} /></div>
-            <div><label className={labelCls}>Target Date</label>
-              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} className={inputCls} /></div>
+            <div><label className={labelCls}>Start Date *</label>
+              <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} required className={inputCls} /></div>
+            <div><label className={labelCls}>Target Date *</label>
+              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} required className={inputCls} /></div>
           </div>
 
-          {/* Financial value (INR) */}
+          {/* Financial management (INR) */}
           <div className="border-t border-[#f1f5f9] pt-4">
             <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">
-              <IndianRupee className="w-3.5 h-3.5" /> Financial Value (₹)
+              <IndianRupee className="w-3.5 h-3.5" /> Financial Management (₹)
             </p>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className={labelCls}>Project Budget *</label>
-                <input type="text" inputMode="decimal" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                <label className={labelCls}>Total Budget</label>
+                <input type="text" inputMode="decimal" value={form.totalBudget} onChange={e => setForm(f => ({ ...f, totalBudget: e.target.value }))}
                   placeholder="e.g. 2500000 or 2.5 Cr" className={inputCls} />
-                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.budget))}</p>
+                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.totalBudget))}</p>
               </div>
               <div>
-                <label className={labelCls}>Expected Revenue / Savings</label>
-                <input type="text" inputMode="decimal" value={form.expectedValue} onChange={e => setForm(f => ({ ...f, expectedValue: e.target.value }))}
-                  placeholder="e.g. 1.2 Cr" className={inputCls} />
-                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.expectedValue))}</p>
-              </div>
-              <div>
-                <label className={labelCls}>Actual Value Delivered</label>
-                <input type="text" inputMode="decimal" value={form.actualValue} onChange={e => setForm(f => ({ ...f, actualValue: e.target.value }))}
+                <label className={labelCls}>Utilized Budget</label>
+                <input type="text" inputMode="decimal" value={form.utilizedBudget} onChange={e => setForm(f => ({ ...f, utilizedBudget: e.target.value }))}
                   placeholder="e.g. 40,00,000" className={inputCls} />
-                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.actualValue))}</p>
+                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.utilizedBudget))}</p>
+              </div>
+              <div>
+                <label className={labelCls}>Balance Budget</label>
+                <div className={`${inputCls} bg-[#f8fafc] text-[#1e293b] font-semibold flex items-center`}>
+                  {formatINRCompact((parseINR(form.totalBudget) || 0) - (parseINR(form.utilizedBudget) || 0))}
+                </div>
+                <p className="text-[10px] text-[#94a3b8] mt-1">Auto: Total − Utilized</p>
               </div>
             </div>
           </div>
@@ -293,7 +287,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
           {/* Dependency details (classified internal/external) */}
           <div className="border-t border-[#f1f5f9] pt-4">
             <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">
-              Dependency Details {!editProject && '*'}
+              Dependency Details <span className="font-normal normal-case tracking-normal text-[#cbd5e1]">(optional)</span>
             </p>
             <DependencyBuilder value={deps} onChange={setDeps} readOnly={readOnly} />
           </div>

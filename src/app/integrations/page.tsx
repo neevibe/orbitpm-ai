@@ -1,7 +1,8 @@
 'use client';
 
-import { Puzzle, Globe, MessageSquare, Database, Mail, GitPullRequest, Cloud, ExternalLink, Search } from 'lucide-react';
+import { Puzzle, Globe, MessageSquare, Database, Mail, GitPullRequest, Cloud, ExternalLink, Search, Shield } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 const mockIntegrations = [
   { id: '1', name: 'Jira Software', desc: 'Sync issues, epics, and sprints bi-directionally.', icon: GitPullRequest, category: 'Development', status: 'Connected', color: 'text-blue-500', bg: 'bg-blue-50' },
@@ -13,7 +14,22 @@ const mockIntegrations = [
 ];
 
 export default function IntegrationsPage() {
+  const { isSuperAdmin, loading: authLoading } = useAuth();
   const [search, setSearch] = useState('');
+
+  if (authLoading) return null;
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-4">
+          <Shield className="w-7 h-7 text-red-500" />
+        </div>
+        <h1 className="text-[18px] font-bold text-[#0f172a]">Access restricted</h1>
+        <p className="text-[13px] text-[#64748b] mt-1 max-w-sm">The Integrations area is available to Super Admin accounts only.</p>
+      </div>
+    );
+  }
+
   const filtered = mockIntegrations.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
 
   return (

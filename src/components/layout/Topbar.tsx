@@ -68,10 +68,7 @@ export default function Topbar() {
           <span className="text-[11px] font-semibold text-indigo-600">Ask AI</span>
         </button>
 
-        {/* Theme Toggle */}
-        <button onClick={toggleTheme} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--color-x-bg)] transition-all" title="Toggle theme">
-          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[var(--color-x-text-muted)]" />}
-        </button>
+
 
         {/* User avatar + logout */}
         {user && (
