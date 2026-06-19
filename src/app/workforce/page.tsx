@@ -88,7 +88,7 @@ export default function WorkforcePage() {
             <BarChart data={workloadData}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-              <Tooltip contentStyle={tooltipStyle} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
               <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active Projects" radius={[0, 0, 4, 4]} barSize={32} />
               <Bar dataKey="done" stackId="a" fill="#e5e7eb" name="Other Projects" radius={[4, 4, 0, 0]} />
             </BarChart>

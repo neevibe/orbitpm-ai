@@ -134,7 +134,7 @@ export default function AnalyticsPage() {
                 <BarChart data={deptData} layout="vertical" margin={{ left: 0 }}>
                   <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={90} />
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="done" stackId="a" fill="#10b981" name="Completed" radius={[0, 4, 4, 0]} />
                 </BarChart>

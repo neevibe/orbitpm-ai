@@ -85,7 +85,7 @@ export default function PortfolioPage() {
               <BarChart data={budgets} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="spent" stackId="a" fill="#8b5cf6" name="Spent" radius={[0, 0, 4, 4]} />
                 <Bar dataKey="remaining" stackId="a" fill="#e5e7eb" name="Remaining" radius={[4, 4, 0, 0]} />
               </BarChart>

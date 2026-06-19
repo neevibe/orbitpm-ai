@@ -67,13 +67,30 @@ export default function CommandCenter() {
   const overloaded = Object.entries(ownerCounts).filter(([, c]) => c >= 4).sort((a, b) => b[1] - a[1]);
 
   // Status pie
-  const statusData = [
-    { name: 'Active', value: kpi.inProgress, color: '#3b82f6' },
-    { name: 'Completed', value: kpi.completed, color: '#10b981' },
-    { name: 'Not Started', value: kpi.notStarted, color: '#d1d5db' },
-    { name: 'Delayed', value: kpi.delayed, color: '#ef4444' },
-    { name: 'On Hold', value: kpi.onHold, color: '#f59e0b' },
-  ].filter(d => d.value > 0);
+  // Portfolio Health calculations
+  const healthData = React.useMemo(() => {
+    let onTrack = 0;
+    let atRisk = 0;
+    let delayed = 0;
+
+    projects.forEach(p => {
+      if (p.archived) return;
+      const hasOpenRisks = risks.some(r => r.projectId === p.id && r.status === 'Open');
+      if (p.status === 'Delayed') {
+        delayed++;
+      } else if (p.status === 'On Hold' || hasOpenRisks) {
+        atRisk++;
+      } else {
+        onTrack++;
+      }
+    });
+
+    return [
+      { name: 'On Track', value: onTrack, color: '#10b981' },
+      { name: 'At Risk', value: atRisk, color: '#f59e0b' },
+      { name: 'Delayed', value: delayed, color: '#ef4444' },
+    ].filter(d => d.value > 0);
+  }, [projects, risks]);
 
   // Department chart
   const deptChartData = departments.slice(0, 7).map(d => ({
@@ -182,20 +199,7 @@ export default function CommandCenter() {
         ))}
       </div>
 
-      {/* Financial value rollup (₹) */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total Budget', value: fin.total, color: '#6366f1', bg: 'from-indigo-50/60' },
-          { label: 'Utilized Budget', value: fin.utilized, color: '#f59e0b', bg: 'from-amber-50/60' },
-          { label: 'Balance Budget', value: finBalance, color: '#10b981', bg: 'from-emerald-50/60' },
-        ].map(f => (
-          <div key={f.label} className={`x-card p-4 bg-gradient-to-br ${f.bg} to-transparent`}>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-x-text-muted)] mb-1">{f.label}</p>
-            <p className="text-[22px] font-bold" style={{ color: f.color }}>{formatINRCompact(f.value)}</p>
-            <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">{formatINR(f.value)}</p>
-          </div>
-        ))}
-      </div>
+
 
       {/* Main Grid — 3 columns */}
       <div className="grid grid-cols-12 gap-4">
@@ -314,7 +318,7 @@ export default function CommandCenter() {
               <BarChart data={deptChartData} layout="vertical" margin={{ left: 0 }}>
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={100} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active" />
                 <Bar dataKey="done" stackId="a" fill="#10b981" name="Done" />
                 <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed" />
@@ -326,23 +330,23 @@ export default function CommandCenter() {
 
         {/* Right col — Status + Priority + Overloaded */}
         <div className="col-span-12 lg:col-span-3 space-y-3">
-          {/* Portfolio Status */}
+          {/* Portfolio Health */}
           <div className="x-card p-5">
-            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-purple-500" /> Portfolio Status</h3>
+            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-purple-500" /> Portfolio Health</h3>
             <ResponsiveContainer width="100%" height={140}>
               <PieChart>
-                <Pie data={statusData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={0}>
-                  {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                <Pie data={healthData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                  {healthData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
               </PieChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
-              {statusData.map(s => (
-                <div key={s.name} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                  <span className="text-[10px] text-[var(--color-x-text-muted)]">{s.name}</span>
-                  <span className="text-[10px] font-bold text-[var(--color-x-text)] ml-auto">{s.value}</span>
+              {healthData.map(h => (
+                <div key={h.name} className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: h.color }} />
+                  <span className="text-[10px] text-[var(--color-x-text-muted)]">{h.name}</span>
+                  <span className="text-[10px] font-bold text-[var(--color-x-text)] ml-auto">{h.value}</span>
                 </div>
               ))}
             </div>
