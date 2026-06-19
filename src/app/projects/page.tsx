@@ -482,8 +482,16 @@ export default function ProjectsPage() {
                                     <td>
                                       <div className="flex items-center gap-2.5 min-w-0">
                                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
-                                        <div className="min-w-0">
-                                          <span className="block font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
+                                        <div className="min-w-0 flex items-center gap-2">
+                                          <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
+                                          {p.isDependencyMirror && (
+                                            <span
+                                              title={`Mirrored from ${departmentDisplayName(p.originalDepartment || '')} via a dependency. Archive/Delete must happen in the source department.`}
+                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-semibold text-indigo-600 whitespace-nowrap flex-shrink-0"
+                                            >
+                                              ↳ Mirror
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                     </td>
@@ -503,16 +511,9 @@ export default function ProjectsPage() {
                                       </div>
                                     </td>
                                     <td className="pr-5 text-right">
-{p.isDependencyMirror ? (
-                                        <span
-                                          title={`Mirrored from ${departmentDisplayName(p.originalDepartment || '')} via a dependency. Manage the original from ${departmentDisplayName(p.originalDepartment || '')}.`}
-                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-600 whitespace-nowrap"
-                                        >
-                                          ↳ Mirror
-                                        </span>
-                                      ) : (
-                                        <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                          <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title="Quick Edit"><Edit2 className="w-4 h-4" /></button>
+                                      <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                        <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title="Quick Edit"><Edit2 className="w-4 h-4" /></button>
+                                        {!p.isDependencyMirror && (
                                           <div className="relative" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
                                             {openMenuId === p.id && (
@@ -523,8 +524,8 @@ export default function ProjectsPage() {
                                               </div>
                                             )}
                                           </div>
-                                        </div>
-                                      )}
+                                        )}
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
