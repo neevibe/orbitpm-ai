@@ -12,6 +12,7 @@ import {
   type Project,
   type Risk,
   type Department,
+  type ClassifiedDependency,
 } from './mock-data';
 
 /**
@@ -88,6 +89,9 @@ interface DataContextType {
   // Project CRUD
   addProject: (project: Omit<Project, 'id'> & { id?: string }) => string;
   updateProject: (id: string, updates: Partial<Project>) => void;
+  /** Update a single internal dependency task inside a parent project. Permissioned
+   *  to the dependency's TARGET (dependent) department, not the parent's. */
+  updateDependencyTask: (parentId: string, depId: string, patch: Partial<ClassifiedDependency>) => void;
   splitProject: (originalId: string, splits: { department: string, owner?: string, percentage: number }[]) => void;
   deleteProject: (id: string) => void;       // kept for compatibility — now archives
   archiveProject: (id: string) => void;       // soft-delete: moves to history
@@ -146,10 +150,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const sourceDept = normalizeDeptName(project.department);
     const set = new Set<string>();
     project.classifiedDependencies.forEach(dep => {
-      let target = '';
-      if (dep.kind === 'internal') target = dep.department || '';
-      else if (dep.kind === 'external' && dep.externalScope === 'within_bial') target = dep.department || '';
-      target = normalizeDeptName(target);
+      // Only internal dependencies mirror into another department, so only they
+      // generate cross-department notifications.
+      if (dep.kind !== 'internal') return;
+      const target = normalizeDeptName(dep.department || '');
       if (target && target !== sourceDept) set.add(target);
     });
     return Array.from(set);
@@ -231,31 +235,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
     active.forEach(proj => {
       if (proj.classifiedDependencies) {
         proj.classifiedDependencies.forEach(dep => {
-          let targetDept = '';
-          let assignedOwner = '';
-          if (dep.kind === 'internal') {
-            targetDept = dep.department || '';
-            assignedOwner = dep.owners?.[0] || '';
-          } else if (dep.kind === 'external' && dep.externalScope === 'within_bial') {
-            targetDept = dep.department || '';
-          }
+          // Only INTERNAL dependencies create a read-only mirrored task in the
+          // target department. External (vendor/partner) dependencies stay as
+          // records inside the parent project and never spawn a mirror.
+          if (dep.kind !== 'internal') return;
 
-          targetDept = normalizeDeptName(targetDept);
+          const targetDept = normalizeDeptName(dep.department || '');
+          const assignedOwner = dep.assignedUser || dep.owners?.[0] || '';
           const sourceDept = normalizeDeptName(proj.department);
 
           if (targetDept && targetDept !== sourceDept) {
-            const alreadyExists = list.some(item => 
-              item.id === proj.id && 
-              item.department === targetDept && 
-              item.owner === (assignedOwner || proj.owner)
+            const alreadyExists = list.some(item =>
+              item.isDependencyMirror &&
+              item.mirrorParentId === proj.id &&
+              item.mirrorDepId === dep.id,
             );
             if (!alreadyExists) {
               list.push({
                 ...proj,
                 department: targetDept,
                 owner: assignedOwner || proj.owner,
+                // The mirror's own task status is what the dependent dept tracks,
+                // falling back to the parent status until they set one.
+                status: dep.status === 'Resolved' ? 'Completed'
+                  : dep.status === 'Blocked' ? 'Delayed'
+                  : dep.status === 'In Progress' ? 'In Progress'
+                  : proj.status,
+                progress: dep.progress ?? proj.progress,
                 isDependencyMirror: true,
                 originalDepartment: sourceDept,
+                mirrorParentId: proj.id,
+                mirrorDepId: dep.id,
               });
             }
           }
@@ -413,6 +423,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }).catch(err => console.error('Error syncing project to local Excel:', err));
     }
   }, [logAudit, notify, canModifyDepartment]);
+
+  // Update one internal dependency task inside its parent project. Unlike
+  // updateProject, this is gated on the dependency's TARGET (dependent) department
+  // so a member of that department can maintain their mirrored task without
+  // holding edit rights over the parent project's own department.
+  const updateDependencyTask = useCallback((parentId: string, depId: string, patch: Partial<ClassifiedDependency>) => {
+    const parent = projects.find(p => p.id === parentId && !p.isDependencyMirror);
+    if (!parent) return;
+    const dep = (parent.classifiedDependencies || []).find(d => d.id === depId);
+    if (!dep) return;
+    // Permission: admins pass; otherwise the user must be able to modify the
+    // dependency's target department.
+    if (!canModifyDepartment(dep.department)) {
+      notify('Permission denied', `You can only update dependency tasks for your own department.`, 'warning');
+      return;
+    }
+    const nextDeps = (parent.classifiedDependencies || []).map(d => (d.id === depId ? { ...d, ...patch } : d));
+    setProjects(prev => prev.map(p => (p.id === parentId ? { ...p, classifiedDependencies: nextDeps } : p)));
+    logAudit({ action: 'update', entityType: 'project', entityId: parentId, entityName: parent.name, changes: { dependencyTask: { old: depId, new: patch } } });
+    if (isSupabaseConfigured()) {
+      persistProjectMutation({ action: 'update', project: { id: parentId }, updates: { classifiedDependencies: nextDeps }, audit: { entityName: parent.name } });
+    }
+  }, [projects, canModifyDepartment, notify, logAudit]);
 
   const splitProject = useCallback((originalId: string, splits: { department: string, owner?: string, percentage: number }[]) => {
     const originalProject = projects.find(p => p.id === originalId);
@@ -713,6 +746,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       kpi,
       addProject,
       updateProject,
+      updateDependencyTask,
       splitProject,
       deleteProject,
       archiveProject,

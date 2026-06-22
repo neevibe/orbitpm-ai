@@ -7,6 +7,7 @@ import { useData } from '@/lib/data-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
+import DependencyTaskModal from '@/components/modals/DependencyTaskModal';
 import type { Project } from '@/lib/mock-data';
 import DepartmentLabel from '@/components/DepartmentLabel';
 
@@ -32,6 +33,8 @@ export default function ProjectsPage() {
   const [tab, setTab] = useState<'active' | 'history'>('active');
   const [showModal, setShowModal] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
+  // Dedicated dependency-task view for read-only internal mirror rows.
+  const [taskMirror, setTaskMirror] = useState<{ parentId: string; depId: string } | null>(null);
   const [selectedDept, setSelectedDept] = useState<string>('All');
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
@@ -161,6 +164,23 @@ export default function ProjectsPage() {
 
   const openEdit = (p: Project) => { setEditProject(p); setShowModal(true); };
   const goToDetail = (id: string) => router.push(`/projects/${id}`);
+
+  // Mirror rows are internal dependency tasks — opening one shows the dedicated
+  // Dependency Task view, never the standard project detail/edit modal.
+  const openRow = (p: Project) => {
+    if (p.isDependencyMirror && p.mirrorParentId && p.mirrorDepId) {
+      setTaskMirror({ parentId: p.mirrorParentId, depId: p.mirrorDepId });
+    } else {
+      goToDetail(p.id);
+    }
+  };
+  const openRowEdit = (p: Project) => {
+    if (p.isDependencyMirror && p.mirrorParentId && p.mirrorDepId) {
+      setTaskMirror({ parentId: p.mirrorParentId, depId: p.mirrorDepId });
+    } else {
+      openEdit(p);
+    }
+  };
 
   // Export all current (live, edited) data to a re-importable Excel workbook.
   const handleExport = async () => {
@@ -477,7 +497,7 @@ export default function ProjectsPage() {
                               </thead>
                               <tbody>
                                 {group.projects.map(p => (
-                                  <tr key={`${p.id}-${p.department}-${p.owner}`} onClick={() => goToDetail(p.id)} className="cursor-pointer group">
+                                  <tr key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="cursor-pointer group">
                                     <td className="pl-5 pr-3 font-mono text-[11px] text-[var(--color-x-text-muted)] whitespace-nowrap truncate" title={p.id}>{p.id}</td>
                                     <td>
                                       <div className="flex items-center gap-2.5 min-w-0">
@@ -512,7 +532,7 @@ export default function ProjectsPage() {
                                     </td>
                                     <td className="pr-5 text-right">
                                       <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        <button onClick={e => { e.stopPropagation(); openEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title="Quick Edit"><Edit2 className="w-4 h-4" /></button>
+                                        <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
                                         {!p.isDependencyMirror && (
                                           <div className="relative" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
@@ -555,7 +575,7 @@ export default function ProjectsPage() {
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto px-1 pb-4">
                       {cols.map(p => (
-                        <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => goToDetail(p.id)} className="x-card p-4 hover:border-indigo-400 cursor-pointer group">
+                        <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="x-card p-4 hover:border-indigo-400 cursor-pointer group">
                           <div className="flex items-center justify-between mb-2">
                             <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
                             <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
@@ -616,7 +636,7 @@ export default function ProjectsPage() {
                     const wp = (Math.max(1, em - sm + 1) / 12) * 100;
                     const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#6366f1';
                     return (
-                      <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => goToDetail(p.id)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
+                      <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
                         <div className="w-80 flex-shrink-0 pr-5 truncate">
                           <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
                           <div className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1.5 flex-wrap mt-0.5">
@@ -660,6 +680,14 @@ export default function ProjectsPage() {
         defaultDepartment={newProjectDept || undefined}
         defaultSubdivision={newProjectSub || undefined}
       />
+
+      {taskMirror && (
+        <DependencyTaskModal
+          parentId={taskMirror.parentId}
+          depId={taskMirror.depId}
+          onClose={() => setTaskMirror(null)}
+        />
+      )}
     </div>
   );
 }

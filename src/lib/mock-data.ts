@@ -22,23 +22,52 @@ export interface DetailedDependency {
  *   external/within_bial  → on a BIAL function outside Commercial (Finance/ICT/…)
  *   external/outside_bial → on a third party (vendor/govt/consultant/…, free text)
  */
+export type DependencyTaskStatus = 'Pending' | 'In Progress' | 'Resolved' | 'Blocked';
+
 export interface ClassifiedDependency {
   id: string;
   kind: 'internal' | 'external';
-  /** external only: where the dependency sits */
+  /** external only: where the dependency sits (legacy; optional) */
   externalScope?: 'within_bial' | 'outside_bial';
-  /** internal: the department the dependency is on. within_bial: the BIAL function. */
+  /** internal: the department the dependency is on. */
   department?: string;
   /** internal: one or more employees the work depends on. */
   owners?: string[];
-  /** outside_bial: free-text party (e.g. "Acme Vendor"), plus optional category. */
+  description?: string;
+  /** When the dependency was first created (ISO date). */
+  createdDate?: string;
+
+  // ── Internal mirror-task tracking. Editable by the dependent department in the
+  //    dedicated Dependency Task view; never touches the parent project's own
+  //    fields (name, department, budget, priority, owner stay read-only). ──
+  /** The user in the dependent department who owns this mirrored task. */
+  assignedUser?: string;
+  /** Dependency task status. */
+  status?: DependencyTaskStatus;
+  /** Task progress 0–100. */
+  progress?: number;
+  /** When the dependent department expects/marked completion (ISO date). */
+  completionDate?: string;
+  /** Free-text comments from the dependent department. */
+  comments?: string;
+  /** Why the task is blocked, if status = Blocked. */
+  blockingReason?: string;
+
+  // ── External (vendor / partner) dependency record. Lives inside the parent
+  //    project; never creates a mirror. ──
+  /** Vendor / Partner name (also accepts legacy externalParty). */
   externalParty?: string;
   externalCategory?: string;
-  description?: string;
-  status?: 'Pending' | 'In Progress' | 'Resolved' | 'Blocked';
-  priority?: 'High' | 'Medium' | 'Low';
-  dueDate?: string;
+  /** Contact person at the vendor/partner. */
+  contactPerson?: string;
+  /** SLA / delivery date agreed with the vendor (ISO date). */
+  slaDate?: string;
   notes?: string;
+
+  /** @deprecated use completionDate / slaDate */
+  dueDate?: string;
+  /** @deprecated priority is a project concept, not a dependency one */
+  priority?: 'High' | 'Medium' | 'Low';
 }
 
 export interface Project {
@@ -70,6 +99,10 @@ export interface Project {
   isDependencyMirror?: boolean;
   /** When isDependencyMirror=true, the department that owns the canonical project. */
   originalDepartment?: string;
+  /** Mirror linkage → the canonical parent project's id (project_code). */
+  mirrorParentId?: string;
+  /** Mirror linkage → the specific ClassifiedDependency.id this mirror represents. */
+  mirrorDepId?: string;
   financials?: {
     budget: number;
     spent: number;

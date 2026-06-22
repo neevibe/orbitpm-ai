@@ -42,8 +42,9 @@ export default function DependenciesPage() {
   const dependencies = useMemo(() => {
     const list: Dependency[] = [];
     projects.forEach(proj => {
-      // Exclude virtual duplicate projects to avoid duplicates in this view
-      if ((proj as any).isDuplicateDependency) return;
+      // Exclude virtual mirror rows so each dependency is listed once (from its
+      // canonical parent project only).
+      if (proj.isDependencyMirror) return;
 
       if (proj.classifiedDependencies) {
         proj.classifiedDependencies.forEach(dep => {

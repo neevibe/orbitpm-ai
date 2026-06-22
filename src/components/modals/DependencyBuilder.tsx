@@ -1,12 +1,10 @@
 'use client';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Users, Building2, Globe } from 'lucide-react';
+import { Plus, Trash2, Users, Globe } from 'lucide-react';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
 import {
   TOP_LEVEL_DEPARTMENTS,
-  BIAL_INTERNAL_DEPARTMENTS,
-  OUTSIDE_BIAL_SUGGESTIONS,
   departmentDisplayName,
 } from '@/lib/org-structure';
 import type { ClassifiedDependency } from '@/lib/mock-data';
@@ -35,6 +33,8 @@ const newDep = (): ClassifiedDependency => ({
   id: `DEP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
   kind: 'internal',
   owners: [],
+  createdDate: new Date().toISOString().slice(0, 10),
+  status: 'Pending',
 });
 
 interface Props {
@@ -125,7 +125,7 @@ function DepRow({
         <button type="button" disabled={readOnly} onClick={() => onUpdate({ kind: 'internal', externalScope: undefined, externalParty: undefined })} className={seg(dep.kind === 'internal')}>
           <Users className="w-3 h-3 inline mr-1" />Internal
         </button>
-        <button type="button" disabled={readOnly} onClick={() => onUpdate({ kind: 'external', owners: [], externalScope: 'within_bial' })} className={seg(dep.kind === 'external')}>
+        <button type="button" disabled={readOnly} onClick={() => onUpdate({ kind: 'external', owners: [], department: undefined })} className={seg(dep.kind === 'external')}>
           <Globe className="w-3 h-3 inline mr-1" />External
         </button>
       </div>
@@ -172,53 +172,47 @@ function DepRow({
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* EXTERNAL: within BIAL / outside BIAL */}
-      {dep.kind === 'external' && (
-        <div className="space-y-2">
-          <div className="flex gap-1 p-1 rounded-lg bg-[#eef2f7]">
-            <button type="button" disabled={readOnly} onClick={() => onUpdate({ externalScope: 'within_bial', externalParty: undefined })} className={seg(dep.externalScope === 'within_bial')}>
-              <Building2 className="w-3 h-3 inline mr-1" />Within BIAL
-            </button>
-            <button type="button" disabled={readOnly} onClick={() => onUpdate({ externalScope: 'outside_bial', department: undefined })} className={seg(dep.externalScope === 'outside_bial')}>
-              <Globe className="w-3 h-3 inline mr-1" />Outside BIAL
-            </button>
+          {/* Optional context for the internal dependency */}
+          <div className="col-span-2">
+            <input type="text" disabled={readOnly} value={dep.description || ''} onChange={e => onUpdate({ description: e.target.value })}
+              placeholder="What is the dependency? (optional)" className={inputCls} />
           </div>
-
-          {dep.externalScope === 'within_bial' && (
-            <div>
-              <label className="block text-[10px] font-semibold text-[#64748b] mb-1">BIAL function</label>
-              <select disabled={readOnly} value={dep.department || ''} onChange={e => onUpdate({ department: e.target.value })} className={inputCls}>
-                <option value="">Select function…</option>
-                {BIAL_INTERNAL_DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-          )}
-
-          {dep.externalScope === 'outside_bial' && (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Category</label>
-                <select disabled={readOnly} value={dep.externalCategory || ''} onChange={e => onUpdate({ externalCategory: e.target.value })} className={inputCls}>
-                  <option value="">Select…</option>
-                  {OUTSIDE_BIAL_SUGGESTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Party name</label>
-                <input type="text" disabled={readOnly} value={dep.externalParty || ''} onChange={e => onUpdate({ externalParty: e.target.value })}
-                  placeholder="e.g. Acme Vendor Pvt Ltd" className={inputCls} />
-              </div>
-            </div>
-          )}
+          <p className="col-span-2 text-[10px] text-[#94a3b8]">
+            A read-only task will appear in {dep.department ? departmentDisplayName(dep.department) : 'the selected department'}; they track progress, status &amp; completion from their side.
+          </p>
         </div>
       )}
 
-      {/* Optional description for any dependency */}
-      <input type="text" disabled={readOnly} value={dep.description || ''} onChange={e => onUpdate({ description: e.target.value })}
-        placeholder="What is the dependency? (optional)" className={inputCls} />
+      {/* EXTERNAL: vendor / partner record (no mirror — stays inside this project) */}
+      {dep.kind === 'external' && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Vendor / Partner Name</label>
+            <input type="text" disabled={readOnly} value={dep.externalParty || ''} onChange={e => onUpdate({ externalParty: e.target.value })}
+              placeholder="e.g. Acme Vendor Pvt Ltd" className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Contact Person</label>
+            <input type="text" disabled={readOnly} value={dep.contactPerson || ''} onChange={e => onUpdate({ contactPerson: e.target.value })}
+              placeholder="Name / email / phone" className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">SLA Date</label>
+            <input type="date" disabled={readOnly} value={dep.slaDate || ''} onChange={e => onUpdate({ slaDate: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Status</label>
+            <select disabled={readOnly} value={dep.status || 'Pending'} onChange={e => onUpdate({ status: e.target.value as ClassifiedDependency['status'] })} className={inputCls}>
+              {['Pending', 'In Progress', 'Resolved', 'Blocked'].map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Notes</label>
+            <textarea disabled={readOnly} value={dep.notes || ''} onChange={e => onUpdate({ notes: e.target.value })}
+              rows={2} placeholder="SLA terms, scope, references…" className={`${inputCls} resize-none`} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
