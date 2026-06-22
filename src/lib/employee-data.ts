@@ -115,3 +115,29 @@ export function getEmployeeByEmail(email: string): Employee | undefined {
 export function isInternalEmail(email: string): boolean {
   return email.toLowerCase().endsWith('@bialairport.com');
 }
+
+/**
+ * Map an employee-master department label (short forms like 'Digital',
+ * 'Advertisment & Marketing', 'DutyFree', 'CCB') onto a canonical top-level
+ * project vertical (matches TOP_LEVEL_DEPARTMENTS in org-structure).
+ */
+export function normalizeEmployeeDept(d: string): string {
+  const s = (d || '').toLowerCase();
+  if (s.startsWith('digital')) return 'Digital & Data';
+  if (s.startsWith('advert')) return 'Advertising & Marketing';
+  if (s.startsWith('duty')) return 'Duty Free';
+  if (s.startsWith('commercial')) return 'Commercial Development';
+  if (s.startsWith('oper')) return 'Operations';
+  if (s === 'basl') return 'BASL';
+  // CBB / CCB (Care by BLR) and amenities are folded into BASL.
+  if (s === 'cbb' || s === 'ccb' || s.startsWith('amen')) return 'BASL';
+  return d;
+}
+
+/** Employees whose (normalized) department matches the given project vertical. */
+export function employeesForDepartment(dept: string | null | undefined): Employee[] {
+  if (!dept) return [];
+  return BIAL_EMPLOYEES
+    .filter(e => normalizeEmployeeDept(e.department) === dept)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

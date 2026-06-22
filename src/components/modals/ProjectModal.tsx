@@ -8,6 +8,7 @@ import { generateProjectId, parseINR, formatINRCompact } from '@/lib/utils';
 import {
   TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions, departmentDisplayName,
 } from '@/lib/org-structure';
+import { employeesForDepartment } from '@/lib/employee-data';
 import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import type { Project, ClassifiedDependency } from '@/lib/mock-data';
@@ -101,6 +102,15 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
   const subdivisions = getSubdivisions(form.department);
   const subdivisionRequired = hasSubdivisions(form.department);
+
+  // Project Owner options = employees mapped to the selected department. The
+  // current owner is always kept selectable (so editing a legacy project whose
+  // owner isn't in the roster — or a multi-name owner — never loses the value).
+  const ownerOptions = useMemo(() => {
+    const names = employeesForDepartment(form.department).map(e => e.name);
+    if (form.owner && !names.includes(form.owner)) return [form.owner, ...names];
+    return names;
+  }, [form.department, form.owner]);
 
   const validateForm = (): string[] => {
     const e: string[] = [];
@@ -213,7 +223,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
           <div className={`grid ${subdivisionRequired ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
             <div><label className={labelCls}>Department *</label>
-              <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value, subdivision: '' }))} required disabled={!isSuperAdmin} className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`}>
+              <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value, subdivision: '', owner: '' }))} required disabled={!isSuperAdmin} className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`}>
                 {deptNames.map(d => <option key={d} value={d}>{departmentDisplayName(d)}</option>)}
               </select>
               {!isSuperAdmin && <p className="text-[10px] text-[#94a3b8] mt-1">Locked to your department</p>}
@@ -227,7 +237,14 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
               </div>
             )}
             <div><label className={labelCls}>Project Owner *</label>
-              <input type="text" value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))} placeholder="Owner name" required className={inputCls} /></div>
+              <select value={form.owner} onChange={e => setForm(f => ({ ...f, owner: e.target.value }))} required disabled={!form.department} className={inputCls}>
+                <option value="">{form.department ? 'Select owner…' : 'Select a department first'}</option>
+                {ownerOptions.map(name => <option key={name} value={name}>{name}</option>)}
+              </select>
+              {form.department && ownerOptions.length === 0 && (
+                <p className="text-[10px] text-[#94a3b8] mt-1">No employees mapped to {departmentDisplayName(form.department)}.</p>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
