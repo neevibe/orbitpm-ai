@@ -2,9 +2,12 @@
 import { BookOpen, FileText, Clock, Search, FolderOpen, Star, Plus, XCircle, Download, Trash2, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useToast, useConfirm } from '@/components/ui';
 
 export default function KnowledgePage() {
   const { isSuperAdmin } = useAuth();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [docs, setDocs] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,13 +70,14 @@ export default function KnowledgePage() {
     link.click();
   };
 
-  const handleDeleteDoc = (id: string) => {
+  const handleDeleteDoc = async (id: string) => {
     if (!isSuperAdmin) return;
-    if (confirm('Are you sure you want to delete this document?')) {
+    if (await confirm({ title: 'Delete document?', message: 'This document will be permanently removed.', confirmText: 'Delete', tone: 'danger' })) {
       setDocs(prev => prev.filter(d => d.id !== id));
       if (selectedDoc?.id === id) {
         setSelectedDoc(null);
       }
+      toast('Document deleted.', 'info');
     }
   };
 

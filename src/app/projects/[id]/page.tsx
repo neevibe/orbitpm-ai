@@ -8,6 +8,7 @@ import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
 import { departmentDisplayName, resolveHierarchy, TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
+import { useToast, useConfirm } from '@/components/ui';
 import type { Project, Allocation, ClassifiedDependency } from '@/lib/mock-data';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
@@ -17,6 +18,8 @@ export default function ProjectDetailPage() {
   const params = useParams(); const router = useRouter();
   const projectId = params.id as string;
   const { projects, risks, updateProject, deleteProject, addProject, splitProject, departments } = useData();
+  const toast = useToast();
+  const confirm = useConfirm();
   const project = projects.find(p => p.id === projectId);
   const projectRisks = risks.filter(r => r.projectId === projectId);
   const [activeTab, setActiveTab] = useState('overview');
@@ -42,7 +45,13 @@ export default function ProjectDetailPage() {
 
   const startEdit = () => { setEditForm({ ...project }); setIsEditing(true); };
   const saveEdit = () => { updateProject(project.id, editForm); setIsEditing(false); };
-  const handleDelete = () => { if (confirm(`Delete "${project.name}"?`)) { deleteProject(project.id); router.push('/projects'); } };
+  const handleDelete = async () => {
+    if (await confirm({ title: 'Delete project?', message: `"${project.name}" will be moved to history. You can restore it anytime.`, confirmText: 'Delete', tone: 'danger' })) {
+      deleteProject(project.id);
+      toast('Project moved to history.', 'info');
+      router.push('/projects');
+    }
+  };
   
   const handleAddTask = () => {
     if (!newTaskName.trim()) return;
@@ -84,15 +93,15 @@ export default function ProjectDetailPage() {
   const handleSaveSplit = () => {
     const total = splitsForm.reduce((sum, s) => sum + Number(s.percentage), 0);
     if (total !== 100) {
-      alert("Total split percentage must equal exactly 100%");
+      toast('Total split percentage must equal exactly 100%.', 'error');
       return;
     }
     if (splitsForm.some(s => !s.department)) {
-      alert("Please select a target department for all splits.");
+      toast('Please select a target department for all splits.', 'error');
       return;
     }
     if (splitsForm.some(s => !s.owner.trim())) {
-      alert("Please assign a person (owner) to every split.");
+      toast('Please assign a person (owner) to every split.', 'error');
       return;
     }
     splitProject(project.id, splitsForm);

@@ -32,6 +32,16 @@
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Semantic type scale (Tailwind v4 generates text-<name> utilities) ──
+     Replaces the 747 one-off text-[px] values. A future redesign is one edit
+     here, not a codebase-wide sweep. 11px is the floor (no more 8/9px text). */
+  --text-display: 1.75rem;   /* 28px — hero KPI numbers              */
+  --text-title: 1.375rem;    /* 22px — page titles                  */
+  --text-h3: 0.9375rem;      /* 15px — card / section headings      */
+  --text-body: 0.8125rem;    /* 13px — default body / table cells   */
+  --text-meta: 0.75rem;      /* 12px — secondary meta               */
+  --text-label: 0.6875rem;   /* 11px — uppercase labels / badges    */
 }
 
 /* ================================================

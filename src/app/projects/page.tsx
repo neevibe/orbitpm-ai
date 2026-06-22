@@ -10,6 +10,7 @@ import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyTaskModal from '@/components/modals/DependencyTaskModal';
 import type { Project } from '@/lib/mock-data';
 import DepartmentLabel from '@/components/DepartmentLabel';
+import { useToast, useConfirm, StatusBadge, PriorityBadge } from '@/components/ui';
 
 const STATUS_OPTIONS = ['All', 'In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const PRIORITY_OPTIONS = ['All', 'Critical', 'High', 'Medium', 'Low'];
@@ -26,6 +27,8 @@ export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -195,7 +198,8 @@ export default function ProjectsPage() {
       a.download = `Xyrenis_Projects_${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch { alert('Export failed. Please try again.'); }
+      toast('Projects exported to Excel.', 'success');
+    } catch { toast('Export failed. Please try again.', 'error'); }
     setIsExporting(false);
   };
 
@@ -373,7 +377,7 @@ export default function ProjectsPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
-                        <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'} text-[9px]`}>{p.status}</span>
+                        <StatusBadge status={p.status} className="text-[10px]" />
                       </div>
                       <p className="text-[14px] font-bold text-[var(--color-x-text)] truncate">{p.name}</p>
                       <div className="text-[12px] text-[var(--color-x-text-secondary)] flex items-center gap-1.5 flex-wrap mt-0.5">
@@ -387,7 +391,7 @@ export default function ProjectsPage() {
                     <button onClick={() => restoreProject(p.id)} className="x-btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200">
                       <RotateCcw className="w-3.5 h-3.5" /> Restore
                     </button>
-                    <button onClick={() => confirm(`Permanently delete "${p.name}"?`) && purgeProject(p.id)} className="x-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200">
+                    <button onClick={async () => { if (await confirm({ title: 'Delete permanently?', message: `"${p.name}" will be permanently removed. This cannot be undone.`, confirmText: 'Delete', tone: 'danger' })) { purgeProject(p.id); toast('Project permanently deleted.', 'warning'); } }} className="x-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200">
                       <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </div>
@@ -517,10 +521,10 @@ export default function ProjectsPage() {
                                     </td>
                                     <td className="truncate" title={p.owner}>{p.owner}</td>
                                     <td>
-                                      <span className={`x-badge ${getStatusColor(p.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(p.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(p.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(p.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{p.status}</span>
+                                      <StatusBadge status={p.status} />
                                     </td>
                                     <td>
-                                      <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
+                                      <PriorityBadge priority={p.priority} />
                                     </td>
                                     <td>
                                       <div className="flex items-center gap-2">
@@ -540,7 +544,7 @@ export default function ProjectsPage() {
                                               <div className="absolute right-0 top-10 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl py-1 w-40 animate-scale-in">
                                                 <button onClick={() => { archiveProject(p.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-amber-600 hover:bg-amber-50">Archive Project</button>
                                                 <div className="border-t border-[var(--color-x-border)] my-1" />
-                                                <button onClick={() => { if (confirm(`Delete ${p.id}?`)) { purgeProject(p.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
+                                                <button onClick={async () => { setOpenMenuId(null); if (await confirm({ title: 'Delete permanently?', message: `Project ${p.id} ("${p.name}") will be permanently removed. This cannot be undone.`, confirmText: 'Delete', tone: 'danger' })) { purgeProject(p.id); toast('Project permanently deleted.', 'warning'); } }} className="w-full text-left px-4 py-2 text-[12px] font-medium text-red-600 hover:bg-red-50">Delete Permanently</button>
                                               </div>
                                             )}
                                           </div>

@@ -4,12 +4,14 @@ import { AlertTriangle, Shield, CheckCircle2, Archive, RotateCcw, Trash2, Histor
 import { useState, useMemo } from 'react';
 import { useData } from '@/lib/data-context';
 import RiskModal from '@/components/modals/RiskModal';
+import { useConfirm } from '@/components/ui';
 import type { Risk } from '@/lib/mock-data';
 
 type RiskWithArchived = Risk & { archived?: boolean; archivedAt?: string };
 
 export default function RisksPage() {
   const { risks, updateRisk, deleteRisk } = useData();
+  const confirm = useConfirm();
   const [statusFilter, setStatusFilter] = useState('All');
   const [impactFilter, setImpactFilter] = useState('All');
   const [tab, setTab] = useState<'active' | 'history'>('active');
@@ -186,7 +188,7 @@ export default function RisksPage() {
                               Reopen
                             </button>
                           )}
-                          <button onClick={() => { if (confirm(`Archive risk "${r.id}"?\n\nIt will be preserved in Risk History.`)) archiveRisk(r.id); }}
+                          <button onClick={async () => { if (await confirm({ title: 'Archive risk?', message: `Risk "${r.id}" will be preserved in Risk History.`, confirmText: 'Archive' })) archiveRisk(r.id); }}
                             className="text-[10px] px-2 py-1 rounded bg-[#f8fafc] text-[#64748b] hover:bg-amber-50 hover:text-amber-600 transition-all font-medium border border-[#e2e8f0]">
                             Archive
                           </button>

@@ -10,6 +10,7 @@ import {
 } from '@/lib/org-structure';
 import { employeesForDepartment } from '@/lib/employee-data';
 import { useModalA11y } from '@/lib/useModalA11y';
+import { useConfirm } from '@/components/ui';
 import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import type { Project, ClassifiedDependency } from '@/lib/mock-data';
@@ -29,6 +30,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
   const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
+  const confirm = useConfirm();
 
   // Canonical verticals (org-structure config). Non-super-admins are limited to
   // departments they may modify.
@@ -157,8 +159,8 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     onClose();
   };
 
-  const handleArchive = () => {
-    if (editProject && confirm(`Archive "${editProject.name}"?\n\nThis moves it to History. You can restore it anytime.`)) {
+  const handleArchive = async () => {
+    if (editProject && await confirm({ title: 'Archive project?', message: `"${editProject.name}" moves to History. You can restore it anytime.`, confirmText: 'Archive' })) {
       archiveProject(editProject.id);
       onClose();
     }
@@ -340,7 +342,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
           <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">
             <div>
               {editProject && !readOnly && (
-                <button type="button" onClick={() => { if(confirm(`Permanently delete project ${editProject.id}?`)) { purgeProject(editProject.id); onClose(); } }} className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold border border-transparent hover:border-red-100">
+                <button type="button" onClick={async () => { if (await confirm({ title: 'Delete permanently?', message: `Project ${editProject.id} ("${editProject.name}") will be permanently removed. This cannot be undone.`, confirmText: 'Delete', tone: 'danger' })) { purgeProject(editProject.id); onClose(); } }} className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold border border-transparent hover:border-red-100">
                   <Trash2 className="w-3.5 h-3.5" /> Delete Project
                 </button>
               )}
