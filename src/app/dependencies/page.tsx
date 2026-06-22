@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Link2, Plus, X, Save, User, Building2, AlertCircle, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
@@ -33,6 +34,7 @@ function getEmployeeDepartment(name: string): string | null {
 }
 
 export default function DependenciesPage() {
+  const router = useRouter();
   const { projects, updateProject } = useData();
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -206,10 +208,16 @@ export default function DependenciesPage() {
                 </div>
                 <p className="text-[13px] font-semibold text-[#1e293b] mb-0.5">{dep.description}</p>
                 <div className="flex items-center gap-3 text-[11px] text-[#64748b]">
-                  <span className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/projects/${dep.projectId}`)}
+                    className="flex items-center gap-1 hover:underline cursor-pointer group/link"
+                    title={`Open ${dep.projectName}`}
+                  >
                     <Link2 className="w-3 h-3" />
-                    <span className="font-mono text-indigo-500">{dep.projectId}</span> — {dep.projectName}
-                  </span>
+                    <span className="font-mono text-indigo-500 group-hover/link:text-indigo-700">{dep.projectId}</span>
+                    <span className="text-[#475569] group-hover/link:text-[#1e293b]"> — {dep.projectName}</span>
+                  </button>
                   <span>→</span>
                   <span className="font-medium text-[#475569]">{dep.assignedTo}</span>
                   {dep.dueDate && <span className="text-[#94a3b8]">Due: {dep.dueDate}</span>}
