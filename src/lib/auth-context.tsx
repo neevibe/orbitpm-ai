@@ -40,6 +40,19 @@ function isInternalEmail(email: string): boolean {
   return email.toLowerCase().endsWith('@bialairport.com');
 }
 
+/**
+ * Distinguish a genuinely dead session (expired/invalid refresh token → must
+ * sign out) from a transient failure (offline / server hiccup → keep the stored
+ * session and let autoRefresh recover). Only the former should log the user out.
+ */
+function isInvalidSessionError(err: unknown): boolean {
+  if (!err) return false;
+  const status = (err as { status?: number }).status;
+  if (status === 400 || status === 401 || status === 403) return true;
+  const msg = ((err as { message?: string }).message || '').toLowerCase();
+  return msg.includes('refresh token') || msg.includes('invalid') || msg.includes('expired') || msg.includes('not found');
+}
+
 function derivePermission(user: User | null): Permission {
   // 1. An explicit permission set by an admin always wins.
   const p = user?.user_metadata?.permission as Permission | undefined;
@@ -90,23 +103,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
         // Validate the stored session against the server. If the access token is
-        // dead, try ONE refresh; if that also fails the session is unusable, so
-        // sign out cleanly — otherwise the app would let the user in with a dead
-        // token and every authed call would 401 ("Invalid or expired session").
+        // dead, try ONE refresh.
         const { data: fresh, error } = await supabase.auth.getUser();
         if (!error && fresh.user) {
           setSession(data.session);
           setUser(fresh.user);
         } else {
-          const { data: refreshed } = await supabase.auth.refreshSession();
+          const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
           if (refreshed.session) {
             const { data: u } = await supabase.auth.getUser();
             setSession(refreshed.session);
             setUser(u.user ?? refreshed.session.user);
-          } else {
+          } else if (isInvalidSessionError(refreshErr)) {
+            // The session is genuinely invalid/expired — sign out cleanly so the
+            // user isn't left with a dead token that 401s every authed call.
             await supabase.auth.signOut();
             setSession(null);
             setUser(null);
+          } else {
+            // Transient failure (offline, server hiccup, tab woke from sleep).
+            // Keep the stored session rather than kicking the user out — Supabase's
+            // autoRefresh will recover it. This is the fix for "logged out / have
+            // to sign in repeatedly" after brief connectivity drops.
+            setSession(data.session);
+            setUser(data.session.user);
           }
         }
       } else {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
@@ -8,6 +8,10 @@ import { Eye, EyeOff } from 'lucide-react';
 function isInternalEmail(email: string) {
   return email.trim().toLowerCase().endsWith('@bialairport.com');
 }
+
+// localStorage key for the "Remember me" email convenience feature. Stores ONLY
+// the email address (never the password) so returning users don't retype it.
+const REMEMBER_EMAIL_KEY = 'xyrenis_remember_email';
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
@@ -19,6 +23,18 @@ export default function LoginPage() {
   const [siError, setSiError] = useState<string | null>(null);
   const [siLoading, setSiLoading] = useState(false);
   const [showSiPassword, setShowSiPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // Prefill the email of a returning user (and tick "Remember me" since it was on).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_EMAIL_KEY);
+      if (saved) {
+        setSiEmail(saved);
+        setRememberMe(true);
+      }
+    } catch { /* localStorage unavailable — ignore */ }
+  }, []);
 
   // Sign-up state
   const [suEmail, setSuEmail] = useState('');
@@ -41,7 +57,15 @@ export default function LoginPage() {
     setSiError(null);
     setSiLoading(true);
     const { error } = await signIn(siEmail.trim(), siPassword);
-    if (error) setSiError('Invalid email or password. Please try again.');
+    if (error) {
+      setSiError('Invalid email or password. Please try again.');
+    } else {
+      // Remember (or forget) the email for next time — password is never stored.
+      try {
+        if (rememberMe) localStorage.setItem(REMEMBER_EMAIL_KEY, siEmail.trim());
+        else localStorage.removeItem(REMEMBER_EMAIL_KEY);
+      } catch { /* ignore */ }
+    }
     setSiLoading(false);
   };
 
@@ -238,10 +262,16 @@ export default function LoginPage() {
                     {showSiPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-[11px]" style={{ color: '#4a6280' }}>
-                    First-time users: default password is Employee ID
-                  </p>
+                <div className="flex items-center justify-between mt-2">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded cursor-pointer accent-[#e86c2d]"
+                    />
+                    <span className="text-[11.5px] font-medium" style={{ color: '#8ca4c0' }}>Remember me</span>
+                  </label>
                   <button
                     type="button"
                     onClick={() => { setTab('forgot'); setForgotSuccess(false); setForgotError(null); }}
@@ -251,6 +281,9 @@ export default function LoginPage() {
                     Forgot password?
                   </button>
                 </div>
+                <p className="text-[11px] mt-1.5" style={{ color: '#4a6280' }}>
+                  First-time users: default password is Employee ID
+                </p>
               </div>
               {siError && (
                 <div className="px-3.5 py-2.5 rounded-lg text-[12px] font-medium" style={{ background: '#3a1a1a', color: '#f87171', border: '1px solid #5a2a2a' }}>

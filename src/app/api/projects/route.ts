@@ -25,6 +25,18 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false }
 });
 
+// The v2 columns (subdivision, financials, classified_dependencies) only exist
+// after migration 0003 runs. Until then, writing them makes Postgres reject the
+// whole statement. This detects that specific failure so we can transparently
+// retry with the v2 fields stripped — existing edits never break, and the v2
+// fields begin persisting automatically the moment the columns are added.
+const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'classified_dependencies'];
+function isMissingV2Column(error: { message?: string } | null): boolean {
+  if (!error?.message) return false;
+  const m = error.message.toLowerCase();
+  return V2_COLUMNS.some(c => m.includes(c)) && (m.includes('does not exist') || m.includes('column') || m.includes('schema cache'));
+}
+
 export async function GET() {
   try {
     // Fetch departments
@@ -57,7 +69,13 @@ export async function GET() {
       notes: p.notes || '',
       risks: '',
       archived: p.archived || false,
-      archivedAt: p.archived_at || null
+      archivedAt: p.archived_at || null,
+      // v2 fields — present only after migration 0003 runs; `?? null` keeps the
+      // mapping safe (and the row simply omits them while the columns are absent).
+      subdivision: p.subdivision ?? null,
+      totalBudget: p.total_budget ?? null,
+      utilizedBudget: p.utilized_budget ?? null,
+      classifiedDependencies: p.classified_dependencies ?? null
     }));
 
     // Fetch risks
@@ -114,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'create') {
       const deptId = deptNameToId[project.department] || null;
-      const { error } = await supabase.from('projects').insert({
+      const baseRow: any = {
         org_id: orgId,
         project_code: project.id,
         name: project.name,
@@ -131,9 +149,21 @@ export async function POST(request: NextRequest) {
         support_team: project.supportTeam || null,
         notes: project.notes || null,
         archived: false
-      });
+      };
+      // v2 fields — included when present; stripped + retried if columns absent.
+      const v2Row = {
+        ...baseRow,
+        subdivision: project.subdivision ?? null,
+        total_budget: project.totalBudget ?? null,
+        utilized_budget: project.utilizedBudget ?? null,
+        classified_dependencies: project.classifiedDependencies ?? null,
+      };
+      let { error } = await supabase.from('projects').insert(v2Row);
+      if (error && isMissingV2Column(error)) {
+        ({ error } = await supabase.from('projects').insert(baseRow));
+      }
       if (error) throw error;
-    } 
+    }
     else if (action === 'update') {
       const dbUpdates: any = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -152,11 +182,25 @@ export async function POST(request: NextRequest) {
         dbUpdates.department_id = deptNameToId[updates.department];
       }
 
-      if (Object.keys(dbUpdates).length > 0) {
-        const { error } = await supabase.from('projects').update(dbUpdates).eq('project_code', project.id);
-        if (error) throw error;
+      // v2 fields. Kept in a separate object so that, if the columns are not yet
+      // present, we can strip them and still persist the core edit.
+      const v2Updates: any = {};
+      if (updates.subdivision !== undefined) v2Updates.subdivision = updates.subdivision || null;
+      if (updates.totalBudget !== undefined) v2Updates.total_budget = updates.totalBudget;
+      if (updates.utilizedBudget !== undefined) v2Updates.utilized_budget = updates.utilizedBudget;
+      if (updates.classifiedDependencies !== undefined) v2Updates.classified_dependencies = updates.classifiedDependencies;
+
+      const fullUpdates = { ...dbUpdates, ...v2Updates };
+      if (Object.keys(fullUpdates).length > 0) {
+        let { error } = await supabase.from('projects').update(fullUpdates).eq('project_code', project.id);
+        // If the v2 columns don't exist yet, retry with only the core fields so
+        // the edit still saves (subdivision/financials persist once migrated).
+        if (error && isMissingV2Column(error) && Object.keys(dbUpdates).length > 0) {
+          ({ error } = await supabase.from('projects').update(dbUpdates).eq('project_code', project.id));
+        }
+        if (error && !isMissingV2Column(error)) throw error;
       }
-    } 
+    }
     else if (action === 'archive') {
       const { error } = await supabase.from('projects').update({
         archived: true,
