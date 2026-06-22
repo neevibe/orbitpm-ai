@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Users, Globe } from 'lucide-react';
+import { Plus, Trash2, Users, Globe, Building2 } from 'lucide-react';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
 import {
   TOP_LEVEL_DEPARTMENTS,
+  BIAL_INTERNAL_DEPARTMENTS,
+  OUTSIDE_BIAL_SUGGESTIONS,
   departmentDisplayName,
 } from '@/lib/org-structure';
 import type { ClassifiedDependency } from '@/lib/mock-data';
@@ -125,7 +127,7 @@ function DepRow({
         <button type="button" disabled={readOnly} onClick={() => onUpdate({ kind: 'internal', externalScope: undefined, externalParty: undefined })} className={seg(dep.kind === 'internal')}>
           <Users className="w-3 h-3 inline mr-1" />Internal
         </button>
-        <button type="button" disabled={readOnly} onClick={() => onUpdate({ kind: 'external', owners: [], department: undefined })} className={seg(dep.kind === 'external')}>
+        <button type="button" disabled={readOnly} onClick={() => onUpdate({ kind: 'external', owners: [], externalScope: dep.externalScope || 'within_bial' })} className={seg(dep.kind === 'external')}>
           <Globe className="w-3 h-3 inline mr-1" />External
         </button>
       </div>
@@ -185,31 +187,65 @@ function DepRow({
 
       {/* EXTERNAL: vendor / partner record (no mirror — stays inside this project) */}
       {dep.kind === 'external' && (
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Vendor / Partner Name</label>
-            <input type="text" disabled={readOnly} value={dep.externalParty || ''} onChange={e => onUpdate({ externalParty: e.target.value })}
-              placeholder="e.g. Acme Vendor Pvt Ltd" className={inputCls} />
+        <div className="space-y-2">
+          {/* Scope: Within BIAL / Outside BIAL */}
+          <div className="flex gap-1 p-1 rounded-lg bg-[#eef2f7]">
+            <button type="button" disabled={readOnly} onClick={() => onUpdate({ externalScope: 'within_bial' })} className={seg(dep.externalScope === 'within_bial')}>
+              <Building2 className="w-3 h-3 inline mr-1" />Within BIAL
+            </button>
+            <button type="button" disabled={readOnly} onClick={() => onUpdate({ externalScope: 'outside_bial' })} className={seg(dep.externalScope === 'outside_bial')}>
+              <Globe className="w-3 h-3 inline mr-1" />Outside BIAL
+            </button>
           </div>
-          <div>
-            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Contact Person</label>
-            <input type="text" disabled={readOnly} value={dep.contactPerson || ''} onChange={e => onUpdate({ contactPerson: e.target.value })}
-              placeholder="Name / email / phone" className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">SLA Date</label>
-            <input type="date" disabled={readOnly} value={dep.slaDate || ''} onChange={e => onUpdate({ slaDate: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Status</label>
-            <select disabled={readOnly} value={dep.status || 'Pending'} onChange={e => onUpdate({ status: e.target.value as ClassifiedDependency['status'] })} className={inputCls}>
-              {['Pending', 'In Progress', 'Resolved', 'Blocked'].map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="col-span-2">
-            <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Notes</label>
-            <textarea disabled={readOnly} value={dep.notes || ''} onChange={e => onUpdate({ notes: e.target.value })}
-              rows={2} placeholder="SLA terms, scope, references…" className={`${inputCls} resize-none`} />
+
+          <div className="grid grid-cols-2 gap-2">
+            {/* Party identification differs by scope */}
+            {dep.externalScope === 'within_bial' ? (
+              <div className="col-span-2">
+                <label className="block text-[10px] font-semibold text-[#64748b] mb-1">BIAL function</label>
+                <select disabled={readOnly} value={dep.externalParty || ''} onChange={e => onUpdate({ externalParty: e.target.value })} className={inputCls}>
+                  <option value="">Select function…</option>
+                  {BIAL_INTERNAL_DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Category</label>
+                  <select disabled={readOnly} value={dep.externalCategory || ''} onChange={e => onUpdate({ externalCategory: e.target.value })} className={inputCls}>
+                    <option value="">Select…</option>
+                    {OUTSIDE_BIAL_SUGGESTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Vendor / Partner Name</label>
+                  <input type="text" disabled={readOnly} value={dep.externalParty || ''} onChange={e => onUpdate({ externalParty: e.target.value })}
+                    placeholder="e.g. Acme Vendor Pvt Ltd" className={inputCls} />
+                </div>
+              </>
+            )}
+
+            {/* Common vendor/partner tracking fields */}
+            <div>
+              <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Contact Person</label>
+              <input type="text" disabled={readOnly} value={dep.contactPerson || ''} onChange={e => onUpdate({ contactPerson: e.target.value })}
+                placeholder="Name / email / phone" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-[#64748b] mb-1">SLA Date</label>
+              <input type="date" disabled={readOnly} value={dep.slaDate || ''} onChange={e => onUpdate({ slaDate: e.target.value })} className={inputCls} />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Status</label>
+              <select disabled={readOnly} value={dep.status || 'Pending'} onChange={e => onUpdate({ status: e.target.value as ClassifiedDependency['status'] })} className={inputCls}>
+                {['Pending', 'In Progress', 'Resolved', 'Blocked'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-[10px] font-semibold text-[#64748b] mb-1">Notes</label>
+              <textarea disabled={readOnly} value={dep.notes || ''} onChange={e => onUpdate({ notes: e.target.value })}
+                rows={2} placeholder="SLA terms, scope, references…" className={`${inputCls} resize-none`} />
+            </div>
           </div>
         </div>
       )}
