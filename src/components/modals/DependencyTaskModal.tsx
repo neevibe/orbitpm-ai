@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Link2, Lock, GitMerge, Save } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useModalA11y } from '@/lib/useModalA11y';
 import { departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
 import { formatDate } from '@/lib/utils';
 import type { ClassifiedDependency, DependencyTaskStatus } from '@/lib/mock-data';
@@ -135,9 +136,10 @@ function ReadField({ label, value }: { label: string; value: string }) {
 }
 
 function Shell({ children, onClose, fromDept }: { children: React.ReactNode; onClose: () => void; fromDept: string }) {
+  const dialogRef = useModalA11y<HTMLDivElement>(true, onClose);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Dependency task" className="bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-[var(--color-x-border)] flex items-center justify-between bg-[var(--color-x-bg)]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><Link2 className="w-4 h-4 text-indigo-600" /></div>

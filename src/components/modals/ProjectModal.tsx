@@ -9,6 +9,7 @@ import {
   TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions, departmentDisplayName,
 } from '@/lib/org-structure';
 import { employeesForDepartment } from '@/lib/employee-data';
+import { useModalA11y } from '@/lib/useModalA11y';
 import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import type { Project, ClassifiedDependency } from '@/lib/mock-data';
@@ -27,6 +28,7 @@ const priorityOptions = ['Critical', 'High', 'Medium', 'Low'] as const;
 export default function ProjectModal({ isOpen, onClose, editProject, defaultDepartment, defaultSubdivision }: Props) {
   const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
   const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
+  const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
 
   // Canonical verticals (org-structure config). Non-super-admins are limited to
   // departments they may modify.
@@ -170,7 +172,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={editProject ? 'Edit project' : 'Create new project'} className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in">
         <div className="sticky top-0 bg-white border-b border-[#f1f5f9] px-5 py-3.5 flex items-center justify-between z-10">
           <h2 className="text-[15px] font-bold text-[#0f172a]">{editProject ? (readOnly ? 'View Project' : 'Edit Project') : 'Create New Project'}</h2>
           <div className="flex items-center gap-2">

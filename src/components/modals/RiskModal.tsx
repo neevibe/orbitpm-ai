@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { riskCategories } from '@/lib/mock-data';
+import { useModalA11y } from '@/lib/useModalA11y';
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface Props {
 
 export default function RiskModal({ isOpen, onClose }: Props) {
   const { addRisk, projects, departments } = useData();
+  const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
   const [selectedDept, setSelectedDept] = useState('');
   const [form, setForm] = useState({
     projectId: '', description: '', category: riskCategories[0],
@@ -48,7 +50,7 @@ export default function RiskModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-2xl bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in overflow-hidden flex flex-col max-h-[90vh]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Add risk" className="relative z-10 w-full max-w-2xl bg-white border border-[#e2e8f0] rounded-xl shadow-2xl animate-scale-in overflow-hidden flex flex-col max-h-[90vh]">
         <div className="border-b border-[#f1f5f9] px-5 py-3.5 flex items-center justify-between bg-white shrink-0">
           <h2 className="text-[15px] font-bold text-[#0f172a]">Add Risk</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-[#94a3b8] hover:bg-[#f1f5f9]"><X className="w-4 h-4" /></button>
