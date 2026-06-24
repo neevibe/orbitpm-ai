@@ -21,9 +21,11 @@ const AUDIT_MAP: Record<string, { action: string; module: string; entityType: st
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rfvhvpeqvuwrjcszyhbb.supabase.co';
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
 
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { persistSession: false }
-});
+// Create a fresh client per invocation — avoids module-level state leakage across
+// concurrent Vercel serverless function invocations.
+function getSupabase() {
+  return createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+}
 
 // The v2 columns (subdivision, financials, classified_dependencies) only exist
 // after migration 0003 runs. Until then, writing them makes Postgres reject the
@@ -38,9 +40,10 @@ function isMissingV2Column(error: { message?: string } | null): boolean {
 }
 
 export async function GET() {
+  const db = getSupabase();
   try {
     // Fetch departments
-    const { data: dbDepts, error: deptsErr } = await supabase.from('departments').select('*');
+    const { data: dbDepts, error: deptsErr } = await db.from('departments').select('*');
     if (deptsErr) throw deptsErr;
 
     const deptMap: Record<string, string> = {};
@@ -49,7 +52,7 @@ export async function GET() {
     });
 
     // Fetch projects
-    const { data: dbProjects, error: projsErr } = await supabase.from('projects').select('*');
+    const { data: dbProjects, error: projsErr } = await db.from('projects').select('*');
     if (projsErr) throw projsErr;
 
     const mappedProjects = (dbProjects || []).map(p => ({
@@ -79,7 +82,7 @@ export async function GET() {
     }));
 
     // Fetch risks
-    const { data: dbRisks, error: risksErr } = await supabase.from('risks').select('*');
+    const { data: dbRisks, error: risksErr } = await db.from('risks').select('*');
     if (risksErr) throw risksErr;
 
     // Get project UUID to code mapping
@@ -115,16 +118,19 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const db = getSupabase();
   try {
     const body = await request.json();
     const { action, project, updates, originalId, splits, audit } = body;
 
+    console.log('[projects API] action:', action, 'project.id:', project?.id, 'updates keys:', Object.keys(updates || {}));
+
     // Fetch default organization ID
-    const { data: orgs } = await supabase.from('organizations').select('id');
+    const { data: orgs } = await db.from('organizations').select('id');
     const orgId = orgs?.[0]?.id || '11111111-1111-1111-1111-111111111111';
 
     // Fetch department list for mapping department name to ID
-    const { data: depts } = await supabase.from('departments').select('id, name');
+    const { data: depts } = await db.from('departments').select('id, name');
     const deptNameToId: Record<string, string> = {};
     depts?.forEach(d => {
       deptNameToId[d.name] = d.id;
@@ -158,9 +164,9 @@ export async function POST(request: NextRequest) {
         utilized_budget: project.utilizedBudget ?? null,
         classified_dependencies: project.classifiedDependencies ?? null,
       };
-      let { error } = await supabase.from('projects').insert(v2Row);
+      let { error } = await db.from('projects').insert(v2Row);
       if (error && isMissingV2Column(error)) {
-        ({ error } = await supabase.from('projects').insert(baseRow));
+        ({ error } = await db.from('projects').insert(baseRow));
       }
       if (error) throw error;
     }
@@ -192,36 +198,40 @@ export async function POST(request: NextRequest) {
 
       const fullUpdates = { ...dbUpdates, ...v2Updates };
       if (Object.keys(fullUpdates).length > 0) {
-        let { error } = await supabase.from('projects').update(fullUpdates).eq('project_code', project.id);
+        console.log('[projects API] updating project_code:', project.id, 'columns:', Object.keys(fullUpdates));
+        let { error } = await db.from('projects').update(fullUpdates).eq('project_code', project.id);
+        if (error) {
+          console.error('[projects API] update error:', error.code, error.message, 'project_code:', project.id);
+        }
         // If the v2 columns don't exist yet, retry with only the core fields so
         // the edit still saves (subdivision/financials persist once migrated).
         if (error && isMissingV2Column(error) && Object.keys(dbUpdates).length > 0) {
-          ({ error } = await supabase.from('projects').update(dbUpdates).eq('project_code', project.id));
+          ({ error } = await db.from('projects').update(dbUpdates).eq('project_code', project.id));
         }
         if (error && !isMissingV2Column(error)) throw error;
       }
     }
     else if (action === 'archive') {
-      const { error } = await supabase.from('projects').update({
+      const { error } = await db.from('projects').update({
         archived: true,
         archived_at: new Date().toISOString()
       }).eq('project_code', project.id);
       if (error) throw error;
-    } 
+    }
     else if (action === 'restore') {
-      const { error } = await supabase.from('projects').update({
+      const { error } = await db.from('projects').update({
         archived: false,
         archived_at: null
       }).eq('project_code', project.id);
       if (error) throw error;
-    } 
+    }
     else if (action === 'delete') {
-      const { error } = await supabase.from('projects').delete().eq('project_code', project.id);
+      const { error } = await db.from('projects').delete().eq('project_code', project.id);
       if (error) throw error;
-    } 
+    }
     else if (action === 'split') {
       // originalProject details
-      const { data: dbOriginal } = await supabase.from('projects').select('*').eq('project_code', originalId).single();
+      const { data: dbOriginal } = await db.from('projects').select('*').eq('project_code', originalId).single();
       if (!dbOriginal) throw new Error('Original project not found');
 
       // Create new split pieces
@@ -231,7 +241,7 @@ export async function POST(request: NextRequest) {
         const newName = `${dbOriginal.name} (Split ${i + 1}/${splits.length})`;
         const deptId = deptNameToId[split.department] || dbOriginal.department_id;
 
-        const { error } = await supabase.from('projects').insert({
+        const { error } = await db.from('projects').insert({
           org_id: orgId,
           project_code: newCode,
           name: newName,
@@ -249,15 +259,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Archive original
-      const { error: archiveErr } = await supabase.from('projects').update({
+      const { error: archiveErr } = await db.from('projects').update({
         archived: true,
         archived_at: new Date().toISOString()
       }).eq('project_code', originalId);
       if (archiveErr) throw archiveErr;
     }
     else if (action === 'create_risk') {
-      const { data: proj } = await supabase.from('projects').select('id').eq('project_code', project.projectId).single();
-      const { error } = await supabase.from('risks').insert({
+      const { data: proj } = await db.from('projects').select('id').eq('project_code', project.projectId).single();
+      const { error } = await db.from('risks').insert({
         org_id: orgId,
         risk_code: project.id,
         project_id: proj?.id || null,
@@ -289,12 +299,12 @@ export async function POST(request: NextRequest) {
       if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
 
       if (Object.keys(dbUpdates).length > 0) {
-        const { error } = await supabase.from('risks').update(dbUpdates).eq('risk_code', project.id);
+        const { error } = await db.from('risks').update(dbUpdates).eq('risk_code', project.id);
         if (error) throw error;
       }
     }
     else if (action === 'delete_risk') {
-      const { error } = await supabase.from('risks').update({
+      const { error } = await db.from('risks').update({
         archived: true,
         archived_at: new Date().toISOString()
       }).eq('risk_code', project.id);
