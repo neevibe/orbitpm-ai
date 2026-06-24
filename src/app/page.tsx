@@ -499,8 +499,14 @@ export default function LandingPage() {
 
           {/* ── Hero text content ── */}
           <div className="relative z-20 flex-1 px-8 md:px-20 pt-16 md:pt-20 flex flex-col items-start justify-center pointer-events-none" style={{ maxWidth: '62%' }}>
+            {/* Logo above headline */}
+            <motion.div {...fadeUp(0)} className="pointer-events-auto mb-7">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
+            </motion.div>
+
             {/* Badge */}
-            <motion.div {...fadeUp(0)} className="pointer-events-auto">
+            <motion.div {...fadeUp(0.08)} className="pointer-events-auto">
               <div
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 mb-8 backdrop-blur-sm"
                 style={{ background: 'rgba(37,99,235,0.15)' }}
