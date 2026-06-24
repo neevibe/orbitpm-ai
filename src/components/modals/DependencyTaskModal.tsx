@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Link2, Lock, GitMerge, Save } from 'lucide-react';
+import { X, Link2, Lock, GitMerge, Save, Loader2 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useModalA11y } from '@/lib/useModalA11y';
+import { useToast } from '@/components/ui';
 import { departmentDisplayName, resolveHierarchy } from '@/lib/org-structure';
 import { formatDate } from '@/lib/utils';
 import type { ClassifiedDependency, DependencyTaskStatus } from '@/lib/mock-data';
@@ -26,9 +27,11 @@ interface Props {
  */
 export default function DependencyTaskModal({ parentId, depId, onClose }: Props) {
   const { projects, updateDependencyTask } = useData();
+  const toast = useToast();
   const parent = projects.find(p => p.id === parentId && !p.isDependencyMirror);
   const dep = parent?.classifiedDependencies?.find(d => d.id === depId);
 
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<ClassifiedDependency>>({
     assignedUser: dep?.assignedUser ?? dep?.owners?.[0] ?? '',
     status: dep?.status ?? 'Pending',
@@ -49,9 +52,16 @@ export default function DependencyTaskModal({ parentId, depId, onClose }: Props)
   const hierarchy = resolveHierarchy(parent.department, parent.subdivision);
   const fromDept = departmentDisplayName(parent.department);
 
-  const save = () => {
-    updateDependencyTask(parent.id, depId, form);
-    onClose();
+  const save = async () => {
+    setSaving(true);
+    const ok = await updateDependencyTask(parent.id, depId, form);
+    setSaving(false);
+    if (ok) {
+      toast('Dependency task saved.', 'success');
+      onClose();
+    } else {
+      toast('Save failed — please try again.', 'error');
+    }
   };
 
   const input =
@@ -119,8 +129,11 @@ export default function DependencyTaskModal({ parentId, depId, onClose }: Props)
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-[var(--color-x-border)] flex items-center justify-end gap-2 bg-[var(--color-x-bg)]">
-        <button onClick={onClose} className="x-btn x-btn-secondary">Cancel</button>
-        <button onClick={save} className="x-btn x-btn-primary"><Save className="w-4 h-4" /> Save Task</button>
+        <button onClick={onClose} disabled={saving} className="x-btn x-btn-secondary">Cancel</button>
+        <button onClick={save} disabled={saving} className="x-btn x-btn-primary">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? 'Saving…' : 'Save Task'}
+        </button>
       </div>
     </Shell>
   );

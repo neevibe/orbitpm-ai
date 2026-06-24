@@ -90,8 +90,9 @@ interface DataContextType {
   addProject: (project: Omit<Project, 'id'> & { id?: string }) => string;
   updateProject: (id: string, updates: Partial<Project>) => void;
   /** Update a single internal dependency task inside a parent project. Permissioned
-   *  to the dependency's TARGET (dependent) department, not the parent's. */
-  updateDependencyTask: (parentId: string, depId: string, patch: Partial<ClassifiedDependency>) => void;
+   *  to the dependency's TARGET (dependent) department, not the parent's.
+   *  Returns true if the DB write succeeded, false otherwise. */
+  updateDependencyTask: (parentId: string, depId: string, patch: Partial<ClassifiedDependency>) => Promise<boolean>;
   splitProject: (originalId: string, splits: { department: string, owner?: string, percentage: number }[]) => void;
   deleteProject: (id: string) => void;       // kept for compatibility — now archives
   archiveProject: (id: string) => void;       // soft-delete: moves to history
@@ -428,22 +429,45 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // updateProject, this is gated on the dependency's TARGET (dependent) department
   // so a member of that department can maintain their mirrored task without
   // holding edit rights over the parent project's own department.
-  const updateDependencyTask = useCallback((parentId: string, depId: string, patch: Partial<ClassifiedDependency>) => {
+  const updateDependencyTask = useCallback(async (parentId: string, depId: string, patch: Partial<ClassifiedDependency>): Promise<boolean> => {
     const parent = projects.find(p => p.id === parentId && !p.isDependencyMirror);
-    if (!parent) return;
+    if (!parent) return false;
     const dep = (parent.classifiedDependencies || []).find(d => d.id === depId);
-    if (!dep) return;
+    if (!dep) return false;
     // Permission: admins pass; otherwise the user must be able to modify the
     // dependency's target department.
     if (!canModifyDepartment(dep.department)) {
       notify('Permission denied', `You can only update dependency tasks for your own department.`, 'warning');
-      return;
+      return false;
     }
     const nextDeps = (parent.classifiedDependencies || []).map(d => (d.id === depId ? { ...d, ...patch } : d));
+    // Update in-memory state immediately so the UI reflects changes without waiting for the network.
     setProjects(prev => prev.map(p => (p.id === parentId ? { ...p, classifiedDependencies: nextDeps } : p)));
     logAudit({ action: 'update', entityType: 'project', entityId: parentId, entityName: parent.name, changes: { dependencyTask: { old: depId, new: patch } } });
-    if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'update', project: { id: parentId }, updates: { classifiedDependencies: nextDeps }, audit: { entityName: parent.name } });
+
+    if (!isSupabaseConfigured()) return true;
+
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+        body: JSON.stringify({
+          action: 'update',
+          project: { id: parentId },
+          updates: { classifiedDependencies: nextDeps },
+          audit: { entityName: parent.name },
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        console.error('[updateDependencyTask] API error', res.status, body);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('[updateDependencyTask] Network error', err);
+      return false;
     }
   }, [projects, canModifyDepartment, notify, logAudit]);
 
