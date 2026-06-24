@@ -431,12 +431,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // holding edit rights over the parent project's own department.
   const updateDependencyTask = useCallback(async (parentId: string, depId: string, patch: Partial<ClassifiedDependency>): Promise<boolean> => {
     const parent = projects.find(p => p.id === parentId && !p.isDependencyMirror);
-    if (!parent) return false;
+    console.log('[depTask] parentId:', parentId, 'parent found:', !!parent, 'total projects:', projects.length);
+    if (!parent) { console.error('[depTask] parent not found'); return false; }
     const dep = (parent.classifiedDependencies || []).find(d => d.id === depId);
-    if (!dep) return false;
+    console.log('[depTask] depId:', depId, 'dep found:', !!dep, 'deps:', (parent.classifiedDependencies || []).map(d => d.id));
+    if (!dep) { console.error('[depTask] dep not found'); return false; }
     // Permission: admins pass; otherwise the user must be able to modify the
     // dependency's target department.
-    if (!canModifyDepartment(dep.department)) {
+    const canModify = canModifyDepartment(dep.department);
+    console.log('[depTask] dep.department:', dep.department, 'canModify:', canModify);
+    if (!canModify) {
       notify('Permission denied', `You can only update dependency tasks for your own department.`, 'warning');
       return false;
     }

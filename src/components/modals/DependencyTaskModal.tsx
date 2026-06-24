@@ -53,8 +53,10 @@ export default function DependencyTaskModal({ parentId, depId, onClose }: Props)
   const fromDept = departmentDisplayName(parent.department);
 
   const save = async () => {
+    console.log('[DependencyTaskModal] save() parent.id:', parent.id, 'depId:', depId, 'dep.department:', dep.department);
     setSaving(true);
     const ok = await updateDependencyTask(parent.id, depId, form);
+    console.log('[DependencyTaskModal] save() result:', ok);
     setSaving(false);
     if (ok) {
       toast('Dependency task saved.', 'success');
