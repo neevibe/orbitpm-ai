@@ -127,60 +127,37 @@ export default function LoginPage() {
   const isBialEmail = isInternalEmail(suEmailTrimmed);
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0f1623' }}>
-      <style>{`
-        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .logo-anim { animation: slideInLeft 0.8s ease-out; }
-        .headline-anim { animation: slideInUp 0.8s ease-out 0.15s both; }
-        .features-anim { animation: fadeIn 0.8s ease-out 0.3s both; }
-        .form-anim { animation: slideInUp 0.8s ease-out 0.2s both; }
-      `}</style>
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex flex-col justify-between w-[500px] flex-shrink-0 px-16 py-12" style={{ background: 'linear-gradient(135deg, #0f1623 0%, #1a2638 100%)' }}>
-        <div className="flex flex-col gap-8">
-          <div className="flex items-start logo-anim">
-            <img src="/logo-mark-white.png" alt="Xyrenis Logo" className="h-14 w-auto object-contain" />
-          </div>
-
-          <div className="headline-anim">
-            <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#e86c2d' }}>Enterprise Platform</p>
-            <h1 className="text-[42px] font-bold text-white leading-tight mb-4">
-              Manage projects.<br />Manage them<br /><span style={{ color: '#e86c2d' }}>brilliantly.</span>
-            </h1>
-            <p className="text-sm leading-relaxed" style={{ color: '#a0b0c8' }}>
-              Project governance, portfolio intelligence, AI copilot, and workforce planning — unified in one platform.
-            </p>
-          </div>
-
-          <div className="mt-10 flex flex-col gap-5 features-anim">
-            {[
-              { icon: '◎', label: 'Portfolio Intelligence', desc: 'Real-time health across all programs' },
-              { icon: '⬡', label: 'AI Copilot', desc: 'Proactive insights and risk detection' },
-              { icon: '▦', label: 'Workforce Management', desc: 'Capacity planning and team analytics' },
-            ].map(item => (
-              <div key={item.label} className="flex items-start gap-3">
-                <span className="text-[16px] mt-0.5" style={{ color: '#e86c2d' }}>{item.icon}</span>
-                <div>
-                  <p className="text-[13px] font-semibold text-white">{item.label}</p>
-                  <p className="text-[12px]" style={{ color: '#8ca4c0' }}>{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="text-[11px]" style={{ color: '#3a526a' }}>© 2026 Xyrenis. All rights reserved.</p>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: '#050816' }}>
+      {/* ── Animated background (matches hero) ── */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        <video autoPlay loop muted playsInline className="w-full h-full object-cover scale-110" style={{ opacity: 0.3 }}>
+          <source src="/logo-reveal.mp4" type="video/mp4" />
+        </video>
+        {/* gradient overlay */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(5,8,22,0.88) 0%, rgba(11,17,32,0.72) 55%, rgba(37,99,235,0.15) 100%)' }} />
+        {/* grid */}
+        <div className="absolute inset-0 opacity-[0.035]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)', backgroundSize: '52px 52px' }} />
+        {/* ambient glows */}
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full blur-3xl opacity-25" style={{ background: 'radial-gradient(circle, #2563EB, transparent)' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-3xl opacity-15" style={{ background: 'radial-gradient(circle, #8b5cf6, transparent)' }} />
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-[400px] form-anim">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <img src="/logo-mark-white.png" alt="Xyrenis" className="h-11 w-auto object-contain" />
-          </div>
+      <style>{`
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        .form-anim { animation: slideInUp 0.7s cubic-bezier(.22,1,.36,1) 0.1s both; }
+      `}</style>
+
+      {/* ── Centred glass card ── */}
+      <div className="relative z-10 w-full max-w-[440px] mx-4 form-anim">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 36, width: 'auto', objectFit: 'contain' }} />
+        </div>
+
+        <div
+          className="rounded-2xl border border-white/10 p-8 backdrop-blur-xl"
+          style={{ background: 'rgba(11,17,32,0.80)' }}
+        >
 
           <h2 className="text-2xl font-bold text-white mb-1">
             {tab === 'forgot' ? 'Reset password' : tab === 'signup' ? 'Create account' : 'Welcome back'}

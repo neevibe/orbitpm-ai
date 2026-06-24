@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
@@ -98,8 +97,9 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
         style={{ background: 'rgba(255,255,255,0.07)' }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center px-2 mr-1">
-          <Image src="/logo-mark-white.png" alt="Xyrenis" width={28} height={28} className="object-contain" />
+        <Link href="/" className="flex items-center px-3 mr-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 22, width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Links */}
@@ -406,7 +406,8 @@ function Footer() {
     <footer className="border-t border-white/8 px-6 py-14">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-10">
         <div className="max-w-xs">
-          <Image src="/logo-full-white.png" alt="Xyrenis" width={140} height={40} className="object-contain mb-4" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 36, width: 'auto', objectFit: 'contain', marginBottom: 16 }} />
           <p className="text-[13px] text-white/40 leading-relaxed">
             The AI-Powered Enterprise Work Operating System. Built for teams that move fast and think ahead.
           </p>
