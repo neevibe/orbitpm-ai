@@ -10,6 +10,26 @@ import {
   CheckCircle, Globe, Lock, Cpu
 } from 'lucide-react';
 
+/* ─── Colorful brandmark for dark backgrounds ─────────────────────── */
+function XyrenisBrandmark({ iconH = 30, tagline = true }: { iconH?: number; tagline?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(iconH * 0.33) }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-icon.png" alt="" style={{ height: iconH, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+        <span style={{ fontSize: Math.round(iconH * 0.72), fontWeight: 800, color: '#fff', letterSpacing: '0.10em', fontFamily: 'Sora, sans-serif' }}>
+          XYRENIS
+        </span>
+        {tagline && (
+          <span style={{ fontSize: Math.round(iconH * 0.27), color: '#2dd4bf', letterSpacing: '0.16em', fontFamily: 'Inter, sans-serif', fontWeight: 500, marginTop: 3 }}>
+            PLAN. EXECUTE. SCALE.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── helpers ─────────────────────────────────────────────────────── */
 function useCountUp(target: number, duration = 1800) {
   const [val, setVal] = useState(0);
@@ -96,8 +116,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center px-3 mr-2 shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 28, width: 'auto', objectFit: 'contain' }} />
+          <XyrenisBrandmark iconH={26} tagline={false} />
         </Link>
 
         {/* Links */}
@@ -415,8 +434,7 @@ function Footer() {
     <footer className="border-t border-white/8 px-6 py-14">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-10">
         <div className="max-w-xs">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 36, width: 'auto', objectFit: 'contain', marginBottom: 16 }} />
+          <div style={{ marginBottom: 16 }}><XyrenisBrandmark iconH={32} tagline={true} /></div>
           <p className="text-[13px] text-white/40 leading-relaxed">
             The AI-Powered Enterprise Work Operating System. Built for teams that move fast and think ahead.
           </p>
@@ -510,6 +528,11 @@ export default function LandingPage() {
 
           {/* ── Hero text content ── */}
           <div className="relative z-20 flex-1 px-8 md:px-20 pt-16 md:pt-20 flex flex-col items-start justify-center pointer-events-none" style={{ maxWidth: '62%' }}>
+            {/* Logo above headline */}
+            <div className="pointer-events-auto mb-8">
+              <XyrenisBrandmark iconH={36} tagline={true} />
+            </div>
+
             {/* Badge */}
             <motion.div {...fadeUp(0.08)} className="pointer-events-auto">
               <div
