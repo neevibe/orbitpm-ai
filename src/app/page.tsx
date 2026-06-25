@@ -523,10 +523,10 @@ export default function LandingPage() {
 
           {/* ── Hero text content ── */}
           <div className="relative z-20 flex-1 px-8 md:px-20 pt-16 md:pt-20 flex flex-col items-start justify-center pointer-events-none" style={{ maxWidth: '62%' }}>
-            {/* Logo above headline — colored mark directly on dark hero */}
+            {/* Logo above headline — white to match nav */}
             <div className="pointer-events-auto mb-8">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-mark.png" alt="Xyrenis" style={{ height: 42, width: 'auto', objectFit: 'contain', display: 'block' }} />
+              <img src="/logo-mark-white.png" alt="Xyrenis" style={{ height: 42, width: 'auto', objectFit: 'contain', display: 'block' }} />
             </div>
 
             {/* Badge */}
