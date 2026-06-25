@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, IndianRupee, ListTodo, Plus } from 'lucide-react';
+import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, IndianRupee, ListTodo, Plus, LayoutGrid, BarChartHorizontal } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
@@ -11,8 +11,130 @@ import { departmentDisplayName, resolveHierarchy, TOP_LEVEL_DEPARTMENTS, getSubd
 import { useToast, useConfirm } from '@/components/ui';
 import type { Project, Allocation, ClassifiedDependency } from '@/lib/mock-data';
 
+import KanbanBoard, { Task } from '@/components/project/KanbanBoard';
+import GanttChart from '@/components/project/GanttChart';
+import RaciMatrix from '@/components/project/RaciMatrix';
+
+// Generates 5 realistic project deliverables/tasks with dependencies, priorities, dates, and RACI roles
+const generateDefaultTasks = (proj: Project): Task[] => {
+  const cy = new Date().getFullYear();
+  const start = proj.startDate || `${cy}-06-01`;
+  const target = proj.targetDate || `${cy}-09-01`;
+  
+  const startD = new Date(start);
+  const targetD = new Date(target);
+  const diffTime = Math.abs(targetD.getTime() - startD.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const step = Math.floor(diffDays / 5);
+
+  const d1 = new Date(startD);
+  const d2 = new Date(startD.getTime() + 86400000 * step);
+  const d3 = new Date(startD.getTime() + 86400000 * step * 2);
+  const d4 = new Date(startD.getTime() + 86400000 * step * 3);
+  const d5 = new Date(startD.getTime() + 86400000 * step * 4);
+  const d6 = new Date(targetD);
+
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+  const t1Id = 'TSK-REQ';
+  const t2Id = 'TSK-DES';
+  const t3Id = 'TSK-DEV';
+  const t4Id = 'TSK-REV';
+  const t5Id = 'TSK-DEP';
+
+  return [
+    {
+      id: t1Id,
+      name: 'Requirements & Scoping Specification',
+      assignee: proj.owner,
+      status: 'Completed',
+      priority: 'High',
+      progress: 100,
+      startDate: fmt(d1),
+      endDate: fmt(d2),
+      dueDate: fmt(d2),
+      tags: ['Planning'],
+      responsible: proj.department,
+      accountable: proj.owner,
+      consulted: 'Digital & Data',
+      informed: 'Operations'
+    },
+    {
+      id: t2Id,
+      name: 'Solution Architecture Design & Approval',
+      assignee: 'Anand Viswanath',
+      status: 'Completed',
+      priority: 'High',
+      progress: 100,
+      startDate: fmt(d2),
+      endDate: fmt(d3),
+      dueDate: fmt(d3),
+      tags: ['Design'],
+      dependencies: [t1Id],
+      responsible: 'Digital & Data',
+      accountable: proj.owner,
+      consulted: proj.owner,
+      informed: 'Operations'
+    },
+    {
+      id: t3Id,
+      name: 'System Implementation & Configuration',
+      assignee: 'Musthaq Ahamed',
+      status: 'In Progress',
+      priority: 'Critical',
+      progress: 45,
+      startDate: fmt(d3),
+      endDate: fmt(d4),
+      dueDate: fmt(d4),
+      tags: ['Development'],
+      dependencies: [t2Id],
+      responsible: 'Digital & Data',
+      accountable: proj.owner,
+      consulted: proj.owner,
+      informed: 'Operations'
+    },
+    {
+      id: t4Id,
+      name: 'Testing & Quality Assurance Review',
+      assignee: 'Neeraj Prakash',
+      status: 'To Do',
+      priority: 'Medium',
+      progress: 0,
+      startDate: fmt(d4),
+      endDate: fmt(d5),
+      dueDate: fmt(d5),
+      tags: ['QA'],
+      dependencies: [t3Id],
+      responsible: 'CCO',
+      accountable: proj.owner,
+      consulted: 'Digital & Data',
+      informed: 'Operations'
+    },
+    {
+      id: t5Id,
+      name: 'Deployment & Enterprise Go-Live Launch',
+      assignee: proj.owner,
+      status: 'To Do',
+      priority: 'High',
+      progress: 0,
+      startDate: fmt(d5),
+      endDate: fmt(d6),
+      dueDate: fmt(d6),
+      tags: ['Ops'],
+      dependencies: [t4Id],
+      isMilestone: true,
+      responsible: proj.department,
+      accountable: proj.owner,
+      consulted: 'Operations',
+      informed: 'All'
+    }
+  ];
+};
+
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
+
+const generateTaskId = () => Math.random().toString(36).substr(2, 9);
 
 export default function ProjectDetailPage() {
   const params = useParams(); const router = useRouter();
@@ -33,6 +155,14 @@ export default function ProjectDetailPage() {
   const [isSplitWizardOpen, setIsSplitWizardOpen] = useState(false);
   const [splitCount, setSplitCount] = useState<number>(2);
   const [splitsForm, setSplitsForm] = useState<{ department: string, owner: string, percentage: number }[]>([]);
+
+  const projectTasks = useMemo(() => {
+    if (!project) return [];
+    if (project.tasks && project.tasks.length > 0) {
+      return project.tasks as Task[];
+    }
+    return generateDefaultTasks(project);
+  }, [project]);
 
   if (!project) return (
     <div className="flex items-center justify-center h-[60vh]">
@@ -55,13 +185,23 @@ export default function ProjectDetailPage() {
   
   const handleAddTask = () => {
     if (!newTaskName.trim()) return;
-    const newTask = {
-      id: Math.random().toString(36).substr(2, 9),
+    const today = new Date().toISOString().split('T')[0];
+    const newTask: Task = {
+      id: generateTaskId(),
       name: newTaskName,
       assignee: newTaskAssignee || project.owner || 'Unassigned',
-      status: 'Not Started' as const
+      status: 'To Do',
+      priority: 'Medium',
+      progress: 0,
+      startDate: today,
+      endDate: today,
+      dueDate: today,
+      responsible: project.department,
+      accountable: project.owner || 'Unassigned',
+      consulted: '',
+      informed: ''
     };
-    updateProject(project.id, { tasks: [...(project.tasks || []), newTask] });
+    handleUpdateTasks([...projectTasks, newTask]);
     setIsTaskModalOpen(false);
     setNewTaskName('');
     setNewTaskAssignee('');
@@ -108,6 +248,10 @@ export default function ProjectDetailPage() {
     setIsSplitWizardOpen(false);
   };
 
+  const handleUpdateTasks = (updated: Task[]) => {
+    updateProject(project.id, { tasks: updated as any });
+  };
+
   // Dependency section is only shown when a dependency actually exists — no
   // blank cards, no "No Dependency" placeholder for projects without any.
   const dependencyCount =
@@ -118,7 +262,10 @@ export default function ProjectDetailPage() {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'tasks', label: 'Tasks', icon: ListTodo, count: project.tasks?.length || 0 },
+    { id: 'tasks', label: 'Tasks (List)', icon: ListTodo, count: projectTasks.length },
+    { id: 'kanban', label: 'Kanban Board', icon: LayoutGrid },
+    { id: 'gantt', label: 'Gantt Chart', icon: BarChartHorizontal },
+    { id: 'raci', label: 'RACI Matrix', icon: FileText },
     ...(hasDependencies ? [{ id: 'dependencies', label: 'Dependencies', icon: Target, count: dependencyCount }] : []),
     { id: 'risks', label: 'Risks', icon: AlertTriangle, count: projectRisks.length },
     { id: 'updates', label: 'Updates', icon: MessageSquare },
@@ -434,9 +581,9 @@ export default function ProjectDetailPage() {
             <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><ListTodo className="w-4 h-4 text-indigo-500" /> Project Tasks & Steps</h3>
             <button onClick={() => setIsTaskModalOpen(true)} className="x-btn x-btn-primary flex items-center gap-2 py-1.5 px-3 text-[11px]"><Plus className="w-3.5 h-3.5" /> Add Task</button>
           </div>
-          {(project.tasks || []).length > 0 ? (
+          {projectTasks.length > 0 ? (
             <div className="space-y-2">
-              {project.tasks!.map(task => (
+              {projectTasks.map(task => (
                 <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-[var(--color-x-border)] hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors group">
                   <div className="flex items-center gap-3">
                     <button className="text-[var(--color-x-text-muted)] hover:text-emerald-500 transition-colors"><CheckCircle2 className="w-4 h-4" /></button>
@@ -445,7 +592,13 @@ export default function ProjectDetailPage() {
                       <p className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1 mt-0.5"><User className="w-3 h-3" /> {task.assignee}</p>
                     </div>
                   </div>
-                  <span className={`x-badge ${task.status === 'Done' ? 'x-badge-green' : task.status === 'In Progress' ? 'x-badge-blue' : 'x-badge-gray'}`}>{task.status}</span>
+                  <span className={`x-badge ${
+                    (task.status as string) === 'Completed' || (task.status as string) === 'Done' ? 'x-badge-green' : 
+                    task.status === 'In Progress' ? 'x-badge-blue' : 
+                    task.status === 'Review' ? 'x-badge-amber' : 
+                    task.status === 'To Do' ? 'x-badge-indigo' : 
+                    'x-badge-gray'
+                  }`}>{task.status}</span>
                 </div>
               ))}
             </div>
@@ -456,6 +609,24 @@ export default function ProjectDetailPage() {
               <p className="text-[11px] text-[var(--color-x-text-muted)]">Break this project down into assignable steps.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'kanban' && (
+        <div className="animate-fade-in">
+          <KanbanBoard tasks={projectTasks} onUpdateTasks={handleUpdateTasks} projectOwner={project.owner} />
+        </div>
+      )}
+
+      {activeTab === 'gantt' && (
+        <div className="animate-fade-in">
+          <GanttChart tasks={projectTasks} onUpdateTasks={handleUpdateTasks} />
+        </div>
+      )}
+
+      {activeTab === 'raci' && (
+        <div className="animate-fade-in">
+          <RaciMatrix tasks={projectTasks} onUpdateTasks={handleUpdateTasks} />
         </div>
       )}
 

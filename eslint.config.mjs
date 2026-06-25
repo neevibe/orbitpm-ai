@@ -11,11 +11,6 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-unused-vars": "warn",
       "react/no-unescaped-entities": "off",
-      "react-hooks/rules-of-hooks": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "react-hooks/preserve-manual-memoization": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/purity": "off",
       "prefer-const": "warn"
     }
   },

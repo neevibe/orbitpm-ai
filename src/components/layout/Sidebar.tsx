@@ -67,19 +67,55 @@ export default function Sidebar() {
   const { isSuperAdmin, user, role } = useAuth();
 
   const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'User';
-  const userInitials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   const roleLabel = isSuperAdmin ? 'Super Admin' : (role && role !== 'user' ? role.replace(/_/g, ' ') : 'Member');
 
   const [companyName, setCompanyName] = useState('Xyrenis Enterprise');
   const [initials, setInitials] = useState('XY');
+  
+  const [profileName, setProfileName] = useState(fullName);
+  const [profileRole, setProfileRole] = useState(roleLabel);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+
+  const loadProfile = () => {
+    if (typeof window !== 'undefined') {
+      const savedDetails = localStorage.getItem('user_profile_details');
+      let nameToSet = fullName;
+      let roleToSet = roleLabel;
+      if (savedDetails) {
+        try {
+          const parsed = JSON.parse(savedDetails);
+          if (parsed.name) nameToSet = parsed.name;
+          if (parsed.designation) roleToSet = parsed.designation;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      
+      const savedAvatar = localStorage.getItem('user_profile_photo');
+      
+      setTimeout(() => {
+        setProfileName(nameToSet);
+        setProfileRole(roleToSet);
+        setProfileAvatar(savedAvatar || null);
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+    window.addEventListener('user-profile-updated', loadProfile);
+    return () => window.removeEventListener('user-profile-updated', loadProfile);
+  }, [fullName, roleLabel]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('xyrenis_user_company');
       if (saved && saved.trim() !== '') {
         const name = saved === 'BIAL Commercial' ? 'Xyrenis Enterprise' : saved;
-        setCompanyName(name);
-        setInitials(name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase());
+        setTimeout(() => {
+          setCompanyName(name);
+          setInitials(name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase());
+        }, 0);
       }
     }
   }, []);
@@ -164,21 +200,23 @@ export default function Sidebar() {
       {/* User */}
       <div className="p-3 border-t border-[var(--color-x-border)]">
         {(() => {
-          const chip = (
-            <>
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white">{userInitials}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight truncate">{fullName}</p>
-                <p className="text-[10px] text-[var(--color-x-text-muted)] capitalize">{roleLabel}</p>
+          const displayInitials = profileName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+          return (
+            <Link href="/settings" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">
+              <div className="w-7 h-7 rounded-full border border-indigo-100 flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-500 text-[10px] font-bold text-white flex-shrink-0">
+                {profileAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  displayInitials
+                )}
               </div>
-              <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
-            </>
-          );
-          // Only Super Admins can reach the Administration area from the profile chip.
-          return isSuperAdmin ? (
-            <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">{chip}</Link>
-          ) : (
-            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg">{chip}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight truncate">{profileName}</p>
+                <p className="text-[10px] text-[var(--color-x-text-muted)] capitalize truncate">{profileRole}</p>
+              </div>
+              <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" />
+            </Link>
           );
         })()}
       </div>

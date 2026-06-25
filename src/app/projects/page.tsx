@@ -45,6 +45,12 @@ export default function ProjectsPage() {
   const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
   const [newProjectSub, setNewProjectSub] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [expandedQuarters, setExpandedQuarters] = useState<Record<string, boolean>>({
+    Q1: true,
+    Q2: false,
+    Q3: false,
+    Q4: false
+  });
 
   const [stuckFilter, setStuckFilter] = useState(false);
   const [hasRisksFilter, setHasRisksFilter] = useState(false);
@@ -53,31 +59,38 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     const status = searchParams.get('status');
-    if (status) {
-      setStatusFilter(status);
-    }
     const priority = searchParams.get('priority');
-    if (priority) {
-      setPriorityFilter(priority);
-    }
     const dept = searchParams.get('department');
-    if (dept) {
-      setSelectedDept(dept);
-    }
     const sub = searchParams.get('subdivision');
-    if (sub) {
-      setSelectedSub(sub);
-    } else {
-      setSelectedSub(null);
-    }
     const q = searchParams.get('search');
-    if (q) {
-      setSearch(q);
-    }
-    setStuckFilter(searchParams.get('stuck') === 'true');
-    setHasRisksFilter(searchParams.get('hasRisks') === 'true');
-    setEscalationFilter(searchParams.get('escalation') === 'true');
-    setBottlenecksFilter(searchParams.get('bottlenecks') === 'true');
+    const stuck = searchParams.get('stuck') === 'true';
+    const hasRisks = searchParams.get('hasRisks') === 'true';
+    const escalation = searchParams.get('escalation') === 'true';
+    const bottlenecks = searchParams.get('bottlenecks') === 'true';
+
+    setTimeout(() => {
+      if (status) {
+        setStatusFilter(status);
+      }
+      if (priority) {
+        setPriorityFilter(priority);
+      }
+      if (dept) {
+        setSelectedDept(dept);
+      }
+      if (sub) {
+        setSelectedSub(sub);
+      } else {
+        setSelectedSub(null);
+      }
+      if (q) {
+        setSearch(q);
+      }
+      setStuckFilter(stuck);
+      setHasRisksFilter(hasRisks);
+      setEscalationFilter(escalation);
+      setBottlenecksFilter(bottlenecks);
+    }, 0);
   }, [searchParams]);
 
   const filtered = useMemo(() => {
@@ -617,54 +630,152 @@ export default function ProjectsPage() {
           })()}
 
           {/* ── GANTT VIEW ── */}
-          {tab === 'active' && view === 'gantt' && (
-            <div className="x-card overflow-x-auto p-5">
-              <div className="min-w-[1000px]">
-                <div className="flex border-b border-[var(--color-x-border)] pb-3 mb-4">
-                  <div className="w-80 flex-shrink-0 text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider">Project</div>
-                  <div className="flex-1 flex">
-                    {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => (
-                      <div key={m} className="flex-1 text-center text-[11px] font-bold text-[var(--color-x-text-muted)] border-l border-[var(--color-x-border)]">{m}</div>
-                    ))}
+          {/* ── GANTT VIEW ── */}
+          {tab === 'active' && view === 'gantt' && (() => {
+            const cy = new Date().getFullYear();
+            
+            const getFiscalMonthFraction = (dateStr: string | undefined, defaultDate: Date) => {
+              const d = dateStr ? new Date(dateStr) : defaultDate;
+              const year = d.getFullYear();
+              const month = d.getMonth();
+              const yearsDiff = year - cy;
+              const monthsDiff = month - 3; // April is index 3
+              const totalMonths = yearsDiff * 12 + monthsDiff;
+              const dayFraction = (d.getDate() - 1) / 30;
+              return Math.max(0, Math.min(12, totalMonths + dayFraction));
+            };
+
+            const getGridPosition = (fm: number) => {
+              const integerPart = Math.floor(fm);
+              const fractionPart = fm - integerPart;
+              const boundaries = [0];
+              let currentUnits = 0;
+              const quartersList = ['Q1', 'Q1', 'Q1', 'Q2', 'Q2', 'Q2', 'Q3', 'Q3', 'Q3', 'Q4', 'Q4', 'Q4'];
+              for (let i = 0; i < 12; i++) {
+                const qKey = quartersList[i];
+                const isExpanded = expandedQuarters[qKey];
+                if (isExpanded) {
+                  currentUnits += 1;
+                } else {
+                  currentUnits += 1 / 3;
+                }
+                boundaries.push(currentUnits);
+              }
+              const totalUnits = boundaries[12];
+              const idx = Math.min(11, integerPart);
+              const startVal = boundaries[idx];
+              const endVal = boundaries[idx + 1];
+              const unitPos = startVal + (endVal - startVal) * fractionPart;
+              return totalUnits > 0 ? (unitPos / totalUnits) * 100 : 0;
+            };
+
+            const visibleColumns: { id: string; type: 'quarter' | 'month'; label: string; quarter: string }[] = [];
+            const quartersDef = [
+              { key: 'Q1', label: 'Q1 (Apr-Jun)', months: ['Apr', 'May', 'Jun'] },
+              { key: 'Q2', label: 'Q2 (Jul-Sep)', months: ['Jul', 'Aug', 'Sep'] },
+              { key: 'Q3', label: 'Q3 (Oct-Dec)', months: ['Oct', 'Nov', 'Dec'] },
+              { key: 'Q4', label: 'Q4 (Jan-Mar)', months: ['Jan', 'Feb', 'Mar'] },
+            ];
+
+            quartersDef.forEach(q => {
+              const isExpanded = expandedQuarters[q.key];
+              if (isExpanded) {
+                q.months.forEach(m => {
+                  visibleColumns.push({
+                    id: `${q.key}-${m}`,
+                    type: 'month',
+                    label: m,
+                    quarter: q.key
+                  });
+                });
+              } else {
+                visibleColumns.push({
+                  id: q.key,
+                  type: 'quarter',
+                  label: `FY ${q.key}`,
+                  quarter: q.key
+                });
+              }
+            });
+
+            const toggleQuarter = (qKey: string) => {
+              setExpandedQuarters(prev => ({
+                ...prev,
+                [qKey]: !prev[qKey]
+              }));
+            };
+
+            return (
+              <div className="x-card overflow-x-auto p-5 animate-fade-in">
+                <div className="min-w-[1000px]">
+                  <div className="flex border-b border-[var(--color-x-border)] pb-3 mb-4 select-none">
+                    <div className="w-80 flex-shrink-0 text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider flex items-center">
+                      Project Timeline (FY {cy}-{String(cy + 1).slice(-2)})
+                    </div>
+                    <div className="flex-1 flex gap-0.5">
+                      {visibleColumns.map(col => (
+                        <div 
+                          key={col.id} 
+                          onClick={() => toggleQuarter(col.quarter)} 
+                          className="flex-1 text-center py-1.5 px-1 rounded-md cursor-pointer hover:bg-indigo-50/50 transition-colors flex flex-col items-center justify-center border-l border-[var(--color-x-border)]/40 bg-[var(--color-x-bg)]"
+                        >
+                          {col.type === 'quarter' ? (
+                            <span className="flex items-center gap-1 text-[10px] text-indigo-600 font-extrabold uppercase tracking-wide">
+                              {col.label} <ChevronRight className="w-3.5 h-3.5 text-indigo-500" />
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-[var(--color-x-text)] flex flex-col leading-tight">
+                              <span className="text-[8px] text-[var(--color-x-text-muted)] font-normal uppercase tracking-wider">{col.quarter}</span>
+                              <span className="flex items-center gap-0.5 justify-center">
+                                {col.label} <ChevronDown className="w-2.5 h-2.5 text-indigo-400" />
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
+                    {filtered.map(p => {
+                      const sdFraction = getFiscalMonthFraction(p.startDate || undefined, new Date(cy, 3, 1));
+                      const tdFraction = getFiscalMonthFraction(p.targetDate || undefined, new Date(cy + 1, 2, 31));
+                      const leftPct = getGridPosition(sdFraction);
+                      const rightPct = getGridPosition(tdFraction);
+                      
+                      const sp = Math.min(leftPct, rightPct);
+                      const wp = Math.max(1, Math.abs(rightPct - leftPct));
+                      const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#6366f1';
+                      return (
+                        <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
+                          <div className="w-80 flex-shrink-0 pr-5 truncate">
+                            <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                            <div className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <span>{p.owner}</span>
+                              <span>·</span>
+                              <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                            </div>
+                          </div>
+                          <div className="flex-1 relative h-7 bg-[var(--color-x-bg)] rounded-md overflow-hidden border border-[var(--color-x-border)]">
+                            <div className="absolute inset-0 flex">
+                              {visibleColumns.map((_, i) => (
+                                <div key={i} className="flex-1 border-l border-[var(--color-x-border)]/40" />
+                              ))}
+                            </div>
+                            <div className="absolute top-1 bottom-1 rounded-md overflow-hidden shadow-sm transition-all group-hover:shadow-md"
+                              style={{ left: `${sp}%`, width: `${wp}%`, background: barColor }}>
+                              <div className="absolute top-0 bottom-0 left-0 bg-white/20" style={{ width: `${p.progress}%` }} />
+                              <span className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white z-10">{p.progress}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {filtered.length === 0 && <div className="text-center p-12 text-[var(--color-x-text-muted)]">No projects to show.</div>}
                   </div>
                 </div>
-                <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
-                  {filtered.map(p => {
-                    const cy = new Date().getFullYear();
-                    const sd = p.startDate ? new Date(p.startDate) : new Date();
-                    const td = p.targetDate ? new Date(p.targetDate) : new Date(sd.getTime() + 86400000 * 30);
-                    let sm = sd.getFullYear() < cy ? 0 : sd.getFullYear() > cy ? 11 : sd.getMonth();
-                    let em = td.getFullYear() < cy ? 0 : td.getFullYear() > cy ? 11 : td.getMonth();
-                    if (em < sm) em = sm;
-                    const sp = (sm / 12) * 100;
-                    const wp = (Math.max(1, em - sm + 1) / 12) * 100;
-                    const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#6366f1';
-                    return (
-                      <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
-                        <div className="w-80 flex-shrink-0 pr-5 truncate">
-                          <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
-                          <div className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1.5 flex-wrap mt-0.5">
-                            <span>{p.owner}</span>
-                            <span>·</span>
-                            <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
-                          </div>
-                        </div>
-                        <div className="flex-1 relative h-7 bg-[var(--color-x-bg)] rounded-md overflow-hidden border border-[var(--color-x-border)]">
-                          <div className="absolute inset-0 flex">{Array.from({length:12}).map((_,i) => <div key={i} className="flex-1 border-l border-white/40"/>)}</div>
-                          <div className="absolute top-1 bottom-1 rounded-md overflow-hidden shadow-sm transition-all group-hover:shadow-md"
-                            style={{ left: `${sp}%`, width: `${Math.min(100-sp, wp)}%`, background: barColor }}>
-                            <div className="absolute top-0 bottom-0 left-0 bg-white/20" style={{ width: `${p.progress}%` }} />
-                            <span className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white z-10">{p.progress}%</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {filtered.length === 0 && <div className="text-center p-12 text-[var(--color-x-text-muted)]">No projects to show.</div>}
-                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
         </div>
       </div>

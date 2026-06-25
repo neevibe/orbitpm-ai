@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
                   </defs>
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
                   <Area type="monotone" dataKey="target" stroke="#8b5cf6" fill="url(#colorTarget)" name="Target Velocity" strokeDasharray="5 5" />
                   <Area type="monotone" dataKey="completed" stroke="#10b981" fill="url(#colorDone)" name="Actual Delivered" />
                 </AreaChart>
@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
                   <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value" strokeWidth={0}>
                     {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="grid grid-cols-2 gap-2 mt-4">

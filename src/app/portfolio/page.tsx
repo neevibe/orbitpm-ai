@@ -21,7 +21,7 @@ export default function PortfolioPage() {
     const deptBudgets: Record<string, { name: string; spent: number; remaining: number; total: number }> = {};
     projects.forEach(p => {
       // Exclude virtual duplicate projects to avoid doubling budget calculation
-      if ((p as any).isDuplicateDependency) return;
+      if (p.isDependencyMirror) return;
 
       const dept = p.department;
       if (!deptBudgets[dept]) {
@@ -36,7 +36,7 @@ export default function PortfolioPage() {
 
   const totalInvestment = React.useMemo(() => {
     return projects.reduce((acc, p) => {
-      if ((p as any).isDuplicateDependency) return acc;
+      if (p.isDependencyMirror) return acc;
       return acc + (p.totalBudget || 0);
     }, 0);
   }, [projects]);
@@ -129,7 +129,7 @@ export default function PortfolioPage() {
               <XAxis type="number" dataKey="likelihood" name="Likelihood" domain={[0, 6]} ticks={[1, 2, 3, 4, 5]} label={{ value: 'Likelihood', position: 'bottom', fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
               <YAxis type="number" dataKey="impact" name="Impact" domain={[0, 6]} ticks={[1, 2, 3, 4, 5]} label={{ value: 'Impact', angle: -90, position: 'left', fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
               <ZAxis type="number" range={[60, 60]} />
-              <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={tooltipStyle}
+              <Tooltip cursor={false} contentStyle={tooltipStyle}
                 formatter={(val: any, name: any, props: any) => [props.payload.name, name === 'impact' ? 'Impact' : 'Likelihood']}
               />
               <Scatter data={riskMatrixData}>

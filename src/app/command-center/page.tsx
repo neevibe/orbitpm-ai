@@ -13,7 +13,7 @@ import {
 import React, { useState } from 'react';
 import { Project } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
-import { formatDate, formatINR, formatINRCompact } from '@/lib/utils';
+import { formatDate, formatINR } from '@/lib/utils';
 import DepartmentLabel from '@/components/DepartmentLabel';
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
@@ -73,18 +73,6 @@ export default function CommandCenter() {
   const highRisks = React.useMemo(() => {
     return risks.filter(r => r.impact === 'High' && r.status === 'Open' && filteredProjects.some(p => p.id === r.projectId));
   }, [risks, filteredProjects]);
-
-  // Portfolio financial rollup (₹) for filtered projects.
-  const fin = React.useMemo(() => {
-    return filteredProjects.reduce(
-      (acc, p) => ({
-        total: acc.total + (p.totalBudget || 0),
-        utilized: acc.utilized + (p.utilizedBudget || 0),
-      }),
-      { total: 0, utilized: 0 },
-    );
-  }, [filteredProjects]);
-  const finBalance = fin.total - fin.utilized;
 
   // Owner workload computed from filtered projects
   const ownerCounts = React.useMemo(() => {
@@ -493,138 +481,146 @@ export default function CommandCenter() {
         {/* Center — Charts */}
         <div className="col-span-12 lg:col-span-4 space-y-4">
           {/* Project Status Distribution */}
-          <div className="x-card p-5">
-            <div className="flex items-center justify-between mb-3">
+          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Project Status Distribution</h3>
               <span className="text-[10px] text-[var(--color-x-text-muted)]">Active Portfolio</span>
             </div>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={statusDistributionData}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} allowDecimals={false} />
-                <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
-                  {statusDistributionData.map((entry, index) => {
-                    const isSelected = activeFilter?.type === 'status' && activeFilter.label === entry.name;
-                    const isDimmed = activeFilter?.type === 'status' && activeFilter.label !== entry.name;
-                    return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        cursor="pointer"
-                        opacity={isDimmed ? 0.35 : 1}
-                        onClick={() => {
-                          if (isSelected) {
-                            setActiveFilter(null);
-                          } else {
-                            setActiveFilter({
-                              type: 'status',
-                              label: entry.name,
-                              filterFn: (p) => p.status === entry.name
-                            });
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusDistributionData}>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
+                    {statusDistributionData.map((entry, index) => {
+                      const isSelected = activeFilter?.type === 'status' && activeFilter.label === entry.name;
+                      const isDimmed = activeFilter?.type === 'status' && activeFilter.label !== entry.name;
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          cursor="pointer"
+                          opacity={isDimmed ? 0.35 : 1}
+                          onClick={() => {
+                            if (isSelected) {
+                              setActiveFilter(null);
+                            } else {
+                              setActiveFilter({
+                                type: 'status',
+                                label: entry.name,
+                                filterFn: (p) => p.status === entry.name
+                              });
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Department Breakdown */}
-          <div className="x-card p-5">
-            <div className="flex items-center justify-between mb-3">
+          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-blue-500" /> Department Breakdown</h3>
             </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart
-                data={deptChartData}
-                layout="vertical"
-                margin={{ left: 0 }}
-                onClick={(state) => {
-                  if (state && state.activeLabel) {
-                    const deptName = String(state.activeLabel);
-                    const deptObj = deptChartData.find(d => d.name === deptName || d.fullName === deptName);
-                    const fullName = deptObj ? deptObj.fullName : deptName;
-                    
-                    if (activeFilter?.type === 'department' && activeFilter.label === fullName) {
-                      setActiveFilter(null);
-                    } else {
-                      setActiveFilter({
-                        type: 'department',
-                        label: fullName,
-                        filterFn: (p) => p.department === fullName
-                      });
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={deptChartData}
+                  layout="vertical"
+                  margin={{ left: 0 }}
+                  onClick={(state) => {
+                    if (state && state.activeLabel) {
+                      const deptName = String(state.activeLabel);
+                      const deptObj = deptChartData.find(d => d.name === deptName || d.fullName === deptName);
+                      const fullName = deptObj ? deptObj.fullName : deptName;
+                      
+                      if (activeFilter?.type === 'department' && activeFilter.label === fullName) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'department',
+                          label: fullName,
+                          filterFn: (p) => p.department === fullName
+                        });
+                      }
                     }
-                  }
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={100} />
-                <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active">
-                  {deptChartData.map((entry, index) => (
-                    <Cell key={`cell-act-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
-                  ))}
-                </Bar>
-                <Bar dataKey="done" stackId="a" fill="#10b981" name="Done">
-                  {deptChartData.map((entry, index) => (
-                    <Cell key={`cell-done-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
-                  ))}
-                </Bar>
-                <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed">
-                  {deptChartData.map((entry, index) => (
-                    <Cell key={`cell-del-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
-                  ))}
-                </Bar>
-                <Bar dataKey="pending" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} name="Pending">
-                  {deptChartData.map((entry, index) => (
-                    <Cell key={`cell-pend-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={100} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
+                  <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active">
+                    {deptChartData.map((entry, index) => (
+                      <Cell key={`cell-act-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="done" stackId="a" fill="#10b981" name="Done">
+                    {deptChartData.map((entry, index) => (
+                      <Cell key={`cell-done-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed">
+                    {deptChartData.map((entry, index) => (
+                      <Cell key={`cell-del-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="pending" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} name="Pending">
+                    {deptChartData.map((entry, index) => (
+                      <Cell key={`cell-pend-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
         {/* Right col — Status + Priority + Overloaded */}
         <div className="col-span-12 lg:col-span-4 space-y-4">
           {/* Portfolio Health */}
-          <div className="x-card p-5">
-            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-purple-500" /> Portfolio Health</h3>
-            <ResponsiveContainer width="100%" height={140}>
-              <PieChart>
-                <Pie data={healthData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={0}>
-                  {healthData.map((entry, i) => {
-                    const isSelected = activeFilter?.type === 'health' && activeFilter.label === entry.name;
-                    const isDimmed = activeFilter?.type === 'health' && activeFilter.label !== entry.name;
-                    return (
-                      <Cell
-                        key={i}
-                        fill={entry.color}
-                        cursor="pointer"
-                        opacity={isDimmed ? 0.35 : 1}
-                        onClick={() => {
-                          if (isSelected) {
-                            setActiveFilter(null);
-                          } else {
-                            setActiveFilter({
-                              type: 'health',
-                              label: entry.name,
-                              filterFn: healthFilters[entry.name as 'On Track' | 'At Risk' | 'Delayed']
-                            });
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
+          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Eye className="w-4 h-4 text-purple-500" /> Portfolio Health</h3>
+            </div>
+            <div className="flex-1 min-h-0 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={150}>
+                <PieChart>
+                  <Pie data={healthData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                    {healthData.map((entry, i) => {
+                      const isSelected = activeFilter?.type === 'health' && activeFilter.label === entry.name;
+                      const isDimmed = activeFilter?.type === 'health' && activeFilter.label !== entry.name;
+                      return (
+                        <Cell
+                          key={i}
+                          fill={entry.color}
+                          cursor="pointer"
+                          opacity={isDimmed ? 0.35 : 1}
+                          onClick={() => {
+                            if (isSelected) {
+                              setActiveFilter(null);
+                            } else {
+                              setActiveFilter({
+                                type: 'health',
+                                label: entry.name,
+                                filterFn: healthFilters[entry.name as 'On Track' | 'At Risk' | 'Delayed']
+                              });
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-[var(--color-x-border)]">
               {healthData.map(h => {
                 const isSelected = activeFilter?.type === 'health' && activeFilter.label === h.name;
                 const isDimmed = activeFilter?.type === 'health' && activeFilter.label !== h.name;
@@ -642,13 +638,15 @@ export default function CommandCenter() {
                         });
                       }
                     }}
-                    className={`flex items-center gap-1.5 cursor-pointer p-1 rounded hover:bg-slate-50 transition-all ${
-                      isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20' : ''
+                    className={`flex flex-col items-center justify-center p-1 rounded hover:bg-slate-50 transition-all ${
+                      isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20 font-semibold' : ''
                     } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
                   >
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: h.color }} />
-                    <span className="text-[10px] text-[var(--color-x-text-muted)]">{h.name}</span>
-                    <span className="text-[10px] font-bold text-[var(--color-x-text)] ml-auto">{h.value}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: h.color }} />
+                      <span className="text-[10px] text-[var(--color-x-text-muted)] truncate">{h.name}</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-[var(--color-x-text)] mt-0.5">{h.value}</span>
                   </div>
                 );
               })}
@@ -656,9 +654,11 @@ export default function CommandCenter() {
           </div>
 
           {/* Priority Breakdown */}
-          <div className="x-card p-5">
-            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
-            <div className="space-y-2.5">
+          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
+            </div>
+            <div className="flex-1 flex flex-col justify-between py-1.5">
               {priorityRadial.map(p => {
                 const pct = filteredProjects.length > 0 ? Math.round((p.value / filteredProjects.length) * 100) : 0;
                 const isSelected = activeFilter?.type === 'priority' && activeFilter.label === p.name;
@@ -677,7 +677,7 @@ export default function CommandCenter() {
                         });
                       }
                     }}
-                    className={`p-1.5 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
+                    className={`p-1 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
                       isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20' : ''
                     } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
                   >

@@ -87,10 +87,10 @@ const NAV_LINKS = ['Features', 'Solutions', 'Pricing', 'AI Copilot', 'Contact'];
 function PillNav({ ctaHref }: { ctaHref: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: -24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 pointer-events-auto"
+      transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      className="absolute top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto"
     >
       <div
         className="flex items-center gap-1 px-2 py-2 rounded-full border border-white/10 backdrop-blur-2xl shadow-2xl"
@@ -499,12 +499,6 @@ export default function LandingPage() {
 
           {/* ── Hero text content ── */}
           <div className="relative z-20 flex-1 px-8 md:px-20 pt-16 md:pt-20 flex flex-col items-start justify-center pointer-events-none" style={{ maxWidth: '62%' }}>
-            {/* Logo above headline */}
-            <motion.div {...fadeUp(0)} className="pointer-events-auto mb-7">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
-            </motion.div>
-
             {/* Badge */}
             <motion.div {...fadeUp(0.08)} className="pointer-events-auto">
               <div

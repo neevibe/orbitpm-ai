@@ -320,7 +320,7 @@ export default function DashboardPage() {
               </defs>
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
               <Area type="monotone" dataKey="projectsDue" name="Projects Due" stroke="#2d65ff" fill="url(#colorDue)" strokeWidth={2} />
               <Area type="monotone" dataKey="delayed" name="Delayed Projects" stroke="#ef4444" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
             </AreaChart>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
               </Pie>
               <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={6}
                 formatter={(value: string) => <span className="text-[11px] text-[#64748b] ml-1">{value}</span>} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
             </PieChart>
           </ResponsiveContainer>
         </div>
