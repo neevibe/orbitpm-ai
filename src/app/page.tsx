@@ -141,7 +141,7 @@ const STATS = [
 ];
 
 function StatsMarquee() {
-  const items = [...STATS, ...STATS];
+  const items = [...STATS, ...STATS, ...STATS, ...STATS];
   return (
     <div
       className="relative overflow-hidden py-6 border-y border-white/5"
@@ -182,7 +182,7 @@ const INTEGRATIONS = [
 ];
 
 function IntegrationsMarquee() {
-  const double = [...INTEGRATIONS, ...INTEGRATIONS];
+  const double = [...INTEGRATIONS, ...INTEGRATIONS, ...INTEGRATIONS, ...INTEGRATIONS];
   return (
     <div className="py-14 overflow-hidden">
       <motion.p
