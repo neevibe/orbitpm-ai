@@ -10,29 +10,16 @@ import {
   CheckCircle, Globe, Lock, Cpu
 } from 'lucide-react';
 
-/* ─── Colorful brandmark for dark backgrounds ─────────────────────── */
-// logo-mark.png is 1716×272 — the X glyph occupies the leftmost ~290px.
-// We clip to that width so only the colourful X icon is shown.
+/* ─── White logo for dark backgrounds ─────────────────────────────── */
+// logo-full-white.png includes X mark + XYRENIS + tagline in white —
+// the standard for logos on dark surfaces (used by Vercel, Linear, etc.)
 function XyrenisBrandmark({ iconH = 30, tagline = true }: { iconH?: number; tagline?: boolean }) {
-  const xW = Math.round(iconH * (290 / 272)); // proportional clip width for the X glyph
+  // logo-full-white.png is 1716×374 (with tagline) — aspect ≈ 4.59:1
+  // logo-mark-white.png is narrower (no tagline) — use full for hero, mark for nav
+  const src = tagline ? '/logo-full-white.png' : '/logo-mark-white.png';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(iconH * 0.36) }}>
-      {/* Clipped X mark from logo-mark.png */}
-      <div style={{ width: xW, height: iconH, overflow: 'hidden', flexShrink: 0 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-mark.png" alt="Xyrenis" style={{ height: iconH, width: 'auto', display: 'block' }} />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-        <span style={{ fontSize: Math.round(iconH * 0.72), fontWeight: 800, color: '#fff', letterSpacing: '0.10em', fontFamily: 'Sora, sans-serif' }}>
-          XYRENIS
-        </span>
-        {tagline && (
-          <span style={{ fontSize: Math.round(iconH * 0.27), color: '#2dd4bf', letterSpacing: '0.16em', fontFamily: 'Inter, sans-serif', fontWeight: 500, marginTop: 3 }}>
-            PLAN. EXECUTE. SCALE.
-          </span>
-        )}
-      </div>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="Xyrenis" style={{ height: iconH, width: 'auto', objectFit: 'contain', display: 'block' }} />
   );
 }
 
