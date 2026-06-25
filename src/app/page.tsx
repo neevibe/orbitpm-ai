@@ -50,7 +50,7 @@ interface KPICardProps {
 function KPICard({ icon, label, value, sub, color, style, delay = 0 }: KPICardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.85, y: 20 }}
+      initial={{ opacity: 1, scale: 1, y: 0 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -6, scale: 1.04 }}
@@ -86,15 +86,13 @@ const NAV_LINKS = ['Features', 'Solutions', 'Pricing', 'AI Copilot', 'Contact'];
 
 function PillNav({ ctaHref }: { ctaHref: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
-    >
+    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
       <div
-        className="flex items-center gap-1 px-2 py-2 rounded-full border border-white/10 backdrop-blur-2xl shadow-2xl"
-        style={{ background: 'rgba(255,255,255,0.07)' }}
+        className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-white/[0.15] backdrop-blur-xl"
+        style={{
+          background: 'rgba(12, 16, 35, 0.92)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset',
+        }}
       >
         {/* Logo */}
         <Link href="/" className="flex items-center px-3 mr-2 shrink-0">
@@ -125,7 +123,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
           Start Free Trial <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -456,9 +454,9 @@ export default function LandingPage() {
 
   const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
   const fadeUp = (delay: number) => ({
-    initial: { opacity: 0, y: 44 },
+    initial: { opacity: 1, y: 0 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 1, delay, ease },
+    transition: { duration: 0.8, delay, ease },
   });
 
   return (
