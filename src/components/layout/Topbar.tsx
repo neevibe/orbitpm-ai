@@ -24,7 +24,7 @@ export default function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { notifications, markAllNotificationsRead, markNotificationRead, projects, departments, risks } = useData();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isDemoMode } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const unread = notifications.filter(n => !n.read).length;
@@ -314,8 +314,20 @@ export default function Topbar() {
 
 
 
+        {/* Demo mode badge + exit */}
+        {isDemoMode && (
+          <div className="flex items-center gap-2 ml-1 pl-2 border-l border-[var(--color-x-border)]">
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: '#f59e0b22', color: '#f59e0b', border: '1px solid #f59e0b44' }}>
+              ✦ Demo Mode — Masked Data
+            </span>
+            <button onClick={() => signOut()} title="Exit demo" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--color-x-bg)] transition-all">
+              <LogOut className="w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
+            </button>
+          </div>
+        )}
+
         {/* User avatar + logout */}
-        {user && (
+        {user && !isDemoMode && (
           <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-[var(--color-x-border)]">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: '#e86c2d' }}>
               {user.email?.[0]?.toUpperCase() ?? 'U'}

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { DEMO_SESSION_KEY } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -15,6 +17,7 @@ const REMEMBER_EMAIL_KEY = 'xyrenis_remember_email';
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
+  const router = useRouter();
   const [tab, setTab] = useState<'signin' | 'signup' | 'forgot'>('signin');
 
   // Sign-in state
@@ -89,14 +92,11 @@ export default function LoginPage() {
     setSuLoading(false);
   };
 
-  const handleDemoLogin = async () => {
-    setSiEmail('demo@xyrenis.com');
-    setSiPassword('demopass123');
-    setSiError(null);
-    setSiLoading(true);
-    const { error } = await signIn('demo@xyrenis.com', 'demopass123');
-    if (error) setSiError(error);
-    setSiLoading(false);
+  const handleDemoLogin = () => {
+    // Demo mode bypasses Supabase entirely — no real credentials needed.
+    // A flag in sessionStorage activates masked fake data throughout the app.
+    sessionStorage.setItem(DEMO_SESSION_KEY, 'true');
+    router.replace('/command-center');
   };
 
   const handleForgot = async (e: React.FormEvent) => {

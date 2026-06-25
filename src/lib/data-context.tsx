@@ -14,6 +14,7 @@ import {
   type Department,
   type ClassifiedDependency,
 } from './mock-data';
+import { DEMO_PROJECTS, DEMO_RISKS } from './demo-data';
 
 /**
  * POST a project/risk mutation to the server, attaching the caller's Supabase
@@ -139,55 +140,46 @@ function normalizeDeptName(d: string | null | undefined): string {
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  // Department-scoped write permissions (super admins / CCO can modify everything).
-  const { canModifyDepartment, user } = useAuth();
-  const currentUserName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'A user';
+  const { canModifyDepartment, user, isDemoMode } = useAuth();
+  const currentUserName = isDemoMode
+    ? 'Demo User'
+    : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'A user';
 
-  // Find every other department that is referenced by a project's
-  // classifiedDependencies, so cross-department side-effects (like delete
-  // notifications) can fan out to the right inboxes.
   const collectDependentDepartments = useCallback((project: Project | undefined): string[] => {
     if (!project?.classifiedDependencies?.length) return [];
     const sourceDept = normalizeDeptName(project.department);
     const set = new Set<string>();
     project.classifiedDependencies.forEach(dep => {
-      // Only internal dependencies mirror into another department, so only they
-      // generate cross-department notifications.
       if (dep.kind !== 'internal') return;
       const target = normalizeDeptName(dep.department || '');
       if (target && target !== sourceDept) set.add(target);
     });
     return Array.from(set);
   }, []);
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [risks, setRisks] = useState<Risk[]>(initialRisks);
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+
+  const [projects, setProjects] = useState<Project[]>(isDemoMode ? DEMO_PROJECTS : initialProjects);
+  const [risks, setRisks] = useState<Risk[]>(isDemoMode ? DEMO_RISKS : initialRisks);
+  const [notifications, setNotifications] = useState<Notification[]>(isDemoMode ? [] : initialNotifications);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
   useEffect(() => {
+    // Demo mode: use local demo data only — never call the real API
+    if (isDemoMode) return;
     if (!isSupabaseConfigured()) return;
-    
+
     async function fetchData() {
-      console.log('Connecting to Supabase via secure API route...');
       try {
         const res = await fetch('/api/projects');
         if (!res.ok) throw new Error('API request failed');
         const data = await res.json();
-        
-        if (data.projects && data.projects.length > 0) {
-          setProjects(data.projects);
-          console.log('Successfully loaded ' + data.projects.length + ' projects from live database!');
-        }
-        if (data.risks && data.risks.length > 0) {
-          setRisks(data.risks);
-        }
+        if (data.projects && data.projects.length > 0) setProjects(data.projects);
+        if (data.risks && data.risks.length > 0) setRisks(data.risks);
       } catch (err) {
-        console.error('[CRITICAL] Error fetching Supabase data:', err);
-        alert('Error loading live data. Please check browser console.');
+        console.error('[DataContext] Error fetching live data:', err);
       }
     }
     fetchData();
-  }, []);
+  }, [isDemoMode]);
 
 
   // ---- Audit helper ----
@@ -195,7 +187,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setAuditLog(prev => [{
       ...entry,
       id: `AUD-${Date.now()}`,
-      user: 'Neeraj Prakash',
+      user: currentUserName,
       timestamp: new Date(),
     }, ...prev]);
   }, []);

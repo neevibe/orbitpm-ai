@@ -8,10 +8,13 @@ import { supabase } from './supabase';
 export type Permission = 'view' | 'edit' | 'modify' | 'admin';
 export type UserType = 'internal' | 'external';
 
+export const DEMO_SESSION_KEY = 'xyrenis_demo';
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isDemoMode: boolean;
   /** Legacy role string (kept for back-compat). */
   role: string;
   /** The department this user is scoped to (admins are unscoped). */
@@ -76,10 +79,20 @@ function deriveUserType(user: User | null): UserType {
   return isInternalEmail(user.email) ? 'internal' : 'external';
 }
 
+const DEMO_USER = {
+  id: 'demo-user',
+  email: 'demo@xyrenis.com',
+  user_metadata: { full_name: 'Demo User', role: 'user' },
+  app_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+} as unknown as User;
+
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   session: null,
   loading: true,
+  isDemoMode: false,
   role: 'user',
   department: null,
   permission: 'view',
@@ -98,8 +111,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
+    // Check for active demo session first — no Supabase call needed
+    if (typeof window !== 'undefined' && sessionStorage.getItem(DEMO_SESSION_KEY) === 'true') {
+      setUser(DEMO_USER);
+      setIsDemoMode(true);
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
         // Validate the stored session against the server. If the access token is
@@ -222,7 +244,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    // Capture the token before the session is torn down so the actor resolves.
+    if (isDemoMode) {
+      if (typeof window !== 'undefined') sessionStorage.removeItem(DEMO_SESSION_KEY);
+      setUser(null);
+      setIsDemoMode(false);
+      return;
+    }
     const token = session?.access_token;
     logAuthEvent('auth.logout', { token, email: user?.email ?? undefined });
     await supabase.auth.signOut();
@@ -260,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user, session, loading, role, department,
+        user, session, loading, isDemoMode, role, department,
         permission, userType, isAdmin, isSuperAdmin, canView,
         canEditDepartment, canModifyDepartment,
         signIn, signUp, signOut,
