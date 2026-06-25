@@ -90,7 +90,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
       initial={{ opacity: 0, y: -24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto"
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
     >
       <div
         className="flex items-center gap-1 px-2 py-2 rounded-full border border-white/10 backdrop-blur-2xl shadow-2xl"
@@ -99,7 +99,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
         {/* Logo */}
         <Link href="/" className="flex items-center px-3 mr-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 22, width: 'auto', objectFit: 'contain' }} />
+          <img src="/logo-full.png" alt="Xyrenis" style={{ height: 22, width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Links */}
@@ -330,6 +330,29 @@ const TRUST = [
   { to: 99.9, suffix: '%', prefix: '', label: 'Uptime SLA' },
 ];
 
+interface MetricItemProps {
+  to: number;
+  suffix: string;
+  prefix: string;
+  label: string;
+}
+
+function MetricItem({ to, suffix, prefix, label }: MetricItemProps) {
+  const { ref, val } = useCountUp(to);
+  const display = to % 1 === 0 ? Math.round(val).toLocaleString() : val.toFixed(1);
+  return (
+    <div className="text-center">
+      <p
+        className="text-[clamp(36px,4vw,52px)] font-bold leading-none"
+        style={{ background: 'linear-gradient(135deg, #60a5fa, #c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+      >
+        <span ref={ref}>{prefix}{display}{suffix}</span>
+      </p>
+      <p className="text-[13px] text-white/40 mt-2 font-medium">{label}</p>
+    </div>
+  );
+}
+
 function TrustSection() {
   return (
     <section className="py-20 px-6 max-w-5xl mx-auto">
@@ -339,21 +362,9 @@ function TrustSection() {
       >
         <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-20 blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, #2563EB, transparent)' }} />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10">
-          {TRUST.map(m => {
-            const { ref, val } = useCountUp(m.to);
-            const display = m.to % 1 === 0 ? Math.round(val).toLocaleString() : val.toFixed(1);
-            return (
-              <div key={m.label} className="text-center">
-                <p
-                  className="text-[clamp(36px,4vw,52px)] font-bold leading-none"
-                  style={{ background: 'linear-gradient(135deg, #60a5fa, #c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                >
-                  <span ref={ref}>{m.prefix}{display}{m.suffix}</span>
-                </p>
-                <p className="text-[13px] text-white/40 mt-2 font-medium">{m.label}</p>
-              </div>
-            );
-          })}
+          {TRUST.map(m => (
+            <MetricItem key={m.label} {...m} />
+          ))}
         </div>
       </div>
     </section>
@@ -453,10 +464,12 @@ export default function LandingPage() {
   return (
     <div style={{ background: '#050816', color: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
 
+      <PillNav ctaHref={ctaHref} />
+
       {/* ══════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════ */}
-      <section className="relative flex justify-center px-4 pt-6 pb-10">
+      <section className="relative flex justify-center px-4 pt-24 pb-10">
         {/* Hero container */}
         <div
           className="relative w-full max-w-[1500px] rounded-[48px] border border-white/10 overflow-hidden flex flex-col shadow-2xl"
@@ -575,7 +588,7 @@ export default function LandingPage() {
               value="172"
               sub="↑ 12% this quarter"
               color="#2563EB"
-              style={{ top: 48, right: 80 }}
+              style={{ top: 96, right: 80 }}
               delay={0.6}
             />
             <KPICard
@@ -584,7 +597,7 @@ export default function LandingPage() {
               value="94%"
               sub="Above target"
               color="#10b981"
-              style={{ top: 190, right: 40 }}
+              style={{ top: 238, right: 40 }}
               delay={0.75}
             />
             <KPICard
@@ -606,9 +619,6 @@ export default function LandingPage() {
               delay={1.05}
             />
           </div>
-
-          {/* ── Bottom pill navbar ── */}
-          <PillNav ctaHref={ctaHref} />
         </div>
       </section>
 
