@@ -99,17 +99,20 @@ const NAV_LINKS = ['Features', 'Solutions', 'Pricing', 'AI Copilot', 'Contact'];
 
 function PillNav({ ctaHref }: { ctaHref: string }) {
   return (
-    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto" style={{ maxWidth: 'calc(100vw - 32px)' }}>
       <div
-        className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-full border border-white/[0.15] backdrop-blur-xl overflow-hidden"
+        className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-white/[0.15] backdrop-blur-xl"
         style={{
           background: 'rgba(12, 16, 35, 0.92)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset',
         }}
       >
-        {/* Logo */}
-        <Link href="/" className="flex items-center px-3 mr-2 shrink-0">
-          <XyrenisBrandmark iconH={26} tagline={false} />
+        {/* Logo — colored mark on a white mini-card inside the dark pill */}
+        <Link href="/" className="flex items-center px-1 mr-1 shrink-0">
+          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 8, padding: '4px 8px' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.png" alt="Xyrenis" style={{ height: 22, width: 'auto', objectFit: 'contain', display: 'block' }} />
+          </div>
         </Link>
 
         {/* Links */}
@@ -521,9 +524,10 @@ export default function LandingPage() {
 
           {/* ── Hero text content ── */}
           <div className="relative z-20 flex-1 px-8 md:px-20 pt-16 md:pt-20 flex flex-col items-start justify-center pointer-events-none" style={{ maxWidth: '62%' }}>
-            {/* Logo above headline */}
-            <div className="pointer-events-auto mb-8">
-              <XyrenisBrandmark iconH={36} tagline={true} />
+            {/* Logo above headline — colorful mark on frosted white card */}
+            <div className="pointer-events-auto mb-8 inline-block rounded-xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-mark.png" alt="Xyrenis" style={{ height: 38, width: 'auto', objectFit: 'contain', display: 'block' }} />
             </div>
 
             {/* Badge */}
