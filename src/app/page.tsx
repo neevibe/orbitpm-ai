@@ -11,11 +11,17 @@ import {
 } from 'lucide-react';
 
 /* ─── Colorful brandmark for dark backgrounds ─────────────────────── */
+// logo-mark.png is 1716×272 — the X glyph occupies the leftmost ~290px.
+// We clip to that width so only the colourful X icon is shown.
 function XyrenisBrandmark({ iconH = 30, tagline = true }: { iconH?: number; tagline?: boolean }) {
+  const xW = Math.round(iconH * (290 / 272)); // proportional clip width for the X glyph
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(iconH * 0.33) }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo-icon.png" alt="" style={{ height: iconH, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(iconH * 0.36) }}>
+      {/* Clipped X mark from logo-mark.png */}
+      <div style={{ width: xW, height: iconH, overflow: 'hidden', flexShrink: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-mark.png" alt="Xyrenis" style={{ height: iconH, width: 'auto', display: 'block' }} />
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
         <span style={{ fontSize: Math.round(iconH * 0.72), fontWeight: 800, color: '#fff', letterSpacing: '0.10em', fontFamily: 'Sora, sans-serif' }}>
           XYRENIS
@@ -108,7 +114,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
   return (
     <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
       <div
-        className="flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-white/[0.15] backdrop-blur-xl"
+        className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-full border border-white/[0.15] backdrop-blur-xl overflow-hidden"
         style={{
           background: 'rgba(12, 16, 35, 0.92)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset',
