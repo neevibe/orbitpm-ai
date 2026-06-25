@@ -102,14 +102,14 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
     <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
       {/* overflow-hidden clips the CTA button's blue bg to the pill's rounded edge */}
       <div
-        className="flex items-center gap-0.5 pl-2 pr-2 py-2 rounded-full border border-white/[0.15] backdrop-blur-xl overflow-hidden"
+        className="flex items-center gap-0.5 pl-2 pr-0 py-0 rounded-full border border-white/[0.15] backdrop-blur-xl overflow-hidden"
         style={{
           background: 'rgba(12, 16, 35, 0.92)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset',
         }}
       >
-        {/* Logo — white version: both X and XYRENIS are clearly readable on dark */}
-        <Link href="/" className="flex items-center pl-1 pr-4 shrink-0">
+        {/* Logo */}
+        <Link href="/" className="flex items-center pl-1 pr-4 py-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-mark-white.png" alt="Xyrenis" style={{ height: 24, width: 'auto', objectFit: 'contain', display: 'block' }} />
         </Link>
@@ -119,7 +119,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
           <a
             key={l}
             href={`#${l.toLowerCase().replace(' ', '-')}`}
-            className="px-3 py-1.5 rounded-full text-[12.5px] font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 whitespace-nowrap"
+            className="px-3 py-2 rounded-full text-[12.5px] font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 whitespace-nowrap"
           >
             {l}
           </a>
@@ -128,10 +128,10 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
         {/* Divider */}
         <span className="w-px h-5 bg-white/15 mx-1.5" />
 
-        {/* CTA — no border-radius mismatch, pill overflow-hidden handles clipping */}
+        {/* CTA — self-stretch fills full pill height, rounded-none lets overflow:hidden on the pill cap the right end perfectly */}
         <Link
           href={ctaHref}
-          className="flex items-center gap-1.5 px-5 py-2 rounded-full text-[12.5px] font-semibold text-white transition-all duration-200 hover:opacity-90 whitespace-nowrap shrink-0"
+          className="flex items-center gap-1.5 px-5 self-stretch rounded-none text-[12.5px] font-semibold text-white transition-all duration-200 hover:opacity-90 whitespace-nowrap shrink-0"
           style={{ background: 'linear-gradient(135deg, #2563EB, #1d4ed8)' }}
         >
           Start Free Trial <ArrowRight className="w-3 h-3" />
