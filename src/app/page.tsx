@@ -119,7 +119,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
         {/* CTA */}
         <Link
           href={ctaHref}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[12.5px] font-semibold text-white transition-all duration-200 hover:opacity-90"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[12.5px] font-semibold text-white transition-all duration-200 hover:opacity-90 whitespace-nowrap shrink-0"
           style={{ background: 'linear-gradient(135deg, #2563EB, #1d4ed8)', boxShadow: '0 0 20px rgba(37,99,235,0.5)' }}
         >
           Start Free Trial <ArrowRight className="w-3 h-3" />
