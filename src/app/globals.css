@@ -395,6 +395,16 @@ body {
 .recharts-cartesian-grid line { stroke: #f3f4f6 !important; }
 [data-theme="dark"] .recharts-cartesian-grid line { stroke: #1f2937 !important; }
 
+/* Prevent default browser blue outline focus ring when clicking on charts */
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-responsive-container:focus,
+.recharts-responsive-container *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* ================================================
    GLASS (for modals / overlays)
    ================================================ */
