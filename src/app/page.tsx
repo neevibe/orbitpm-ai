@@ -97,9 +97,9 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
         style={{ background: 'rgba(255,255,255,0.07)' }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center px-3 mr-1">
+        <Link href="/" className="flex items-center px-3 mr-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-full.png" alt="Xyrenis" style={{ height: 22, width: 'auto', objectFit: 'contain' }} />
+          <img src="/logo-full-white.png" alt="Xyrenis" style={{ height: 28, width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Links */}
@@ -107,7 +107,7 @@ function PillNav({ ctaHref }: { ctaHref: string }) {
           <a
             key={l}
             href={`#${l.toLowerCase().replace(' ', '-')}`}
-            className="px-3.5 py-2 rounded-full text-[12.5px] font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+            className="px-3.5 py-2 rounded-full text-[12.5px] font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200 whitespace-nowrap"
           >
             {l}
           </a>
