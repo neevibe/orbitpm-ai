@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download, Filter } from 'lucide-react';
 import { useData } from '@/lib/data-context';
@@ -65,6 +65,19 @@ export default function ProjectsPage() {
   const [myProjectsOnly, setMyProjectsOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'id' | 'owner'>('id');
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const filtersPanelRef = useRef<HTMLDivElement>(null);
+
+  // Close filters panel on outside click (avoids z-index stacking context conflict with overlay).
+  useEffect(() => {
+    if (!showFiltersPanel) return;
+    const handle = (e: MouseEvent) => {
+      if (filtersPanelRef.current && !filtersPanelRef.current.contains(e.target as Node)) {
+        setShowFiltersPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [showFiltersPanel]);
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -370,7 +383,7 @@ export default function ProjectsPage() {
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
           </select>
           {/* Filters popover — Owner, My Projects, Sort */}
-          <div className="relative flex-shrink-0">
+          <div ref={filtersPanelRef} className="relative flex-shrink-0">
             <button
               onClick={() => setShowFiltersPanel(v => !v)}
               className={`flex items-center gap-1.5 px-2.5 rounded-md border text-[12px] font-semibold transition-colors ${(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300 hover:text-[var(--color-x-text)]'}`}
@@ -892,7 +905,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Click-away for dropdown */}
-      {(openMenuId || showFiltersPanel) && <div className="fixed inset-0 z-40" onClick={() => { setOpenMenuId(null); setShowFiltersPanel(false); }} />}
+      {openMenuId && <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />}
 
       <ProjectModal
         isOpen={showModal}
