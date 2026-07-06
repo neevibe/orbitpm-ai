@@ -136,10 +136,25 @@ export default function ProjectsPage() {
     }
   }, []);
 
+  // Owners scoped to the active department/subdivision selection so the list
+  // only shows names relevant to what is currently visible.
   const allOwners = useMemo(() => {
-    const names = new Set(activeProjects.map(p => p.owner).filter(Boolean));
+    const pool = activeProjects.filter(p => {
+      const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
+      const matchDept = selectedDept === 'All' || vertical === selectedDept;
+      const matchSub = !selectedSub || p.subdivision === selectedSub;
+      return matchDept && matchSub;
+    });
+    const names = new Set(pool.map(p => p.owner).filter(Boolean));
     return Array.from(names).sort();
-  }, [activeProjects]);
+  }, [activeProjects, selectedDept, selectedSub]);
+
+  // Reset owner filter when switching departments if the chosen owner isn't in the new set.
+  useEffect(() => {
+    if (ownerFilter !== 'All' && !allOwners.includes(ownerFilter)) {
+      setOwnerFilter('All');
+    }
+  }, [allOwners, ownerFilter]);
 
   const filtered = useMemo(() => {
     const pool = tab === 'active' ? activeProjects : archivedProjects;
