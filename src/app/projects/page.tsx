@@ -28,7 +28,7 @@ export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
-  const { user, isDemoMode, canModifyDepartment } = useAuth();
+  const { user, isDemoMode, canModifyDepartment, isAdmin } = useAuth();
   const currentUserName = isDemoMode
     ? 'Demo User'
     : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
@@ -686,10 +686,10 @@ export default function ProjectsPage() {
                                     </td>
                                     <td className="pr-5 text-right">
                                       <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        {(p.isDependencyMirror || canModifyDepartment(p.department)) && (
+                                        {(p.isDependencyMirror || (canModifyDepartment(p.department) && (isAdmin || p.owner === currentUserName))) && (
                                           <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
                                         )}
-                                        {!p.isDependencyMirror && canModifyDepartment(p.department) && (
+                                        {!p.isDependencyMirror && canModifyDepartment(p.department) && (isAdmin || p.owner === currentUserName) && (
                                           <div className="relative" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
                                             {openMenuId === p.id && (
