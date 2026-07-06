@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download } from 'lucide-react';
+import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download, Filter } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
@@ -64,6 +64,7 @@ export default function ProjectsPage() {
   const [ownerFilter, setOwnerFilter] = useState('All');
   const [myProjectsOnly, setMyProjectsOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'id' | 'owner'>('id');
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -368,36 +369,70 @@ export default function ProjectsPage() {
           >
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
           </select>
-          {/* Owner filter */}
-          <select
-            value={ownerFilter}
-            onChange={e => setOwnerFilter(e.target.value)}
-            className="x-input"
-            style={{ width: 140, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
-          >
-            <option value="All">All Owners</option>
-            {allOwners.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-          {/* My Projects toggle */}
-          {currentUserName && (
+          {/* Filters popover — Owner, My Projects, Sort */}
+          <div className="relative flex-shrink-0">
             <button
-              onClick={() => setMyProjectsOnly(v => !v)}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded-md border flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0 ${myProjectsOnly ? 'bg-indigo-600 text-white border-indigo-600' : 'text-indigo-600 hover:text-indigo-700 bg-indigo-50 border-indigo-100'}`}
+              onClick={() => setShowFiltersPanel(v => !v)}
+              className={`flex items-center gap-1.5 px-2.5 rounded-md border text-[12px] font-semibold transition-colors ${(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300 hover:text-[var(--color-x-text)]'}`}
               style={{ height: 32 }}
             >
-              My Projects
+              <Filter className="w-3.5 h-3.5" />
+              Filters
+              {(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') && (
+                <span className="inline-flex w-4 h-4 rounded-full bg-indigo-600 text-white text-[9px] items-center justify-center font-bold">
+                  {(ownerFilter !== 'All' ? 1 : 0) + (myProjectsOnly ? 1 : 0) + (sortBy !== 'id' ? 1 : 0)}
+                </span>
+              )}
             </button>
-          )}
-          {/* Sort order */}
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value as 'id' | 'owner')}
-            className="x-input"
-            style={{ width: 120, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
-          >
-            <option value="id">Sort: ID</option>
-            <option value="owner">Sort: Owner</option>
-          </select>
+            {showFiltersPanel && (
+              <div className="absolute top-10 left-0 z-50 bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl shadow-xl p-4 w-60 space-y-3 animate-scale-in">
+                <div>
+                  <p className="text-[10px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider mb-1.5">Owner</p>
+                  <select
+                    value={ownerFilter}
+                    onChange={e => setOwnerFilter(e.target.value)}
+                    className="x-input w-full"
+                    style={{ height: 32, fontSize: 13, padding: '0 8px' }}
+                  >
+                    <option value="All">All Owners</option>
+                    {allOwners.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                {currentUserName && (
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="text-[12px] font-medium text-[var(--color-x-text)]">My Projects only</span>
+                    <button
+                      onClick={() => setMyProjectsOnly(v => !v)}
+                      className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${myProjectsOnly ? 'bg-indigo-600' : 'bg-[var(--color-x-border)]'}`}
+                    >
+                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${myProjectsOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider mb-1.5">Sort by</p>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setSortBy('id')}
+                      className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg border transition-all ${sortBy === 'id' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300'}`}
+                    >ID</button>
+                    <button
+                      onClick={() => setSortBy('owner')}
+                      className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg border transition-all ${sortBy === 'owner' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300'}`}
+                    >Owner</button>
+                  </div>
+                </div>
+                {(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') && (
+                  <button
+                    onClick={() => { setOwnerFilter('All'); setMyProjectsOnly(false); setSortBy('id'); }}
+                    className="w-full text-[11px] font-semibold text-[var(--color-x-text-muted)] hover:text-red-600 py-0.5 text-center transition-colors border-t border-[var(--color-x-border)] pt-2"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           {(stuckFilter || hasRisksFilter || escalationFilter || bottlenecksFilter) && (
             <button
               onClick={() => {
@@ -857,7 +892,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Click-away for dropdown */}
-      {openMenuId && <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />}
+      {(openMenuId || showFiltersPanel) && <div className="fixed inset-0 z-40" onClick={() => { setOpenMenuId(null); setShowFiltersPanel(false); }} />}
 
       <ProjectModal
         isOpen={showModal}
