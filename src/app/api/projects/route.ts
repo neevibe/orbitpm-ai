@@ -4,15 +4,16 @@ import { recordAudit, actorFromToken } from '@/lib/audit';
 
 // Maps the mutation action to a persistent audit action + module.
 const AUDIT_MAP: Record<string, { action: string; module: string; entityType: string }> = {
-  create:      { action: 'project.create',  module: 'projects', entityType: 'project' },
-  update:      { action: 'project.update',  module: 'projects', entityType: 'project' },
-  archive:     { action: 'project.archive', module: 'projects', entityType: 'project' },
-  restore:     { action: 'project.restore', module: 'projects', entityType: 'project' },
-  delete:      { action: 'project.delete',  module: 'projects', entityType: 'project' },
-  split:       { action: 'project.split',   module: 'projects', entityType: 'project' },
-  create_risk: { action: 'risk.create',     module: 'risks',    entityType: 'risk' },
-  update_risk: { action: 'risk.update',     module: 'risks',    entityType: 'risk' },
-  delete_risk: { action: 'risk.delete',     module: 'risks',    entityType: 'risk' },
+  create:               { action: 'project.create',              module: 'projects', entityType: 'project' },
+  update:               { action: 'project.update',              module: 'projects', entityType: 'project' },
+  target_date_override: { action: 'project.target_date_override', module: 'projects', entityType: 'project' },
+  archive:              { action: 'project.archive',             module: 'projects', entityType: 'project' },
+  restore:              { action: 'project.restore',             module: 'projects', entityType: 'project' },
+  delete:               { action: 'project.delete',              module: 'projects', entityType: 'project' },
+  split:                { action: 'project.split',               module: 'projects', entityType: 'project' },
+  create_risk:          { action: 'risk.create',                 module: 'risks',    entityType: 'risk' },
+  update_risk:          { action: 'risk.update',                 module: 'risks',    entityType: 'risk' },
+  delete_risk:          { action: 'risk.delete',                 module: 'risks',    entityType: 'risk' },
 };
 
 // Fallbacks mirror src/lib/supabase.ts so the client never gets an empty URL at
@@ -37,6 +38,35 @@ function isMissingV2Column(error: { message?: string } | null): boolean {
   if (!error?.message) return false;
   const m = error.message.toLowerCase();
   return V2_COLUMNS.some(c => m.includes(c)) && (m.includes('does not exist') || m.includes('column') || m.includes('schema cache'));
+}
+
+// Governance columns (baseline date lock). Added in migration 0004. Same graceful-
+// degradation pattern as V2_COLUMNS: strip + retry so existing edits never break.
+const GOVERNANCE_COLUMNS = ['baseline_date', 'target_date_locked'];
+function isMissingGovernanceColumn(error: { message?: string } | null): boolean {
+  if (!error?.message) return false;
+  const m = error.message.toLowerCase();
+  return GOVERNANCE_COLUMNS.some(c => m.includes(c)) && (m.includes('does not exist') || m.includes('column') || m.includes('schema cache'));
+}
+
+/** Resolve permission level from a Supabase JWT. Returns true if the user is admin. */
+async function isAdminToken(token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
+    const { createClient: cc } = await import('@supabase/supabase-js');
+    const client = cc(supabaseUrl, anonKey, { auth: { persistSession: false } });
+    const { data } = await client.auth.getUser(token);
+    const u = data.user;
+    if (!u) return false;
+    const meta = u.user_metadata || {};
+    const perm = (meta.permission as string) || '';
+    const role = (meta.role as string) || '';
+    const ADMIN_ROLES = ['cco', 'admin', 'super_admin'];
+    return perm === 'admin' || ADMIN_ROLES.includes(role) || u.email === 'neeraj.p@bialairport.com';
+  } catch {
+    return false;
+  }
 }
 
 export async function GET() {
@@ -78,7 +108,10 @@ export async function GET() {
       subdivision: p.subdivision ?? null,
       totalBudget: p.total_budget ?? null,
       utilizedBudget: p.utilized_budget ?? null,
-      classifiedDependencies: p.classified_dependencies ?? null
+      classifiedDependencies: p.classified_dependencies ?? null,
+      // governance fields — present only after migration 0004 runs.
+      baselineDate: p.baseline_date ?? null,
+      targetDateLocked: p.target_date_locked ?? false
     }));
 
     // Fetch risks
@@ -164,7 +197,17 @@ export async function POST(request: NextRequest) {
         utilized_budget: project.utilizedBudget ?? null,
         classified_dependencies: project.classifiedDependencies ?? null,
       };
-      let { error } = await db.from('projects').insert(v2Row);
+      // governance fields — baseline the target date immediately on creation so the
+      // original plan date is permanently preserved.
+      const govRow = {
+        ...v2Row,
+        baseline_date: project.targetDate || null,
+        target_date_locked: project.targetDate ? true : false,
+      };
+      let { error } = await db.from('projects').insert(govRow);
+      if (error && isMissingGovernanceColumn(error)) {
+        ({ error } = await db.from('projects').insert(v2Row));
+      }
       if (error && isMissingV2Column(error)) {
         ({ error } = await db.from('projects').insert(baseRow));
       }
@@ -178,7 +221,33 @@ export async function POST(request: NextRequest) {
       if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
       if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
       if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
-      if (updates.targetDate !== undefined) dbUpdates.target_date = updates.targetDate || null;
+
+      // Target date: check the lock before writing. If the project has a locked
+      // baseline, only admin-level JWTs may change it; anyone else gets a 403.
+      if (updates.targetDate !== undefined) {
+        const { data: currentProj } = await db
+          .from('projects')
+          .select('baseline_date, target_date_locked')
+          .eq('project_code', project.id)
+          .single();
+
+        if (currentProj?.target_date_locked) {
+          const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+          const adminUser = await isAdminToken(token);
+          if (!adminUser) {
+            return NextResponse.json(
+              { error: 'Target date is locked. Only Super Admins can modify the baseline target date.' },
+              { status: 403 }
+            );
+          }
+        } else if (!currentProj?.baseline_date && updates.targetDate) {
+          // First time a target date is being set → baseline it now.
+          // Stored in govUpdates below so it degrades gracefully.
+        }
+
+        dbUpdates.target_date = updates.targetDate || null;
+      }
+
       if (updates.objective !== undefined) dbUpdates.business_objective = updates.objective;
       if (updates.kpi !== undefined) dbUpdates.kpi = updates.kpi;
       if (updates.projectDependencies !== undefined) dbUpdates.dependencies = updates.projectDependencies;
@@ -196,19 +265,43 @@ export async function POST(request: NextRequest) {
       if (updates.utilizedBudget !== undefined) v2Updates.utilized_budget = updates.utilizedBudget;
       if (updates.classifiedDependencies !== undefined) v2Updates.classified_dependencies = updates.classifiedDependencies;
 
-      const fullUpdates = { ...dbUpdates, ...v2Updates };
+      // Governance: set baseline when first assigning a target date to a project that had none.
+      const govUpdates: any = {};
+      if (updates.targetDate && dbUpdates.target_date) {
+        // Re-fetch to check if baseline is still unset (separate query above may have resolved it).
+        const { data: check } = await db
+          .from('projects')
+          .select('baseline_date')
+          .eq('project_code', project.id)
+          .single()
+          .then(r => r);
+        if (!check?.baseline_date) {
+          govUpdates.baseline_date = updates.targetDate;
+          govUpdates.target_date_locked = true;
+        }
+      }
+
+      const fullUpdates = { ...dbUpdates, ...v2Updates, ...govUpdates };
       if (Object.keys(fullUpdates).length > 0) {
         console.log('[projects API] updating project_code:', project.id, 'columns:', Object.keys(fullUpdates));
         let { error } = await db.from('projects').update(fullUpdates).eq('project_code', project.id);
         if (error) {
           console.error('[projects API] update error:', error.code, error.message, 'project_code:', project.id);
         }
-        // If the v2 columns don't exist yet, retry with only the core fields so
-        // the edit still saves (subdivision/financials persist once migrated).
+        // Degrade gracefully: strip governance columns if migration 0004 not run yet.
+        if (error && isMissingGovernanceColumn(error)) {
+          const withoutGov = { ...dbUpdates, ...v2Updates };
+          if (Object.keys(withoutGov).length > 0) {
+            ({ error } = await db.from('projects').update(withoutGov).eq('project_code', project.id));
+          } else {
+            error = null;
+          }
+        }
+        // Degrade gracefully: strip v2 columns if migration 0003 not run yet.
         if (error && isMissingV2Column(error) && Object.keys(dbUpdates).length > 0) {
           ({ error } = await db.from('projects').update(dbUpdates).eq('project_code', project.id));
         }
-        if (error && !isMissingV2Column(error)) throw error;
+        if (error && !isMissingV2Column(error) && !isMissingGovernanceColumn(error)) throw error;
       }
     }
     else if (action === 'archive') {

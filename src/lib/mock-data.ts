@@ -82,6 +82,10 @@ export interface Project {
   priority: 'Critical' | 'High' | 'Medium' | 'Low';
   startDate: string | null;
   targetDate: string | null;
+  /** Original target date, set once on first save. Permanently preserved for audit. */
+  baselineDate?: string | null;
+  /** True once a target date has been baselined. Only Super Admins can modify target_date after this. */
+  targetDateLocked?: boolean;
   risks: string;
   objective: string;
   kpi?: string;

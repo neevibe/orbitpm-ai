@@ -267,9 +267,44 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>Start Date *</label>
               <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} required className={inputCls} /></div>
-            <div><label className={labelCls}>Target Date *</label>
-              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} required className={inputCls} /></div>
+            <div>
+              <label className={labelCls}>
+                Target Date *
+                {editProject?.targetDateLocked && (
+                  <span className="ml-1.5 inline-flex items-center gap-0.5 text-amber-600 font-semibold normal-case tracking-normal">
+                    <Lock className="w-3 h-3" />
+                    {isSuperAdmin ? 'Locked (you can override)' : 'Locked'}
+                  </span>
+                )}
+              </label>
+              <input
+                type="date"
+                value={form.targetDate}
+                onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))}
+                required
+                disabled={!!(editProject?.targetDateLocked && !isSuperAdmin)}
+                className={`${inputCls} ${editProject?.targetDateLocked && !isSuperAdmin ? 'bg-[#f8fafc] text-[#94a3b8] cursor-not-allowed' : ''}`}
+              />
+              {editProject?.targetDateLocked && !isSuperAdmin && (
+                <p className="text-[10px] text-amber-600 mt-1">Locked — only Super Admins can modify this date</p>
+              )}
+              {editProject?.targetDateLocked && isSuperAdmin && form.targetDate !== (editProject.targetDate || '') && (
+                <p className="text-[10px] text-amber-500 mt-1">You are overriding a locked baseline date as Super Admin</p>
+              )}
+            </div>
           </div>
+
+          {/* Baseline date — shown when a target date has been baselined */}
+          {editProject?.baselineDate && (
+            <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+              <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">Baseline Date</span>
+                <span className="text-[13px] font-mono font-bold text-amber-800">{editProject.baselineDate}</span>
+                <span className="text-[10px] text-amber-500">— original locked target, permanently preserved</span>
+              </div>
+            </div>
+          )}
 
           {/* Financial management (INR) */}
           <div className="border-t border-[#f1f5f9] pt-4">
