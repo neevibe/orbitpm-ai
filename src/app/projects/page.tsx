@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
@@ -27,6 +28,10 @@ export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
+  const { user, isDemoMode, canModifyDepartment } = useAuth();
+  const currentUserName = isDemoMode
+    ? 'Demo User'
+    : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
   const toast = useToast();
   const confirm = useConfirm();
   const [search, setSearch] = useState('');
@@ -56,6 +61,9 @@ export default function ProjectsPage() {
   const [hasRisksFilter, setHasRisksFilter] = useState(false);
   const [escalationFilter, setEscalationFilter] = useState(false);
   const [bottlenecksFilter, setBottlenecksFilter] = useState(false);
+  const [ownerFilter, setOwnerFilter] = useState('All');
+  const [myProjectsOnly, setMyProjectsOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'id' | 'owner'>('id');
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -92,6 +100,32 @@ export default function ProjectsPage() {
       setBottlenecksFilter(bottlenecks);
     }, 0);
   }, [searchParams]);
+
+  // Restore filter state when navigating back from a project detail page.
+  useEffect(() => {
+    const saved = sessionStorage.getItem('xyrenis_projects_filters');
+    if (saved) {
+      try {
+        const f = JSON.parse(saved);
+        sessionStorage.removeItem('xyrenis_projects_filters');
+        setTimeout(() => {
+          if (f.search) setSearch(f.search);
+          if (f.statusFilter) setStatusFilter(f.statusFilter);
+          if (f.priorityFilter) setPriorityFilter(f.priorityFilter);
+          if (f.selectedDept) setSelectedDept(f.selectedDept);
+          setSelectedSub(f.selectedSub ?? null);
+          if (f.ownerFilter) setOwnerFilter(f.ownerFilter);
+          if (f.myProjectsOnly) setMyProjectsOnly(f.myProjectsOnly);
+          if (f.sortBy) setSortBy(f.sortBy);
+        }, 0);
+      } catch {}
+    }
+  }, []);
+
+  const allOwners = useMemo(() => {
+    const names = new Set(activeProjects.map(p => p.owner).filter(Boolean));
+    return Array.from(names).sort();
+  }, [activeProjects]);
 
   const filtered = useMemo(() => {
     const pool = tab === 'active' ? activeProjects : archivedProjects;
@@ -137,11 +171,15 @@ export default function ProjectsPage() {
         if (!hasBottleneck) return false;
       }
 
-      return matchSearch && matchStatus && matchDept && matchSub && matchPriority;
+      const matchOwner = ownerFilter === 'All' || p.owner === ownerFilter;
+      const matchMyProjects = !myProjectsOnly || p.owner === currentUserName;
+      return matchSearch && matchStatus && matchDept && matchSub && matchPriority && matchOwner && matchMyProjects;
     })
-    // Default ordering: by serial number (ID), natural sort so PRX_2 < PRX_10.
-    .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
-  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter, stuckFilter, hasRisksFilter, escalationFilter, bottlenecksFilter, risks]);
+    .sort((a, b) => {
+      if (sortBy === 'owner') return (a.owner || '').localeCompare(b.owner || '');
+      return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter, stuckFilter, hasRisksFilter, escalationFilter, bottlenecksFilter, risks, ownerFilter, myProjectsOnly, sortBy, currentUserName]);
 
   const deptGroups = useMemo(() => {
     const groups: Record<string, Project[]> = {};
@@ -179,7 +217,13 @@ export default function ProjectsPage() {
   };
 
   const openEdit = (p: Project) => { setEditProject(p); setShowModal(true); };
-  const goToDetail = (id: string) => router.push(`/projects/${id}`);
+  const goToDetail = (id: string) => {
+    sessionStorage.setItem('xyrenis_projects_filters', JSON.stringify({
+      search, statusFilter, priorityFilter, selectedDept, selectedSub,
+      ownerFilter, myProjectsOnly, sortBy,
+    }));
+    router.push(`/projects/${id}`);
+  };
 
   // Mirror rows are internal dependency tasks — opening one shows the dedicated
   // Dependency Task view, never the standard project detail/edit modal.
@@ -323,6 +367,36 @@ export default function ProjectsPage() {
             style={{ width: 120, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
           >
             {PRIORITY_OPTIONS.map(p => <option key={p}>{p === 'All' ? 'All Priority' : p}</option>)}
+          </select>
+          {/* Owner filter */}
+          <select
+            value={ownerFilter}
+            onChange={e => setOwnerFilter(e.target.value)}
+            className="x-input"
+            style={{ width: 140, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
+          >
+            <option value="All">All Owners</option>
+            {allOwners.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+          {/* My Projects toggle */}
+          {currentUserName && (
+            <button
+              onClick={() => setMyProjectsOnly(v => !v)}
+              className={`text-[11px] font-bold px-2.5 py-1 rounded-md border flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0 ${myProjectsOnly ? 'bg-indigo-600 text-white border-indigo-600' : 'text-indigo-600 hover:text-indigo-700 bg-indigo-50 border-indigo-100'}`}
+              style={{ height: 32 }}
+            >
+              My Projects
+            </button>
+          )}
+          {/* Sort order */}
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as 'id' | 'owner')}
+            className="x-input"
+            style={{ width: 120, height: 32, fontSize: 13, padding: '0 8px', flexShrink: 0 }}
+          >
+            <option value="id">Sort: ID</option>
+            <option value="owner">Sort: Owner</option>
           </select>
           {(stuckFilter || hasRisksFilter || escalationFilter || bottlenecksFilter) && (
             <button
@@ -549,8 +623,10 @@ export default function ProjectsPage() {
                                     </td>
                                     <td className="pr-5 text-right">
                                       <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
-                                        {!p.isDependencyMirror && (
+                                        {(p.isDependencyMirror || canModifyDepartment(p.department)) && (
+                                          <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
+                                        )}
+                                        {!p.isDependencyMirror && canModifyDepartment(p.department) && (
                                           <div className="relative" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
                                             {openMenuId === p.id && (

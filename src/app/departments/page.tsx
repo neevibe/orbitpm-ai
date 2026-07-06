@@ -42,6 +42,7 @@ export default function DepartmentsPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [newProjectDept, setNewProjectDept] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'id' | 'owner'>('id');
 
   const openNew = (dept?: string) => {
     setNewProjectDept(dept || null);
@@ -68,8 +69,11 @@ export default function DepartmentsPage() {
       const q = deptSearch.toLowerCase();
       pool = pool.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || (p.owner || '').toLowerCase().includes(q));
     }
-    return pool;
-  }, [deptProjects, statusFilter, deptSearch]);
+    return pool.slice().sort((a, b) => {
+      if (sortBy === 'owner') return (a.owner || '').localeCompare(b.owner || '');
+      return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [deptProjects, statusFilter, deptSearch, sortBy]);
 
   const startEdit = (p: Project) => {
     setEditingId(p.id);
@@ -157,6 +161,11 @@ export default function DepartmentsPage() {
             className="text-[13px] bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[#334155] outline-none focus:border-indigo-400">
             <option value="All">All Status</option>
             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as 'id' | 'owner')}
+            className="text-[13px] bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[#334155] outline-none focus:border-indigo-400">
+            <option value="id">Sort: ID</option>
+            <option value="owner">Sort: Owner</option>
           </select>
         </div>
 
