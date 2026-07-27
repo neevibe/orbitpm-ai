@@ -686,7 +686,7 @@ export default function ProjectsPage() {
                                     </td>
                                     <td className="pr-5 text-right">
                                       <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        {(p.isDependencyMirror || (canModifyDepartment(p.department) && (isAdmin || isProjectOwner(p.owner, currentUserName, user?.email)))) && (
+                                        {(p.isDependencyMirror || canModifyDepartment(p.department)) && (
                                           <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
                                         )}
                                         {!p.isDependencyMirror && canModifyDepartment(p.department) && (isAdmin || isProjectOwner(p.owner, currentUserName, user?.email)) && (
