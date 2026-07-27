@@ -3,16 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 
 /**
- * Xyrenis AI Copilot — HYBRID engine.
+ * Xyro — the Xyrenis AI engine.
  *
- *   1. Heuristic router (free, instant, deterministic): answers structured
- *      project-intelligence queries directly from LIVE Supabase data —
- *      delayed projects, department breakdowns, owner workload, risks,
- *      project/owner lookups, portfolio summaries.
- *   2. Claude fallback (claude-opus-4-8): everything open-ended — natural
- *      conversation, follow-ups, general knowledge, meeting-note parsing —
- *      grounded in a compact snapshot of the same live data so it never
- *      fabricates project facts.
+ *   1. LLM-first: when an API key is configured, EVERY question goes to the
+ *      model (Claude by default, Gemini if that key is set instead), grounded
+ *      in a live snapshot of the whole portfolio so it never fabricates
+ *      project facts. This is what makes Xyro genuinely conversational.
+ *   2. Heuristic fallback (free, instant, deterministic): only used when NO
+ *      API key is configured — answers structured queries (delayed projects,
+ *      workload, risks, summaries) directly from live Supabase data.
  *
  * Both read the SAME real data. There are no hardcoded/fake numbers.
  */
@@ -140,8 +139,11 @@ function heuristicAnswer(message: string, data: Data): string | null {
     const nameLower = o.toLowerCase();
     if (m.includes(nameLower)) return true;
     
-    // Split name into parts (handling slash and space)
-    const parts = nameLower.split(/[\s/]+/).filter(part => part.length > 2 && !['and', 'the', 'for', 'owner', 'team', 'major'].includes(part));
+    // Split name into parts (handling slash and space). Generic words like
+    // "projects" or "team" must never match — owner strings such as
+    // "Dominic / Projects team" would otherwise claim every projects question.
+    const STOP = ['and', 'the', 'for', 'owner', 'team', 'teams', 'major', 'project', 'projects', 'group', 'dept', 'department', 'all'];
+    const parts = nameLower.split(/[\s/]+/).filter(part => part.length > 2 && !STOP.includes(part));
     return parts.some(part => {
       const regex = new RegExp(`\\b${part}\\b`, 'i');
       return regex.test(m);
@@ -170,7 +172,7 @@ function heuristicAnswer(message: string, data: Data): string | null {
       const ownerLower = p.owner.toLowerCase();
       if (ownerLower.includes(matchedOwner.toLowerCase())) return true;
       
-      const matchedParts = matchedOwner.toLowerCase().split(/[\s/]+/).filter(part => part.length > 2 && !['and', 'the', 'for', 'owner', 'team', 'major'].includes(part));
+      const matchedParts = matchedOwner.toLowerCase().split(/[\s/]+/).filter(part => part.length > 2 && !['and', 'the', 'for', 'owner', 'team', 'teams', 'major', 'project', 'projects', 'group', 'dept', 'department', 'all'].includes(part));
       return matchedParts.some(part => {
         const regex = new RegExp(`\\b${part}\\b`, 'i');
         return regex.test(ownerLower);
@@ -265,13 +267,15 @@ function heuristicAnswer(message: string, data: Data): string | null {
 
 function buildContext(data: Data, user?: { name?: string; department?: string; role?: string }): string {
   const { kpi } = data;
-  const projLines = cap(data.projects, 200)
-    .map(p => `- ${p.code} | ${p.name} | ${p.dept} | ${p.owner} | ${p.status} | ${p.priority} | ${p.progress}% | due ${p.targetDate || 'n/a'}`)
+  const clean = (s: string) => s.replace(/\s+/g, ' ').trim(); // names can contain stray newlines
+  const projLines = cap(data.projects, 600)
+    .map(p => `- ${p.code} | ${clean(p.name)} | ${p.dept} | ${clean(p.owner)} | ${p.status} | ${p.priority} | ${p.progress}% | due ${p.targetDate || 'n/a'}`)
     .join('\n');
   const riskLines = cap(data.risks.filter(r => !/closed|resolved/i.test(r.status)), 40)
-    .map(r => `- [${r.score}] ${r.description.slice(0, 100)} (${r.owner || 'unassigned'})`)
+    .map(r => `- [${r.score}] ${clean(r.description).slice(0, 100)} (${r.owner || 'unassigned'})`)
     .join('\n');
   return [
+    `## Today's date\n${new Date().toISOString().split('T')[0]}`,
     user ? `## Current user\nName: ${user.name || 'unknown'} · Department: ${user.department || 'unassigned'} · Role: ${user.role || 'user'}` : '',
     `## Portfolio KPIs (live)\nTotal active: ${kpi.total} · Completed: ${kpi.completed} · In progress: ${kpi.inProgress} · Not started: ${kpi.notStarted} · Delayed: ${kpi.delayed} · Stuck / Overdue: ${kpi.stuck} · Open risks: ${kpi.openRisks}`,
     `## Departments\n${data.departments.join(', ')}`,
@@ -364,7 +368,8 @@ export async function POST(request: Request) {
     const messages: { role: string; content: string }[] = Array.isArray(body.messages)
       ? body.messages
       : [...(body.history || []), ...(body.message ? [{ role: 'user', content: body.message }] : [])];
-    const user = body.user;
+    // user arrives as a plain name string (floating panel) or an object (/ai page)
+    const user = typeof body.user === 'string' ? { name: body.user } : body.user;
 
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     if (!lastUser?.content) {
@@ -378,24 +383,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ response: `I couldn't reach the project database just now (${e.message}). Please try again in a moment.`, source: 'error' });
     }
 
-    // 1) Heuristic fast-path (free, deterministic)
+    // 1) LLM-first: with a key configured, EVERY question goes to the model —
+    //    that's what makes Xyro conversational. Claude is the default; Gemini
+    //    only if that's the key that was provided.
+    if (ANTHROPIC_API_KEY || GEMINI_API_KEY) {
+      const context = buildContext(data, user);
+      const convo = messages.slice(-12).filter(m => m.content?.trim()).map(m => ({
+        role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: m.content,
+      }));
+      while (convo.length && convo[0].role !== 'user') convo.shift(); // must start on a user turn
+      if (ANTHROPIC_API_KEY) return callClaude(convo, context);
+      return callGemini(convo, context);
+    }
+
+    // 2) No key: deterministic heuristic answers for structured queries.
     const heuristic = heuristicAnswer(lastUser.content, data);
     if (heuristic) {
       return NextResponse.json({ response: heuristic, source: 'heuristic' });
     }
-
-    // 2) LLM fallback for open-ended / conversational / general-knowledge.
-    //    Gemini is used when GEMINI_API_KEY is set; otherwise Claude; otherwise
-    //    we stay heuristic-only with a friendly note.
-    const context = buildContext(data, user);
-    const convo = messages.slice(-12).filter(m => m.content?.trim()).map(m => ({
-      role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
-      content: m.content,
-    }));
-    while (convo.length && convo[0].role !== 'user') convo.shift(); // must start on a user turn
-
-    if (GEMINI_API_KEY) return callGemini(convo, context);
-    if (ANTHROPIC_API_KEY) return callClaude(convo, context);
 
     return NextResponse.json({
       response: `I can answer that once the AI engine is connected. For now I can help with anything structured — try "show delayed projects", "team workload", "open risks", or "summary". (Admin: set GEMINI_API_KEY or ANTHROPIC_API_KEY to unlock full conversation.)`,
