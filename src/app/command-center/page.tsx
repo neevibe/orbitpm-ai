@@ -766,7 +766,7 @@ export default function CommandCenter() {
               { label: 'New Project', icon: '📁', href: '/projects' },
               { label: 'Log Risk', icon: '⚠️', href: '/risks' },
               { label: 'View Reports', icon: '📊', href: '/analytics' },
-              { label: 'Ask AI', icon: '🤖', href: '/ai' },
+              { label: 'Ask Xyro', icon: '🤖', href: '/ai' },
               { label: 'Team Status', icon: '👥', href: '/workforce' },
               { label: 'Export Data', icon: '📥', href: '/admin' },
             ].map(a => (

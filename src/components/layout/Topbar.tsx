@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Search, Bell, Sparkles, Command, X, CheckCheck, Sun, Moon, ChevronRight, LogOut,
@@ -12,8 +13,8 @@ import { useAuth } from '@/lib/auth-context';
 const routeNames: Record<string, string> = {
   '/': 'Command Center', '/command-center': 'Command Center', '/dashboard': 'Command Center',
   '/projects': 'Projects', '/portfolio': 'Portfolio', '/workforce': 'Workforce',
-  '/departments': 'Departments', '/knowledge': 'Knowledge', '/ai': 'AI Copilot',
-  '/ai-insights': 'AI Copilot', '/ai-assistant': 'AI Copilot',
+  '/departments': 'Departments', '/knowledge': 'Knowledge', '/ai': 'Xyro AI',
+  '/ai-insights': 'Xyro AI', '/ai-assistant': 'Xyro AI',
   '/analytics': 'Analytics', '/risks': 'Risk Register', '/dependencies': 'Dependencies',
   '/automations': 'Automations', '/integrations': 'Integrations',
   '/admin': 'Administration', '/settings': 'Administration',
@@ -86,7 +87,7 @@ export default function Topbar() {
     { name: 'Dependencies', href: '/dependencies', icon: Link2 },
     { name: 'Workforce', href: '/workforce', icon: Users2 },
     { name: 'Departments', href: '/departments', icon: Users2 },
-    { name: 'AI Copilot', href: '/ai', icon: Sparkles },
+    { name: 'Xyro (AI Copilot)', href: '/ai', icon: Sparkles },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Risk Register', href: '/risks', icon: AlertTriangle },
     { name: 'Knowledge', href: '/knowledge', icon: BookOpen },
@@ -143,8 +144,8 @@ export default function Topbar() {
           onClick={() => router.push('/ai')}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-200 hover:border-indigo-300 transition-all cursor-pointer"
         >
-          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-          <span className="text-[11px] font-semibold text-indigo-600">Ask AI</span>
+          <Image src="/xyro.webp" alt="Xyro" width={20} height={20} className="w-5 h-5" />
+          <span className="text-[11px] font-semibold text-indigo-600">Ask Xyro</span>
         </button>
 
         {/* Global Search Dialog */}
