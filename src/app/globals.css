@@ -553,3 +553,67 @@ body {
   thead { display: table-header-group !important; }
   tr { page-break-inside: avoid !important; break-inside: avoid !important; }
 }
+
+/* ============================================================
+   Xyro — the living AI companion
+   ============================================================ */
+@keyframes xyro-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes xyro-tilt {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2.5deg); }
+}
+@keyframes xyro-glow {
+  0%, 100% { filter: drop-shadow(0 4px 14px rgba(99, 102, 241, 0.45)); }
+  50% { filter: drop-shadow(0 8px 26px rgba(139, 92, 246, 0.75)); }
+}
+@keyframes xyro-wave {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(9deg); }
+  60% { transform: rotate(-7deg); }
+  80% { transform: rotate(4deg); }
+}
+@keyframes xyro-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.3) translateY(0); }
+  50% { opacity: 1; transform: scale(1) translateY(-8px); }
+}
+@keyframes xyro-pop {
+  0% { opacity: 0; transform: scale(0.6) translateY(24px); }
+  70% { opacity: 1; transform: scale(1.02) translateY(-3px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes xyro-bubble-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes xyro-confetti {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(var(--cx), var(--cy)) rotate(540deg) scale(0.6); }
+}
+@keyframes xyro-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-9px); }
+  55% { transform: translateY(0); }
+  75% { transform: translateY(-4px); }
+}
+@keyframes xyro-think-dot {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+.xyro-launcher-float { animation: xyro-float 4s ease-in-out infinite; }
+.xyro-launcher-tilt { animation: xyro-tilt 7s ease-in-out infinite; }
+.xyro-launcher-glow { animation: xyro-glow 3.5s ease-in-out infinite; }
+.xyro-waving { animation: xyro-wave 1.3s ease-in-out 2; transform-origin: 60% 70%; }
+.xyro-panel-pop { animation: xyro-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; transform-origin: bottom right; }
+.xyro-bubble { animation: xyro-bubble-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.xyro-avatar-bob { animation: xyro-float 2.6s ease-in-out infinite; }
+.xyro-hover-bounce:hover img { animation: xyro-bounce 0.7s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .xyro-launcher-float, .xyro-launcher-tilt, .xyro-launcher-glow,
+  .xyro-waving, .xyro-avatar-bob, .xyro-sparkle-dot { animation: none !important; }
+}
