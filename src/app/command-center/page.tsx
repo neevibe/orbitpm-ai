@@ -170,7 +170,7 @@ export default function CommandCenter() {
     return departments.slice(0, 7).map(d => {
       const deptProjects = sourceProjects.filter(p => p.department === d.name);
       return {
-        name: d.name.length > 14 ? d.name.substring(0, 12) + '…' : d.name,
+        name: d.name,
         fullName: d.name,
         active: deptProjects.filter(p => p.status === 'In Progress').length,
         done: deptProjects.filter(p => p.status === 'Completed').length,
@@ -553,7 +553,7 @@ export default function CommandCenter() {
                   style={{ cursor: 'pointer' }}
                 >
                   <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={100} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 10 }} width={150} interval={0} />
                   <Tooltip contentStyle={tooltipStyle} cursor={false} />
                   <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active">
                     {deptChartData.map((entry, index) => (
@@ -759,9 +759,14 @@ export default function CommandCenter() {
         <div className="x-card p-5">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-indigo-500" /> Upcoming Milestones</h3>
           <div className="space-y-2">
-            {filteredProjects.filter(p => p.targetDate && p.status !== 'Completed').sort((a, b) => new Date(a.targetDate || '').getTime() - new Date(b.targetDate || '').getTime()).slice(0, 6).map(p => (
+            {filteredProjects
+              // Upcoming = due today or later; overdue targets belong in Stuck/Delayed, not here.
+              .filter(p => p.targetDate && p.status !== 'Completed' && (daysUntil(p.targetDate) ?? -1) >= 0)
+              .sort((a, b) => new Date(a.targetDate || '').getTime() - new Date(b.targetDate || '').getTime())
+              .slice(0, 6)
+              .map(p => (
               <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all">
-                <span className="text-[10px] font-mono text-[var(--color-x-text-muted)] w-16 flex-shrink-0">{p.targetDate ? new Date(p.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}</span>
+                <span className="text-[10px] font-mono text-[var(--color-x-text-muted)] w-16 flex-shrink-0">{p.targetDate ? new Date(p.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate">{p.name}</p>
                   <p className="text-[10px] text-[var(--color-x-text-muted)]">{p.department}</p>
