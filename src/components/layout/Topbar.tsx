@@ -143,10 +143,10 @@ export default function Topbar() {
         {/* AI */}
         <button 
           onClick={() => router.push('/ai')}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-200 hover:border-indigo-300 transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/10 to-sky-500/10 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer"
         >
           <Image src="/xyro.webp" alt="Xyro" width={20} height={20} className="w-5 h-5" />
-          <span className="text-[11px] font-semibold text-indigo-600">Ask Xyro</span>
+          <span className="text-[11px] font-semibold text-blue-600">Ask Xyro</span>
         </button>
 
         {/* Global Search Dialog */}
@@ -194,7 +194,7 @@ export default function Topbar() {
                           onClick={() => handleNavigate(item.href)}
                           className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[var(--color-x-bg)] text-left transition-colors cursor-pointer w-full"
                         >
-                          <item.icon className="w-3.5 h-3.5 text-indigo-500" />
+                          <item.icon className="w-3.5 h-3.5 text-blue-500" />
                           <span className="text-[12px] font-medium text-[var(--color-x-text-secondary)]">{item.name}</span>
                         </button>
                       ))}
@@ -213,7 +213,7 @@ export default function Topbar() {
                               onClick={() => handleNavigate(item.href)}
                               className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-[var(--color-x-bg)] text-left transition-colors cursor-pointer"
                             >
-                              <item.icon className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                              <item.icon className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
                               <span className="text-[12px] font-medium text-[var(--color-x-text)]">{item.name}</span>
                             </button>
                           ))}
@@ -364,9 +364,9 @@ export default function Topbar() {
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {notifications.slice(0, 8).map(n => (
-                    <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`px-4 py-3 border-b border-[var(--color-x-border)]/50 hover:bg-[var(--color-x-bg)] transition-colors cursor-pointer ${!n.read ? 'bg-indigo-50/30' : ''}`}>
+                    <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`px-4 py-3 border-b border-[var(--color-x-border)]/50 hover:bg-[var(--color-x-bg)] transition-colors cursor-pointer ${!n.read ? 'bg-blue-50/30' : ''}`}>
                       <div className="flex items-start gap-2.5">
-                        <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${n.type === 'critical' ? 'bg-red-500' : n.type === 'warning' ? 'bg-amber-500' : n.type === 'success' ? 'bg-emerald-500' : n.type === 'insight' ? 'bg-indigo-500' : 'bg-gray-400'}`} />
+                        <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${n.type === 'critical' ? 'bg-red-500' : n.type === 'warning' ? 'bg-amber-500' : n.type === 'success' ? 'bg-emerald-500' : n.type === 'insight' ? 'bg-blue-500' : 'bg-gray-400'}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-semibold text-[var(--color-x-text)]">{n.title}</p>
                           <p className="text-[11px] text-[var(--color-x-text-secondary)] mt-0.5 leading-relaxed">{n.message}</p>

@@ -273,7 +273,7 @@ ${topRisks.length ? `\n**High-Impact Risks:**\n${topRisks.map(r=>`  • ${r.desc
       <div className="flex-1 overflow-y-auto rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mb-5 shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center mb-5 shadow-md">
               <Bot className="w-7 h-7 text-white" />
             </div>
             <h2 className="text-lg font-bold text-[#0f172a] mb-1">How can I help you today?</h2>
@@ -283,8 +283,8 @@ ${topRisks.length ? `\n**High-Impact Risks:**\n${topRisks.map(r=>`  • ${r.desc
             <div className="grid grid-cols-2 gap-2.5 max-w-lg w-full">
               {suggestions.map(s => (
                 <button key={s} onClick={() => handleSend(s)}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#e2e8f0] hover:border-indigo-300 hover:bg-indigo-50/50 transition-all text-left group">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#e2e8f0] hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left group">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <span className="text-[12px] text-[#475569] group-hover:text-[#1e293b] transition-colors">{s}</span>
                 </button>
               ))}
@@ -295,13 +295,13 @@ ${topRisks.length ? `\n**High-Impact Risks:**\n${topRisks.map(r=>`  • ${r.desc
             {messages.map((m, i) => (
               <div key={i} className={`flex gap-2.5 ${m.role === 'user' ? 'justify-end' : ''}`}>
                 {m.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Bot className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
                 <div className={`group relative max-w-2xl rounded-xl px-4 py-3 text-[13px] leading-relaxed whitespace-pre-wrap ${
                   m.role === 'user'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-white border border-[#e2e8f0] text-[#334155]'
                 }`}>
                   {m.role === 'assistant' ? renderContent(m.content) : m.content}
@@ -318,14 +318,14 @@ ${topRisks.length ? `\n**High-Impact Risks:**\n${topRisks.map(r=>`  • ${r.desc
             ))}
             {isTyping && (
               <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center flex-shrink-0">
                   <Bot className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div className="bg-white border border-[#e2e8f0] rounded-xl px-4 py-3">
                   <div className="flex gap-1.5 items-center">
-                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
@@ -345,13 +345,13 @@ ${topRisks.length ? `\n**High-Impact Risks:**\n${topRisks.map(r=>`  • ${r.desc
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Ask about projects, risks, deadlines, departments..."
-            className="w-full bg-white border border-[#e2e8f0] rounded-xl pl-10 pr-5 py-3 text-[13px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all placeholder:text-[#94a3b8]"
+            className="w-full bg-white border border-[#e2e8f0] rounded-xl pl-10 pr-5 py-3 text-[13px] text-[#1e293b] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition-all placeholder:text-[#94a3b8]"
           />
         </div>
         <button
           onClick={() => handleSend()}
           disabled={!input.trim() || isTyping}
-          className="w-11 h-11 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 flex items-center justify-center hover:from-indigo-500 hover:to-indigo-600 disabled:opacity-40 transition-all shadow-md"
+          className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center hover:from-blue-500 hover:to-blue-600 disabled:opacity-40 transition-all shadow-md"
         >
           <Send className="w-4 h-4 text-white" />
         </button>

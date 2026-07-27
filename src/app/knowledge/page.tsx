@@ -157,7 +157,7 @@ export default function KnowledgePage() {
                       <doc.icon className="w-4 h-4 text-[var(--color-x-text-muted)]" />
                     )}
                     <div>
-                      <p className="text-[13px] font-semibold text-[var(--color-x-text)] hover:text-indigo-600 transition-colors">{doc.title}</p>
+                      <p className="text-[13px] font-semibold text-[var(--color-x-text)] hover:text-blue-600 transition-colors">{doc.title}</p>
                       <p className="text-[10px] text-[var(--color-x-text-muted)] font-medium">{doc.size || `${doc.words} words`}</p>
                     </div>
                   </div>
@@ -167,7 +167,7 @@ export default function KnowledgePage() {
                 <td className="text-[12px] text-[var(--color-x-text-muted)]">{doc.updated}</td>
                 <td className="text-right" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => setSelectedDoc(doc)} title="View document" className="p-1.5 text-[var(--color-x-text-muted)] hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors">
+                    <button onClick={() => setSelectedDoc(doc)} title="View document" className="p-1.5 text-[var(--color-x-text-muted)] hover:text-blue-600 hover:bg-slate-100 rounded transition-colors">
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     {doc.dataUrl && (

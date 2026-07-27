@@ -39,7 +39,7 @@ interface KanbanBoardProps {
 
 const COLUMNS: { key: KanbanStatus; label: string; bg: string; border: string; text: string }[] = [
   { key: 'Backlog', label: 'Backlog', bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700' },
-  { key: 'To Do', label: 'To Do', bg: 'bg-indigo-50/40', border: 'border-indigo-150', text: 'text-indigo-700' },
+  { key: 'To Do', label: 'To Do', bg: 'bg-blue-50/40', border: 'border-blue-150', text: 'text-blue-700' },
   { key: 'In Progress', label: 'In Progress', bg: 'bg-blue-50/40', border: 'border-blue-150', text: 'text-blue-700' },
   { key: 'Review', label: 'Review', bg: 'bg-amber-50/40', border: 'border-amber-150', text: 'text-amber-700' },
   { key: 'Completed', label: 'Completed', bg: 'bg-emerald-50/40', border: 'border-emerald-150', text: 'text-emerald-700' },
@@ -133,7 +133,7 @@ export default function KanbanBoard({ tasks, onUpdateTasks, projectOwner }: Kanb
             onDragLeave={() => setOverCol(null)}
             onDrop={() => handleDrop(col.key)}
             className={`flex-shrink-0 w-64 rounded-xl p-3 flex flex-col max-h-full border transition-all ${col.bg} ${
-              isOver ? 'border-dashed border-indigo-400 scale-[1.01]' : col.border
+              isOver ? 'border-dashed border-blue-400 scale-[1.01]' : col.border
             }`}
           >
             {/* Column Header */}
@@ -167,7 +167,7 @@ export default function KanbanBoard({ tasks, onUpdateTasks, projectOwner }: Kanb
                     </div>
 
                     {/* Task Title */}
-                    <h4 className="text-[12.5px] font-semibold text-slate-800 leading-snug mb-2 group-hover:text-indigo-650 transition-colors">
+                    <h4 className="text-[12.5px] font-semibold text-slate-800 leading-snug mb-2 group-hover:text-blue-650 transition-colors">
                       {t.name}
                     </h4>
 
@@ -187,7 +187,7 @@ export default function KanbanBoard({ tasks, onUpdateTasks, projectOwner }: Kanb
                     {t.status !== 'Completed' && t.progress > 0 && (
                       <div className="flex items-center gap-2 mb-2.5">
                         <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-indigo-500" style={{ width: `${t.progress}%` }} />
+                          <div className="h-full bg-blue-500" style={{ width: `${t.progress}%` }} />
                         </div>
                         <span className="text-[9.5px] font-bold text-slate-500">{t.progress}%</span>
                       </div>
@@ -207,12 +207,12 @@ export default function KanbanBoard({ tasks, onUpdateTasks, projectOwner }: Kanb
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => setEditingTask(t)}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 text-slate-400 hover:text-indigo-600 rounded transition-all mr-1 cursor-pointer animate-fade-in"
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 text-slate-400 hover:text-blue-600 rounded transition-all mr-1 cursor-pointer animate-fade-in"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <div
-                          className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[8px] font-bold text-white shadow-inner flex-shrink-0"
+                          className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center text-[8px] font-bold text-white shadow-inner flex-shrink-0"
                           title={`Assigned to: ${t.assignee}`}
                         >
                           {initials}
@@ -237,11 +237,11 @@ export default function KanbanBoard({ tasks, onUpdateTasks, projectOwner }: Kanb
                 value={newTasksInputs[col.key] || ''}
                 onChange={e => setNewTasksInputs(prev => ({ ...prev, [col.key]: e.target.value }))}
                 onKeyDown={e => e.key === 'Enter' && handleAddTask(col.key)}
-                className="bg-white border border-slate-200 rounded-md py-1 px-2 text-[11px] text-slate-700 placeholder:text-slate-400 outline-none focus:border-indigo-400 flex-1 min-w-0"
+                className="bg-white border border-slate-200 rounded-md py-1 px-2 text-[11px] text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-400 flex-1 min-w-0"
               />
               <button
                 onClick={() => handleAddTask(col.key)}
-                className="p-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs cursor-pointer flex-shrink-0"
+                className="p-1 rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-xs cursor-pointer flex-shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -256,7 +256,7 @@ export default function KanbanBoard({ tasks, onUpdateTasks, projectOwner }: Kanb
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <h2 className="text-[14px] font-bold text-slate-850 flex items-center gap-1.5">
-                <Edit3 className="w-4 h-4 text-indigo-500" />
+                <Edit3 className="w-4 h-4 text-blue-500" />
                 Edit Task Details
               </h2>
               <span className="text-[10px] font-mono text-slate-400">{editingTask.id}</span>

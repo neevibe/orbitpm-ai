@@ -106,7 +106,7 @@ export default function RisksPage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-mono text-indigo-400">{r.id}</span>
+                    <span className="text-[10px] font-mono text-blue-400">{r.id}</span>
                     <span className="text-[10px] font-mono text-[#94a3b8]">{r.projectId}</span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${r.impact === 'High' ? 'bg-red-50 text-red-500 border-red-100' : r.impact === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-green-50 text-green-600 border-green-100'}`}>{r.impact}</span>
                     <Archive className="w-3 h-3 text-amber-400" />
@@ -131,13 +131,13 @@ export default function RisksPage() {
         <>
           <div className="flex items-center gap-2.5">
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-              className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-indigo-500">
+              className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-blue-500">
               <option value="All">All Status</option>
               <option value="Open">Open</option>
               <option value="Closed">Closed</option>
             </select>
             <select value={impactFilter} onChange={e => setImpactFilter(e.target.value)}
-              className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-indigo-500">
+              className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-blue-500">
               <option value="All">All Impact</option>
               <option value="High">High Impact</option>
               <option value="Medium">Medium Impact</option>
@@ -161,7 +161,7 @@ export default function RisksPage() {
                   )}
                   {filtered.map(r => (
                     <tr key={r.id}>
-                      <td><span className="font-mono text-[11px] text-indigo-500 font-medium">{r.id}</span></td>
+                      <td><span className="font-mono text-[11px] text-blue-500 font-medium">{r.id}</span></td>
                       <td><span className="font-mono text-[11px] text-[#94a3b8]">{r.projectId || '—'}</span></td>
                       <td><span className="text-[#334155] font-medium">{r.description}</span></td>
                       <td><span className="text-[11px] px-2 py-0.5 rounded bg-[#f1f5f9] text-[#64748b] border border-[#e2e8f0]">{r.category}</span></td>

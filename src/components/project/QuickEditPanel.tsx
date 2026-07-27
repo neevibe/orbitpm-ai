@@ -112,9 +112,9 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[var(--color-x-border)] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50 sticky top-0 z-10">
+        <div className="px-5 py-4 border-b border-[var(--color-x-border)] flex items-center justify-between bg-gradient-to-r from-blue-50 to-sky-50 sticky top-0 z-10">
           <div className="min-w-0">
-            <p className="text-[10px] font-mono text-indigo-500 font-bold">{live.id}</p>
+            <p className="text-[10px] font-mono text-blue-500 font-bold">{live.id}</p>
             <h2 className="text-[14px] font-bold text-[var(--color-x-text)] leading-tight truncate">{live.name}</h2>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -162,7 +162,7 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
             <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase tracking-wider">Progress</label>
             {isEditing ? (
               <div className="flex items-center gap-3">
-                <input type="range" min="0" max="100" value={editForm.progress ?? 0} onChange={e => setEditForm(f => ({ ...f, progress: Number(e.target.value) }))} className="flex-1 accent-indigo-600" />
+                <input type="range" min="0" max="100" value={editForm.progress ?? 0} onChange={e => setEditForm(f => ({ ...f, progress: Number(e.target.value) }))} className="flex-1 accent-blue-600" />
                 <span className="text-[14px] font-bold text-[var(--color-x-text)] w-10 text-right">{editForm.progress}%</span>
               </div>
             ) : (
@@ -186,7 +186,7 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
           {/* Tasks */}
           <div className="pt-2 border-t border-[var(--color-x-border)]">
             <label className="text-[11px] font-bold text-[var(--color-x-text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <ListTodo className="w-3.5 h-3.5 text-indigo-500" /> Tasks ({tasks.length})
+              <ListTodo className="w-3.5 h-3.5 text-blue-500" /> Tasks ({tasks.length})
             </label>
 
             {tasks.length > 0 && (
@@ -252,7 +252,7 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
 
           <button
             onClick={() => router.push(`/projects/${live.id}`)}
-            className="w-full mt-2 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[13px] rounded-xl border border-indigo-100 transition-colors"
+            className="w-full mt-2 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[13px] rounded-xl border border-blue-100 transition-colors"
           >
             Open Full Project Detail →
           </button>

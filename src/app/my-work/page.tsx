@@ -74,7 +74,7 @@ export default function MyWorkPage() {
   };
 
   const metrics = [
-    { label: 'My Projects', value: myProjects.length, icon: FolderKanban, accent: '#6366f1', trend: { tone: 'flat', text: `${myProjects.length - active.length} completed` } },
+    { label: 'My Projects', value: myProjects.length, icon: FolderKanban, accent: '#2563eb', trend: { tone: 'flat', text: `${myProjects.length - active.length} completed` } },
     { label: 'Active', value: active.length, icon: Rocket, accent: '#3b82f6', trend: { tone: overdue.length > 0 ? 'down' : 'flat', text: overdue.length > 0 ? `${overdue.length} overdue` : 'none overdue' } },
     { label: 'Due This Week', value: dueSoon.length, icon: CalendarClock, accent: '#f59e0b', trend: { tone: dueSoon.length > 0 ? 'warn' : 'flat', text: dueSoon.length > 0 ? 'plan the week' : 'clear runway' } },
     { label: 'My Open Tasks', value: openTasks.length, icon: ListTodo, accent: '#8b5cf6', trend: { tone: 'flat', text: `${myTasks.length - openTasks.length} done` } },
@@ -118,7 +118,7 @@ export default function MyWorkPage() {
               <FolderKanban className="w-8 h-8 mx-auto text-[var(--color-x-text-faint)] mb-3" />
               <p className="text-[13px] font-semibold text-[var(--color-x-text)]">Nothing on your plate yet</p>
               <p className="text-[12px] text-[var(--color-x-text-muted)] mt-1 mb-4">Projects you own will show up here automatically.</p>
-              <Link href="/projects" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 transition-colors">
+              <Link href="/projects" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 text-white text-[12px] font-semibold hover:bg-blue-700 transition-colors">
                 Browse projects
               </Link>
             </div>
@@ -134,7 +134,7 @@ export default function MyWorkPage() {
                     return (
                       <tr key={p.id}>
                         <td>
-                          <Link href={`/projects/${p.id}`} className="font-semibold text-[var(--color-x-text)] hover:text-indigo-600 transition-colors">
+                          <Link href={`/projects/${p.id}`} className="font-semibold text-[var(--color-x-text)] hover:text-blue-600 transition-colors">
                             {p.name}
                           </Link>
                           <p className="text-[11px] text-[var(--color-x-text-muted)]">{p.department}</p>
@@ -144,7 +144,7 @@ export default function MyWorkPage() {
                         <td>
                           <div className="flex items-center gap-2 min-w-[90px]">
                             <div className="flex-1 h-1.5 rounded-full bg-[var(--color-x-border)] overflow-hidden">
-                              <div className="h-full rounded-full bg-indigo-500" style={{ width: `${p.progress}%` }} />
+                              <div className="h-full rounded-full bg-blue-500" style={{ width: `${p.progress}%` }} />
                             </div>
                             <span className="text-[11px] font-semibold">{p.progress}%</span>
                           </div>
@@ -194,7 +194,7 @@ export default function MyWorkPage() {
                       <p className={`text-[13px] font-medium leading-tight truncate ${done ? 'line-through text-[var(--color-x-text-muted)]' : 'text-[var(--color-x-text)]'}`}>
                         {task.name}
                       </p>
-                      <Link href={`/projects/${project.id}`} className="text-[11px] text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors truncate block">
+                      <Link href={`/projects/${project.id}`} className="text-[11px] text-[var(--color-x-text-muted)] hover:text-blue-600 transition-colors truncate block">
                         {project.name}
                       </Link>
                     </div>

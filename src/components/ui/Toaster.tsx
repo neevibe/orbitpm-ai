@@ -90,7 +90,7 @@ export default function Toaster() {
           {t.undo && !t.leaving && (
             <button
               onClick={() => { t.undo?.(); close(t.id); }}
-              className="text-[12px] font-bold text-indigo-600 hover:text-indigo-700 px-1.5 py-0.5 rounded-md hover:bg-indigo-50 transition-colors cursor-pointer"
+              className="text-[12px] font-bold text-blue-600 hover:text-blue-700 px-1.5 py-0.5 rounded-md hover:bg-blue-50 transition-colors cursor-pointer"
             >
               Undo
             </button>

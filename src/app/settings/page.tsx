@@ -212,7 +212,7 @@ export default function SettingsPage() {
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 pb-2.5 text-[13px] font-semibold transition-all border-b-2 ${
               activeTab === tab.id
-                ? 'text-indigo-600 border-indigo-600'
+                ? 'text-blue-600 border-blue-600'
                 : 'text-[#64748b] border-transparent hover:text-[#0f172a] hover:border-[#cbd5e1]'
             }`}
           >
@@ -227,12 +227,12 @@ export default function SettingsPage() {
         <form onSubmit={handleProfileSave} className="space-y-5 animate-fade-in">
           <div className="x-card p-6 flex flex-col md:flex-row gap-6 items-start">
             <div className="flex flex-col items-center gap-3">
-              <div className="relative group w-24 h-24 rounded-full border-2 border-indigo-100 flex items-center justify-center bg-indigo-50/50 overflow-hidden shadow-inner flex-shrink-0">
+              <div className="relative group w-24 h-24 rounded-full border-2 border-blue-100 flex items-center justify-center bg-blue-50/50 overflow-hidden shadow-inner flex-shrink-0">
                 {avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-2xl font-bold text-indigo-600">{getInitials(profile.name)}</span>
+                  <span className="text-2xl font-bold text-blue-600">{getInitials(profile.name)}</span>
                 )}
                 <div 
                   onClick={() => avatarInputRef.current?.click()}
@@ -327,7 +327,7 @@ export default function SettingsPage() {
         <form onSubmit={handlePasswordChange} className="space-y-5 animate-fade-in">
           <div className="x-card p-6 space-y-4">
             <h3 className="text-[14px] font-bold text-[#0f172a] flex items-center gap-2">
-              <Key className="w-4 h-4 text-indigo-500" /> Update Password
+              <Key className="w-4 h-4 text-blue-500" /> Update Password
             </h3>
             <p className="text-[12px] text-[#64748b]">Change your account password securely. Please use a strong, unique password.</p>
 
@@ -440,7 +440,7 @@ export default function SettingsPage() {
         <div className="space-y-5 animate-fade-in">
           <div className="x-card p-6 space-y-4">
             <h3 className="text-[14px] font-bold text-[#0f172a] flex items-center gap-2">
-              <Bell className="w-4 h-4 text-indigo-500" /> Notifications & Display
+              <Bell className="w-4 h-4 text-blue-500" /> Notifications & Display
             </h3>
             <p className="text-[12px] text-[#64748b]">Configure your settings for communication preferences and UI modes.</p>
 
@@ -454,7 +454,7 @@ export default function SettingsPage() {
                   type="checkbox" 
                   checked={preferences.emailNotifications}
                   onChange={e => setPreferences(p => ({ ...p, emailNotifications: e.target.checked }))}
-                  className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                  className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                 />
               </div>
               <div className="flex items-center justify-between py-3">
@@ -466,7 +466,7 @@ export default function SettingsPage() {
                   type="checkbox" 
                   checked={preferences.pushNotifications}
                   onChange={e => setPreferences(p => ({ ...p, pushNotifications: e.target.checked }))}
-                  className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                  className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                 />
               </div>
               <div className="flex items-center justify-between py-3">
@@ -478,7 +478,7 @@ export default function SettingsPage() {
                   type="checkbox" 
                   checked={preferences.darkMode}
                   onChange={e => setPreferences(p => ({ ...p, darkMode: e.target.checked }))}
-                  className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                  className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                 />
               </div>
               <div className="flex items-center justify-between py-3">
@@ -490,7 +490,7 @@ export default function SettingsPage() {
                   type="checkbox" 
                   checked={preferences.compactView}
                   onChange={e => setPreferences(p => ({ ...p, compactView: e.target.checked }))}
-                  className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                  className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                 />
               </div>
             </div>
@@ -511,9 +511,9 @@ export default function SettingsPage() {
 
       {/* Sync (Excel Import/Export) Tab */}
       {activeTab === 'sync' && (
-        <div className="glass-card p-6 border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-emerald-50/50 animate-fade-in">
+        <div className="glass-card p-6 border-blue-200 bg-gradient-to-r from-blue-50/50 to-emerald-50/50 animate-fade-in">
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center flex-shrink-0">
               <FileSpreadsheet className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -523,7 +523,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-white border border-[#e2e8f0]">
-            <Database className="w-4 h-4 text-indigo-500" />
+            <Database className="w-4 h-4 text-blue-500" />
             <p className="text-[12px] text-[#334155]">
               <span className="font-semibold">{projects.length}</span> projects · <span className="font-semibold">{risks.length}</span> risks · <span className="font-semibold">{departments.length}</span> departments
             </p>
@@ -532,7 +532,7 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="p-4 rounded-xl bg-white border border-[#e2e8f0]">
-              <div className="flex items-center gap-2 mb-2"><Upload className="w-4 h-4 text-indigo-500" /><h3 className="text-[12px] font-semibold text-[#334155]">Import from Excel</h3></div>
+              <div className="flex items-center gap-2 mb-2"><Upload className="w-4 h-4 text-blue-500" /><h3 className="text-[12px] font-semibold text-[#334155]">Import from Excel</h3></div>
               <p className="text-[11px] text-[#94a3b8] mb-3">Upload .xlsx to import projects and risks.</p>
               <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
               <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isImporting} className="btn-primary w-full justify-center text-[12px] py-2">

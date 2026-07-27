@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
                       <td className="text-[12px]">{p.owner}</td>
                       <td>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 x-progress"><div className="x-progress-bar bg-indigo-500" style={{ width: `${p.progress}%` }} /></div>
+                          <div className="flex-1 x-progress"><div className="x-progress-bar bg-blue-500" style={{ width: `${p.progress}%` }} /></div>
                           <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.progress}%</span>
                         </div>
                       </td>
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
 
       {activeTab !== 'executive' && (
         <div className="x-card p-12 text-center animate-fade-in">
-          <Activity className="w-8 h-8 text-indigo-300 mx-auto mb-3" />
+          <Activity className="w-8 h-8 text-blue-300 mx-auto mb-3" />
           <h3 className="text-[14px] font-bold text-[var(--color-x-text)]">Detailed Analytics View</h3>
           <p className="text-[12px] text-[var(--color-x-text-muted)] mt-1">The {tabs.find(t => t.id === activeTab)?.label} dashboard is being provisioned.</p>
         </div>

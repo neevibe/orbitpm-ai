@@ -28,7 +28,7 @@ export default function TeamPage() {
       </div>
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total Owners', value: owners.length, icon: Users, bg: 'bg-indigo-50', border: 'border-indigo-100', color: 'text-indigo-500' },
+          { label: 'Total Owners', value: owners.length, icon: Users, bg: 'bg-blue-50', border: 'border-blue-100', color: 'text-blue-500' },
           { label: 'Overloaded (15+)', value: overloaded.length, icon: AlertTriangle, bg: 'bg-red-50', border: 'border-red-100', color: 'text-red-500' },
           { label: 'At Capacity (10-14)', value: atCapacity.length, icon: FolderKanban, bg: 'bg-amber-50', border: 'border-amber-100', color: 'text-amber-500' },
           { label: 'Healthy (< 10)', value: healthy.length, icon: Users, bg: 'bg-emerald-50', border: 'border-emerald-100', color: 'text-emerald-500' },
@@ -50,7 +50,7 @@ export default function TeamPage() {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${
                   isOverloaded ? 'bg-gradient-to-br from-red-500 to-red-600' :
                   isAtCapacity ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
-                  'bg-gradient-to-br from-indigo-500 to-purple-500'
+                  'bg-gradient-to-br from-blue-600 to-sky-500'
                 }`}>
                   {o.name.split('/')[0].split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </div>

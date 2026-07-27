@@ -78,7 +78,7 @@ export default function DepartmentsPage() {
         {/* Header */}
         <div className="flex items-center gap-3">
           <button onClick={() => { setSelectedDept(null); setEditModalProject(null); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:border-indigo-200 hover:text-indigo-600 transition-all">
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:border-blue-200 hover:text-blue-600 transition-all">
             <ArrowLeft className="w-3.5 h-3.5" /> All Departments
           </button>
           <ChevronRight className="w-4 h-4 text-[var(--color-x-text-muted)]" />
@@ -97,7 +97,7 @@ export default function DepartmentsPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-4 gap-3">
           {[
-            { label: 'Total Projects', value: selectedDeptData.total, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+            { label: 'Total Projects', value: selectedDeptData.total, color: 'text-blue-500', bg: 'bg-blue-50' },
             { label: 'In Progress', value: inProgress, color: 'text-blue-500', bg: 'bg-blue-50' },
             { label: 'Delayed', value: delayed, color: 'text-red-500', bg: 'bg-red-50' },
             { label: 'Critical Priority', value: critical, color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -133,7 +133,7 @@ export default function DepartmentsPage() {
 
           {filteredProjects.map(p => {
             return (
-              <div key={p.id} className="x-card transition-all hover:border-indigo-200">
+              <div key={p.id} className="x-card transition-all hover:border-blue-200">
                 <div className="p-4 flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -148,7 +148,7 @@ export default function DepartmentsPage() {
                         {p.progress > 0 && (
                           <div className="flex items-center gap-1.5 ml-1">
                             <div className="w-14 h-1.5 bg-[var(--color-x-bg)] rounded-full overflow-hidden">
-                              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${p.progress}%` }} />
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${p.progress}%` }} />
                             </div>
                             <span className="text-[10px] text-[var(--color-x-text-muted)]">{p.progress}%</span>
                           </div>
@@ -159,14 +159,14 @@ export default function DepartmentsPage() {
                         <span className="text-[11px] text-[var(--color-x-text-secondary)]">👤 <span className="font-medium">{p.owner || '—'}</span></span>
                         {p.startDate && <span className="text-[11px] text-[var(--color-x-text-muted)]">📅 {p.startDate} → {p.targetDate || '?'}</span>}
                         {p.supportTeam && <span className="text-[11px] text-[var(--color-x-text-muted)]">🤝 {p.supportTeam}</span>}
-                        {p.projectDependencies && <span className="text-[11px] text-indigo-400">🔗 {p.projectDependencies}</span>}
+                        {p.projectDependencies && <span className="text-[11px] text-blue-400">🔗 {p.projectDependencies}</span>}
                         {p.kpi && <span className="text-[11px] text-emerald-600">📊 {p.kpi.length > 50 ? p.kpi.slice(0, 50) + '…' : p.kpi}</span>}
                       </div>
                       {p.objective && <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1 italic line-clamp-1">{p.objective}</p>}
                     </div>
                     {canModifyDepartment(p.department) && (
                       <button onClick={() => setEditModalProject(p)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-semibold text-[var(--color-x-text-secondary)] hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0">
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-semibold text-[var(--color-x-text-secondary)] hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all flex-shrink-0">
                         <Edit3 className="w-3.5 h-3.5" /> Edit All Fields
                       </button>
                     )}
@@ -213,7 +213,7 @@ export default function DepartmentsPage() {
           const critical = deptProjs.filter(p => p.priority === 'Critical').length;
           return (
             <div key={dept.name} onClick={() => setSelectedDept(dept.name)}
-              className="x-card p-5 cursor-pointer hover:border-indigo-200 hover:shadow-md transition-all group">
+              className="x-card p-5 cursor-pointer hover:border-blue-200 hover:shadow-md transition-all group">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: dept.color + '20' }}>
@@ -224,7 +224,7 @@ export default function DepartmentsPage() {
                     <p className="text-[11px] text-[var(--color-x-text-muted)]">{plural(dept.total, 'project')}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[var(--color-x-text-muted)] group-hover:text-indigo-500 transition-colors">
+                <div className="flex items-center gap-1.5 text-[var(--color-x-text-muted)] group-hover:text-blue-500 transition-colors">
                   <span className="text-[11px] font-medium">Edit Projects</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </div>

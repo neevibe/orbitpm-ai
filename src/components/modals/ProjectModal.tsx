@@ -168,7 +168,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
   if (!isOpen) return null;
 
-  const inputCls = "w-full bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 placeholder:text-[#94a3b8]";
+  const inputCls = "w-full bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#1e293b] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 placeholder:text-[#94a3b8]";
   const labelCls = "block text-[11px] font-semibold text-[#64748b] mb-1 uppercase tracking-wider";
 
   return (
@@ -205,16 +205,16 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
           <fieldset disabled={readOnly} className="space-y-4 m-0 p-0 border-0 disabled:opacity-95">
           {/* Auto-generated ID preview */}
           {!editProject && (
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50 border border-indigo-100">
-              <Wand2 className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-blue-50 border border-blue-100">
+              <Wand2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Auto-Generated Project ID</p>
-                <p className="text-[14px] font-bold text-indigo-700 font-mono">{autoId || '—'}</p>
+                <p className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Auto-Generated Project ID</p>
+                <p className="text-[14px] font-bold text-blue-700 font-mono">{autoId || '—'}</p>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-indigo-400 mb-1">Override (optional)</label>
+                <label className="block text-[10px] font-semibold text-blue-400 mb-1">Override (optional)</label>
                 <input type="text" value={form.id} onChange={e => setForm(f => ({ ...f, id: e.target.value }))}
-                  placeholder={autoId} className="bg-white border border-indigo-200 rounded-lg px-2.5 py-1.5 text-[12px] font-mono text-indigo-700 outline-none focus:border-indigo-400 w-36" />
+                  placeholder={autoId} className="bg-white border border-blue-200 rounded-lg px-2.5 py-1.5 text-[12px] font-mono text-blue-700 outline-none focus:border-blue-400 w-36" />
               </div>
             </div>
           )}

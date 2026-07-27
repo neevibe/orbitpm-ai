@@ -140,7 +140,7 @@ export default function DependenciesPage() {
     }
   };
 
-  const inputCls = "w-full bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 placeholder:text-[#94a3b8]";
+  const inputCls = "w-full bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#1e293b] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 placeholder:text-[#94a3b8]";
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -171,7 +171,7 @@ export default function DependenciesPage() {
       {/* Filters */}
       <div className="flex items-center gap-2.5">
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-indigo-500">
+          className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-blue-500">
           <option value="All">All Status</option>
           <option value="Pending">Pending</option>
           <option value="In Progress">In Progress</option>
@@ -179,7 +179,7 @@ export default function DependenciesPage() {
           <option value="Resolved">Resolved</option>
         </select>
         <select value={assignFilter} onChange={e => setAssignFilter(e.target.value)}
-          className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-indigo-500">
+          className="bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#334155] outline-none focus:border-blue-500">
           <option value="All">All Assignees</option>
           <option value="user">Individual Users</option>
           <option value="department">Departments</option>
@@ -189,14 +189,14 @@ export default function DependenciesPage() {
       {/* Dependency List */}
       <div className="space-y-2.5">
         {filtered.map(dep => (
-          <div key={dep.id} className="glass-card p-4 hover:border-indigo-200 transition-all">
+          <div key={dep.id} className="glass-card p-4 hover:border-blue-200 transition-all">
             <div className="flex items-start gap-4">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                dep.assignedType === 'department' ? 'bg-purple-50' : 'bg-indigo-50'
+                dep.assignedType === 'department' ? 'bg-purple-50' : 'bg-blue-50'
               }`}>
                 {dep.assignedType === 'department'
                   ? <Building2 className="w-4 h-4 text-purple-500" />
-                  : <User className="w-4 h-4 text-indigo-500" />}
+                  : <User className="w-4 h-4 text-blue-500" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -215,7 +215,7 @@ export default function DependenciesPage() {
                     title={`Open ${dep.projectName}`}
                   >
                     <Link2 className="w-3 h-3" />
-                    <span className="font-mono text-indigo-500 group-hover/link:text-indigo-700">{dep.projectId}</span>
+                    <span className="font-mono text-blue-500 group-hover/link:text-blue-700">{dep.projectId}</span>
                     <span className="text-[#475569] group-hover/link:text-[#1e293b]"> — {dep.projectName}</span>
                   </button>
                   <span>→</span>
@@ -229,7 +229,7 @@ export default function DependenciesPage() {
                   <select
                     value={dep.status}
                     onChange={e => updateStatus(dep.id, e.target.value as Dependency['status'])}
-                    className="text-[11px] bg-white border border-[#e2e8f0] rounded px-2 py-1 text-[#334155] outline-none focus:border-indigo-500"
+                    className="text-[11px] bg-white border border-[#e2e8f0] rounded px-2 py-1 text-[#334155] outline-none focus:border-blue-500"
                   >
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>

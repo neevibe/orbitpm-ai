@@ -84,7 +84,7 @@ export default function PortfolioPage() {
           { label: 'Total Investment', value: formatINRCompact(totalInvestment), icon: PieChart, accent: '#8b5cf6', sub: 'Allocated budget' },
           { label: 'Programs', value: departments.length, icon: Target, accent: '#3b82f6', sub: 'Business units' },
           { label: 'Active Execution', value: kpi.inProgress, icon: Activity, accent: '#10b981', sub: 'In progress' },
-          { label: 'Portfolio Health', value: kpi.totalProjects > 0 ? `${Math.round((kpi.completed / kpi.totalProjects) * 100)}%` : '0%', icon: TrendingUp, accent: '#6366f1', sub: 'Overall completion' },
+          { label: 'Portfolio Health', value: kpi.totalProjects > 0 ? `${Math.round((kpi.completed / kpi.totalProjects) * 100)}%` : '0%', icon: TrendingUp, accent: '#2563eb', sub: 'Overall completion' },
         ].map((m, i) => (
           <div key={m.label} className={`x-metric animate-slide-up stagger-${i + 1}`} style={{ '--metric-accent': m.accent } as React.CSSProperties}>
             <m.icon className="w-4 h-4 mb-2" style={{ color: m.accent }} />
@@ -100,7 +100,7 @@ export default function PortfolioPage() {
         <div className="x-card p-5 animate-slide-up stagger-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><PieChart className="w-4 h-4 text-purple-500" /> Budget Utilization</h3>
-            {isAdmin && <button className="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"><Plus className="w-3 h-3" /> Add Budget</button>}
+            {isAdmin && <button className="text-[11px] text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"><Plus className="w-3 h-3" /> Add Budget</button>}
           </div>
           {budgets.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -170,7 +170,7 @@ export default function PortfolioPage() {
       <div className="x-card p-5 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Target className="w-4 h-4 text-emerald-500" /> Strategic OKRs</h3>
-          {isAdmin && <button className="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"><Plus className="w-3 h-3" /> Add OKR</button>}
+          {isAdmin && <button className="text-[11px] text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"><Plus className="w-3 h-3" /> Add OKR</button>}
         </div>
         {okrs.length > 0 ? (
           <div className="space-y-4">

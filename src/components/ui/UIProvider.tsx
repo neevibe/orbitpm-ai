@@ -31,13 +31,13 @@ const TOAST_ACCENT = {
   success: 'border-l-emerald-500',
   error: 'border-l-red-500',
   warning: 'border-l-amber-500',
-  info: 'border-l-indigo-500',
+  info: 'border-l-blue-500',
 };
 const TOAST_ICON_COLOR = {
   success: 'text-emerald-500',
   error: 'text-red-500',
   warning: 'text-amber-500',
-  info: 'text-indigo-500',
+  info: 'text-blue-500',
 };
 
 export function UIProvider({ children }: { children: React.ReactNode }) {

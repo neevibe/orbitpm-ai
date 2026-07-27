@@ -285,13 +285,13 @@ export default function CommandCenter() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="x-page-title flex items-center gap-2"><Activity className="w-5 h-5 text-indigo-500" /> Dashboard</h1>
+          <h1 className="x-page-title flex items-center gap-2"><Activity className="w-5 h-5 text-blue-500" /> Dashboard</h1>
           <p className="x-page-subtitle">Commercial Portfolio · Real-time executive intelligence</p>
         </div>
         <div className="flex items-center gap-2 no-print">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[12px] font-semibold hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[12px] font-semibold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" /> Export PDF
           </button>
@@ -316,7 +316,7 @@ export default function CommandCenter() {
           const stalled = activeProjects.filter(p => p.status === 'In Progress' && p.progress === 0).length;
           const delayedPct = localKpi.totalProjects ? Math.round((localKpi.delayed / localKpi.totalProjects) * 100) : 0;
           return [
-            { label: 'Total Projects', value: localKpi.totalProjects, icon: BarChart3, accent: '#6366f1', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
+            { label: 'Total Projects', value: localKpi.totalProjects, icon: BarChart3, accent: '#2563eb', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
             { label: 'Active', value: localKpi.inProgress, icon: Rocket, accent: '#3b82f6', trend: { tone: dueSoon > 0 ? 'warn' : 'flat', text: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
             { label: 'Completed', value: localKpi.completed, icon: CheckCircle2, accent: '#10b981', trend: { tone: 'up', text: `${pctComplete}% of portfolio` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
             { label: 'Delayed', value: localKpi.delayed, icon: XCircle, accent: '#ef4444', trend: { tone: localKpi.delayed > 0 ? 'down' : 'up', text: localKpi.delayed > 0 ? `${delayedPct}% of portfolio` : 'all on schedule' }, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
@@ -344,7 +344,7 @@ export default function CommandCenter() {
                 }
               }}
               className={`x-metric animate-slide-up stagger-${i + 1} text-left transition-all cursor-pointer ${
-                isSelected ? 'ring-2 ring-indigo-500 scale-[1.03] shadow-md bg-[var(--color-x-surface)] border-indigo-200' : 'hover:scale-[1.02] hover:shadow-md'
+                isSelected ? 'ring-2 ring-blue-500 scale-[1.03] shadow-md bg-[var(--color-x-surface)] border-blue-200' : 'hover:scale-[1.02] hover:shadow-md'
               } ${isDimmed ? 'opacity-40' : 'opacity-100'}`} 
               style={{ '--metric-accent': m.accent } as React.CSSProperties}
             >
@@ -371,7 +371,7 @@ export default function CommandCenter() {
         <div className="col-span-12 lg:col-span-4 space-y-3">
           <div className="x-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">AI Recommendations</h3>
@@ -396,7 +396,7 @@ export default function CommandCenter() {
                       }
                     }}
                     className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                      isSelected ? 'ring-2 ring-indigo-500 scale-[1.01] shadow-md bg-[var(--color-x-surface)] border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
+                      isSelected ? 'ring-2 ring-blue-500 scale-[1.01] shadow-md bg-[var(--color-x-surface)] border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
                     } ${isDimmed ? 'opacity-40' : 'opacity-100'} ${
                       // translucent severity tints read correctly on light AND dark surfaces
                       insight.severity === 'critical' ? 'bg-red-500/10 border-red-500/20 hover:bg-red-500/15' :
@@ -436,9 +436,9 @@ export default function CommandCenter() {
                     onClick={() => openPanel(p)}
                     className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all cursor-pointer group"
                   >
-                    <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-400' : 'bg-indigo-400'}`} />
+                    <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-400' : 'bg-blue-400'}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-indigo-600">{p.name}</p>
+                      <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-blue-600">{p.name}</p>
                       <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-x-text-muted)] flex-wrap">
                         <span className="font-mono">{p.id}</span>
                         <span>·</span>
@@ -461,7 +461,7 @@ export default function CommandCenter() {
                       <span className={`x-priority-${p.priority.toLowerCase()} text-[9px]`}>{p.priority}</span>
                       <div
                         onClick={() => openPanel(p)}
-                        className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 text-indigo-600 text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 text-blue-600 text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                       >
                         <Edit3 className="w-2.5 h-2.5" /> Edit
                       </div>
@@ -471,6 +471,44 @@ export default function CommandCenter() {
               </div>
             </div>
           )}
+          {/* Priority Breakdown */}
+          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
+            </div>
+            <div className="flex-1 flex flex-col justify-between py-1.5">
+              {priorityRadial.map(p => {
+                const pct = filteredProjects.length > 0 ? Math.round((p.value / filteredProjects.length) * 100) : 0;
+                const isSelected = activeFilter?.type === 'priority' && activeFilter.label === p.name;
+                const isDimmed = activeFilter?.type === 'priority' && activeFilter.label !== p.name;
+                return (
+                  <div
+                    key={p.name}
+                    onClick={() => {
+                      if (isSelected) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'priority',
+                          label: p.name,
+                          filterFn: (project) => project.priority === p.name
+                        });
+                      }
+                    }}
+                    className={`p-1 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
+                      isSelected ? 'ring-1 ring-blue-500 bg-blue-50/20' : ''
+                    } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.name}</span>
+                      <span className="text-[11px] font-bold text-[var(--color-x-text)]">{p.value} <span className="font-normal text-[var(--color-x-text-muted)]">({pct}%)</span></span>
+                    </div>
+                    <div className="x-progress"><div className="x-progress-bar" style={{ width: `${pct}%`, background: p.fill }} /></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
          </div>
 
         {/* Center — Charts */}
@@ -478,7 +516,7 @@ export default function CommandCenter() {
           {/* Project Status Distribution */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Project Status Distribution</h3>
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-blue-500" /> Project Status Distribution</h3>
               <span className="text-[10px] text-[var(--color-x-text-muted)]">Active Portfolio</span>
             </div>
             <div className="flex-1 min-h-0">
@@ -634,7 +672,7 @@ export default function CommandCenter() {
                       }
                     }}
                     className={`flex flex-col items-center justify-center p-1 rounded hover:bg-slate-50 transition-all ${
-                      isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20 font-semibold' : ''
+                      isSelected ? 'ring-1 ring-blue-500 bg-blue-50/20 font-semibold' : ''
                     } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
                   >
                     <div className="flex items-center gap-1">
@@ -648,54 +686,16 @@ export default function CommandCenter() {
             </div>
           </div>
 
-          {/* Priority Breakdown */}
-          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
-            </div>
-            <div className="flex-1 flex flex-col justify-between py-1.5">
-              {priorityRadial.map(p => {
-                const pct = filteredProjects.length > 0 ? Math.round((p.value / filteredProjects.length) * 100) : 0;
-                const isSelected = activeFilter?.type === 'priority' && activeFilter.label === p.name;
-                const isDimmed = activeFilter?.type === 'priority' && activeFilter.label !== p.name;
-                return (
-                  <div
-                    key={p.name}
-                    onClick={() => {
-                      if (isSelected) {
-                        setActiveFilter(null);
-                      } else {
-                        setActiveFilter({
-                          type: 'priority',
-                          label: p.name,
-                          filterFn: (project) => project.priority === p.name
-                        });
-                      }
-                    }}
-                    className={`p-1 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
-                      isSelected ? 'ring-1 ring-indigo-500 bg-indigo-50/20' : ''
-                    } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.name}</span>
-                      <span className="text-[11px] font-bold text-[var(--color-x-text)]">{p.value} <span className="font-normal text-[var(--color-x-text-muted)]">({pct}%)</span></span>
-                    </div>
-                    <div className="x-progress"><div className="x-progress-bar" style={{ width: `${pct}%`, background: p.fill }} /></div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>     
         </div>
       </div>
 
       {/* Filtered Projects Section (Full Width, replaces blocking modals) */}
       {activeFilter && (
-        <div className="x-card p-5 border-indigo-200 bg-indigo-50/10 space-y-4 animate-fade-in">
+        <div className="x-card p-5 border-blue-200 bg-blue-50/10 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between border-b border-[var(--color-x-border)] pb-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-100 border border-indigo-200 text-[10px] font-bold text-indigo-700 uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /> Filter Active
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 border border-blue-200 text-[10px] font-bold text-blue-700 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /> Filter Active
               </span>
               <div>
                 <h3 className="text-[14px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5">
@@ -706,7 +706,7 @@ export default function CommandCenter() {
             </div>
             <button
               onClick={() => setActiveFilter(null)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-[11px] font-bold hover:bg-indigo-50 transition-colors shadow-xs cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 text-blue-600 rounded-lg text-[11px] font-bold hover:bg-blue-50 transition-colors shadow-xs cursor-pointer"
             >
               <X className="w-3.5 h-3.5" /> Clear Filter
             </button>
@@ -717,14 +717,14 @@ export default function CommandCenter() {
               <div
                 key={p.id}
                 onClick={() => openPanel(p)}
-                className="p-4 bg-white border border-[var(--color-x-border)] hover:border-indigo-300 hover:shadow-md rounded-xl transition-all cursor-pointer group flex flex-col justify-between"
+                className="p-4 bg-white border border-[var(--color-x-border)] hover:border-blue-300 hover:shadow-md rounded-xl transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="text-[10px] font-mono text-[var(--color-x-text-muted)] bg-slate-50 px-1.5 py-0.5 rounded">{p.id}</span>
                     <span className={`x-status-${p.status.toLowerCase().replace(' ', '-')} text-[9px]`}>{p.status}</span>
                   </div>
-                  <h4 className="text-[13.5px] font-semibold text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors line-clamp-1">{p.name}</h4>
+                  <h4 className="text-[13.5px] font-semibold text-[var(--color-x-text)] group-hover:text-blue-600 transition-colors line-clamp-1">{p.name}</h4>
                   <div className="flex items-center gap-2 mt-1.5">
                     <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
                   </div>
@@ -733,7 +733,7 @@ export default function CommandCenter() {
                   <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {p.owner}</span>
                   <div className="flex items-center gap-1.5">
                     <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${p.progress}%` }} />
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${p.progress}%` }} />
                     </div>
                     <span className="font-bold text-[var(--color-x-text)]">{p.progress}%</span>
                   </div>
@@ -752,7 +752,7 @@ export default function CommandCenter() {
       {/* Milestones / Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="x-card p-5">
-          <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-indigo-500" /> Upcoming Milestones</h3>
+          <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-blue-500" /> Upcoming Milestones</h3>
           <div className="space-y-2">
             {filteredProjects
               // Upcoming = due today or later; overdue targets belong in Stuck/Delayed, not here.
@@ -772,18 +772,18 @@ export default function CommandCenter() {
             ))}
           </div>
         </div>
-        <div className="x-card p-5 bg-gradient-to-br from-indigo-50/40 to-purple-50/40 border-indigo-100">
-          <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Zap className="w-4 h-4 text-indigo-500" /> Quick Actions</h3>
+        <div className="x-card p-5 bg-gradient-to-br from-blue-50/60 to-sky-50/40 border-blue-100">
+          <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-500" /> Quick Actions</h3>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { label: 'New Project', icon: FolderKanban, color: 'text-indigo-500', href: '/projects' },
+              { label: 'New Project', icon: FolderKanban, color: 'text-blue-500', href: '/projects' },
               { label: 'Log Risk', icon: AlertTriangle, color: 'text-red-500', href: '/risks' },
               { label: 'View Reports', icon: BarChart3, color: 'text-orange-500', href: '/analytics' },
               { label: 'Ask Xyro', icon: Sparkles, color: 'text-purple-500', href: '/ai' },
               { label: 'Team Status', icon: Users, color: 'text-emerald-500', href: '/workforce' },
               { label: 'Export Data', icon: Download, color: 'text-blue-500', href: '/admin' },
             ].map(a => (
-              <a key={a.label} href={a.href} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/60 border border-[var(--color-x-border)] hover:border-indigo-200 hover:shadow-sm transition-all cursor-pointer">
+              <a key={a.label} href={a.href} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/60 border border-[var(--color-x-border)] hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
                 <a.icon className={`w-4 h-4 flex-shrink-0 ${a.color}`} />
                 <span className="text-[12px] font-medium text-[var(--color-x-text-secondary)]">{a.label}</span>
               </a>

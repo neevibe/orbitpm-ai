@@ -225,7 +225,7 @@ export default function AdminPage() {
           {/* Stats */}
           <div className="grid grid-cols-5 gap-3">
             {[
-              { label: 'Total Users', value: stats.total, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+              { label: 'Total Users', value: stats.total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
               { label: 'Internal', value: stats.internal, icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
               { label: 'External', value: stats.external, icon: UserX, color: 'text-amber-600', bg: 'bg-amber-50' },
               { label: 'Admins', value: stats.admins, icon: Shield, color: 'text-rose-600', bg: 'bg-rose-50' },
@@ -255,7 +255,7 @@ export default function AdminPage() {
             <div className="flex items-center gap-0.5 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-0.5">
               {(['all', 'internal', 'external'] as const).map(t => (
                 <button key={t} onClick={() => setTypeFilter(t)}
-                  className={`px-3 py-1.5 rounded-md text-[11px] font-medium capitalize transition-all ${typeFilter === t ? 'bg-white shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}>
+                  className={`px-3 py-1.5 rounded-md text-[11px] font-medium capitalize transition-all ${typeFilter === t ? 'bg-white shadow-sm text-blue-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}>
                   {t}
                 </button>
               ))}
@@ -289,7 +289,7 @@ export default function AdminPage() {
                     <tr key={u.id}>
                       <td>
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0">
                             {u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                           </div>
                           <div>
@@ -317,7 +317,7 @@ export default function AdminPage() {
                             <option value="modify">Modify</option>
                             <option value="admin">Admin</option>
                           </select>
-                          {updatingUserId === u.id && <Loader2 className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 animate-spin text-indigo-500" />}
+                          {updatingUserId === u.id && <Loader2 className="absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 animate-spin text-blue-500" />}
                         </div>
                       </td>
                       <td>
@@ -432,19 +432,19 @@ export default function AdminPage() {
       {/* Data Management */}
       {activeTab === 'data' && (
         <div className="space-y-4 animate-fade-in">
-          <div className="x-card p-5 border-indigo-200 bg-gradient-to-r from-indigo-50/30 to-purple-50/30">
+          <div className="x-card p-5 border-blue-200 bg-gradient-to-r from-blue-50/40 to-sky-50/30">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><FileSpreadsheet className="w-5 h-5 text-white" /></div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center"><FileSpreadsheet className="w-5 h-5 text-white" /></div>
               <div><h2 className="text-[15px] font-bold text-[var(--color-x-text)]">Excel Data Sync</h2><p className="text-[12px] text-[var(--color-x-text-muted)]">Import and export maintaining workbook compatibility</p></div>
             </div>
             <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-white border border-[var(--color-x-border)]">
-              <Database className="w-4 h-4 text-indigo-500" />
+              <Database className="w-4 h-4 text-blue-500" />
               <p className="text-[12px] text-[var(--color-x-text-secondary)]"><span className="font-semibold">{projects.length}</span> projects · <span className="font-semibold">{risks.length}</span> risks · <span className="font-semibold">{departments.length}</span> departments</p>
               <RefreshCw className="w-3.5 h-3.5 text-[var(--color-x-text-muted)] ml-auto" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-4 rounded-xl bg-white border border-[var(--color-x-border)]">
-                <div className="flex items-center gap-2 mb-2"><Upload className="w-4 h-4 text-indigo-500" /><h3 className="text-[12px] font-semibold">Import</h3></div>
+                <div className="flex items-center gap-2 mb-2"><Upload className="w-4 h-4 text-blue-500" /><h3 className="text-[12px] font-semibold">Import</h3></div>
                 <p className="text-[11px] text-[var(--color-x-text-muted)] mb-3">Upload .xlsx to sync projects and risks</p>
                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
                 <button onClick={() => fileInputRef.current?.click()} disabled={isImporting} className="x-btn x-btn-primary w-full text-[12px]">
@@ -479,8 +479,8 @@ export default function AdminPage() {
             { title: 'Timezone', desc: 'Asia/Kolkata (IST, UTC+5:30)', icon: Clock },
           ].map(s => (
             <div key={s.title} className="x-card p-5 flex items-center gap-3 hover:border-[var(--color-x-accent)] transition-all cursor-pointer group">
-              <div className="w-9 h-9 rounded-lg bg-[var(--color-x-bg)] border border-[var(--color-x-border)] flex items-center justify-center group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all">
-                <s.icon className="w-4 h-4 text-[var(--color-x-text-muted)] group-hover:text-indigo-500 transition-colors" />
+              <div className="w-9 h-9 rounded-lg bg-[var(--color-x-bg)] border border-[var(--color-x-border)] flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-200 transition-all">
+                <s.icon className="w-4 h-4 text-[var(--color-x-text-muted)] group-hover:text-blue-500 transition-colors" />
               </div>
               <div className="flex-1"><h3 className="text-[12px] font-semibold text-[var(--color-x-text)]">{s.title}</h3><p className="text-[11px] text-[var(--color-x-text-muted)]">{s.desc}</p></div>
               <ChevronRight className="w-4 h-4 text-[var(--color-x-text-muted)]" />

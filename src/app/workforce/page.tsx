@@ -12,7 +12,7 @@ export default function WorkforcePage() {
   // Extract unique team members from projects owner field
   const teamMap = new Map<string, { name: string; dept: string; active: number; total: number; initials: string; avatarColor: string }>();
   
-  const colors = ['from-indigo-500 to-purple-500', 'from-blue-500 to-cyan-500', 'from-emerald-400 to-teal-500', 'from-amber-400 to-orange-500', 'from-pink-500 to-rose-500'];
+  const colors = ['from-blue-600 to-sky-500', 'from-blue-500 to-cyan-500', 'from-emerald-400 to-teal-500', 'from-amber-400 to-orange-500', 'from-pink-500 to-rose-500'];
   
   // Workload counts only ACTIVE work: anything not Completed/Cancelled/Archived
   // (i.e. In Progress, Delayed, Not Started/pending-dependency, On Hold).
@@ -67,7 +67,7 @@ export default function WorkforcePage() {
       {/* KPI Row */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total Team', value: team.length, icon: UserSquare2, accent: '#6366f1' },
+          { label: 'Total Team', value: team.length, icon: UserSquare2, accent: '#2563eb' },
           { label: 'Overloaded (13+)', value: overloaded, icon: AlertCircle, accent: '#ef4444' },
           { label: 'Moderate (8–12)', value: atCapacity, icon: Clock, accent: '#f59e0b' },
           { label: 'Healthy (0–7)', value: available, icon: CheckCircle2, accent: '#10b981' },
@@ -162,7 +162,7 @@ export default function WorkforcePage() {
                 <a key={p.id} href={`/projects/${p.id}`} className="flex items-center gap-4 p-3 rounded-xl hover:bg-[var(--color-x-bg)] transition-all border border-transparent hover:border-[var(--color-x-border)] group">
                   <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-500' : 'bg-blue-500'}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                    <p className="text-[14px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-blue-600 transition-colors">{p.name}</p>
                     <div className="flex items-center gap-3 mt-1 text-[11px] text-[var(--color-x-text-muted)]">
                       <span className="font-mono bg-[var(--color-x-surface-hover)] px-1.5 py-0.5 rounded">{p.id}</span>
                       <span>{p.department}</span>

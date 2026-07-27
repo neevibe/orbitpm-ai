@@ -328,7 +328,7 @@ export default function GanttChart({ tasks, onUpdateTasks, projectStartDate, pro
               onClick={() => setZoom(z as ZoomLevel)}
               className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                 zoom === z
-                  ? 'bg-white text-indigo-600 shadow-xs'
+                  ? 'bg-white text-blue-600 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -464,20 +464,20 @@ export default function GanttChart({ tasks, onUpdateTasks, projectStartDate, pro
                       className={`absolute h-6 rounded-md shadow-xs flex items-center overflow-hidden cursor-move border transition-shadow hover:shadow-md ${
                         isCritical
                           ? 'bg-red-50 border-red-500 shadow-sm shadow-red-100'
-                          : 'bg-indigo-50 border-indigo-200'
+                          : 'bg-blue-50 border-blue-200'
                       }`}
                       onMouseDown={e => handleMouseDown(e, t.id, 'move')}
                     >
                       {/* Left Drag Resize Handle */}
                       <div
-                        className="w-1.5 h-full hover:bg-indigo-300 cursor-ew-resize flex-shrink-0 opacity-0 hover:opacity-100 transition-opacity bg-indigo-200/50"
+                        className="w-1.5 h-full hover:bg-blue-300 cursor-ew-resize flex-shrink-0 opacity-0 hover:opacity-100 transition-opacity bg-blue-200/50"
                         onMouseDown={e => handleMouseDown(e, t.id, 'resize-start')}
                       />
 
                       {/* Progress Fill */}
                       <div className="flex-1 h-full relative flex items-center px-2">
                         <div
-                          className={`absolute top-0 bottom-0 left-0 ${isCritical ? 'bg-red-200/60' : 'bg-indigo-200/60'}`}
+                          className={`absolute top-0 bottom-0 left-0 ${isCritical ? 'bg-red-200/60' : 'bg-blue-200/60'}`}
                           style={{ width: `${t.progress}%` }}
                         />
                         <span className="relative z-10 text-[9.5px] font-bold text-slate-700 truncate" title={`${t.name} (${t.progress}%)`}>
@@ -487,7 +487,7 @@ export default function GanttChart({ tasks, onUpdateTasks, projectStartDate, pro
 
                       {/* Right Drag Resize Handle */}
                       <div
-                        className="w-1.5 h-full hover:bg-indigo-300 cursor-ew-resize flex-shrink-0 opacity-0 hover:opacity-100 transition-opacity bg-indigo-200/50"
+                        className="w-1.5 h-full hover:bg-blue-300 cursor-ew-resize flex-shrink-0 opacity-0 hover:opacity-100 transition-opacity bg-blue-200/50"
                         onMouseDown={e => handleMouseDown(e, t.id, 'resize-end')}
                       />
                     </div>

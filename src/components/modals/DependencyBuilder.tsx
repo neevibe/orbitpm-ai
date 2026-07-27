@@ -53,7 +53,7 @@ export default function DependencyBuilder({ value, onChange, readOnly }: Props) 
   const add = () => onChange([...deps, newDep()]);
 
   const inputCls =
-    'w-full bg-white border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 text-[12px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50';
+    'w-full bg-white border border-[#e2e8f0] rounded-lg px-2.5 py-1.5 text-[12px] text-[#1e293b] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50';
 
   return (
     <div className="space-y-2.5">
@@ -68,7 +68,7 @@ export default function DependencyBuilder({ value, onChange, readOnly }: Props) 
 
       {!readOnly && (
         <button type="button" onClick={add}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all">
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-all">
           <Plus className="w-3.5 h-3.5" /> Add Dependency
         </button>
       )}
@@ -108,7 +108,7 @@ function DepRow({
 
   const seg = (active: boolean) =>
     `flex-1 py-1.5 text-[11px] font-semibold rounded-md transition-all ${
-      active ? 'bg-white text-indigo-600 shadow-sm' : 'text-[#64748b] hover:text-[#1e293b]'
+      active ? 'bg-white text-blue-600 shadow-sm' : 'text-[#64748b] hover:text-[#1e293b]'
     }`;
 
   return (
@@ -167,9 +167,9 @@ function DepRow({
           {owners.length > 0 && (
             <div className="col-span-2 flex flex-wrap gap-1">
               {owners.map(o => (
-                <span key={o} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] border border-indigo-100">
+                <span key={o} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[11px] border border-blue-100">
                   {o}
-                  {!readOnly && <button type="button" onClick={() => toggleOwner(o)} className="text-indigo-400 hover:text-indigo-700">×</button>}
+                  {!readOnly && <button type="button" onClick={() => toggleOwner(o)} className="text-blue-400 hover:text-blue-700">×</button>}
                 </span>
               ))}
             </div>
