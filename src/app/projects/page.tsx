@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download, Filter } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
+import { getStatusColor, getPriorityColor, formatDate, isProjectOwner } from '@/lib/utils';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyTaskModal from '@/components/modals/DependencyTaskModal';
@@ -201,14 +201,14 @@ export default function ProjectsPage() {
       }
 
       const matchOwner = ownerFilter === 'All' || p.owner === ownerFilter;
-      const matchMyProjects = !myProjectsOnly || p.owner === currentUserName;
+      const matchMyProjects = !myProjectsOnly || isProjectOwner(p.owner, currentUserName, user?.email);
       return matchSearch && matchStatus && matchDept && matchSub && matchPriority && matchOwner && matchMyProjects;
     })
     .sort((a, b) => {
       if (sortBy === 'owner') return (a.owner || '').localeCompare(b.owner || '');
       return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter, stuckFilter, hasRisksFilter, escalationFilter, bottlenecksFilter, risks, ownerFilter, myProjectsOnly, sortBy, currentUserName]);
+  }, [activeProjects, archivedProjects, tab, search, statusFilter, selectedDept, priorityFilter, stuckFilter, hasRisksFilter, escalationFilter, bottlenecksFilter, risks, ownerFilter, myProjectsOnly, sortBy, currentUserName, user?.email]);
 
   const deptGroups = useMemo(() => {
     const groups: Record<string, Project[]> = {};
@@ -686,10 +686,10 @@ export default function ProjectsPage() {
                                     </td>
                                     <td className="pr-5 text-right">
                                       <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        {(p.isDependencyMirror || (canModifyDepartment(p.department) && (isAdmin || p.owner === currentUserName))) && (
+                                        {(p.isDependencyMirror || (canModifyDepartment(p.department) && (isAdmin || isProjectOwner(p.owner, currentUserName, user?.email)))) && (
                                           <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
                                         )}
-                                        {!p.isDependencyMirror && canModifyDepartment(p.department) && (isAdmin || p.owner === currentUserName) && (
+                                        {!p.isDependencyMirror && canModifyDepartment(p.department) && (isAdmin || isProjectOwner(p.owner, currentUserName, user?.email)) && (
                                           <div className="relative" onClick={e => e.stopPropagation()}>
                                             <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} className="p-2 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors" title="More options"><MoreVertical className="w-4 h-4" /></button>
                                             {openMenuId === p.id && (
