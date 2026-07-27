@@ -131,7 +131,7 @@ function heuristicAnswer(message: string, data: Data): string | null {
 
   // pure greeting
   if (/^(hi|hello|hey|namaskara|namaste|good (morning|afternoon|evening)|yo)\b[\s!.]*$/i.test(m)) {
-    return `🙏 Namaskara! I'm your Xyrenis Copilot. I'm tracking **${kpi.total} active projects** across **${data.departments.length} departments**. Ask me about delayed projects, team workload, risks, or any project's status.`;
+    return `🙏 Namaskara! I'm Xyro, your Xyrenis copilot. I'm tracking **${kpi.total} active projects** across **${data.departments.length} departments**. Ask me about delayed projects, team workload, risks, or any project's status.`;
   }
 
   // owner lookup — "projects handled by / assigned to / owned by <name>", or @name
@@ -281,7 +281,7 @@ function buildContext(data: Data, user?: { name?: string; department?: string; r
   ].filter(Boolean).join('\n\n');
 }
 
-const SYSTEM_PROMPT = `You are the Xyrenis AI Copilot — an experienced Program/Portfolio Manager and executive advisor for an enterprise project-tracking platform (airport operations, BIAL).
+const SYSTEM_PROMPT = `You are Xyro — the Xyrenis AI copilot, an experienced Program/Portfolio Manager and executive advisor for an enterprise project-tracking platform (airport operations, BIAL).
 
 Voice: warm, professional, concise. Use relevant emojis naturally and Markdown (**bold** for key figures, bullet lists). Never robotic. Maintain conversation context — when the user says "that one" or "which is delayed", resolve it against what was just discussed.
 

@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Bot, Send, Sparkles, X } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 
 /**
- * Floating in-app assistant, available on every page:
+ * Xyro — the floating in-app assistant, available on every page:
  *   • answers "how do I…" questions from a built-in guide (instant, offline)
  *   • falls back to /api/ai-chat (live-data heuristics + LLM) for anything else
  *   • creates projects on the user's behalf via a guided question flow that
@@ -38,7 +39,7 @@ const GUIDE: { match: RegExp; answer: string }[] = [
 
 const WELCOME: Msg = {
   role: 'bot',
-  text: 'Hi! I’m the Xyrenis assistant. I can explain how anything in this app works, answer questions about your live portfolio, or create a project for you step by step.',
+  text: 'Hi, I’m Xyro! 👋 I can explain how anything in this app works, answer questions about your live portfolio, or create a project for you step by step.',
   chips: [
     { label: '➕ Add a project', value: 'add a project' },
     { label: 'How do I assign a task?', value: 'how do I assign a task' },
@@ -226,10 +227,10 @@ export default function FloatingAssistant() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          title="Xyrenis Assistant"
-          className="fixed bottom-5 right-5 z-[60] p-3.5 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-xl hover:scale-105 hover:shadow-2xl transition-all cursor-pointer"
+          title="Xyro"
+          className="fixed bottom-5 right-5 z-[60] rounded-full hover:scale-110 transition-transform cursor-pointer drop-shadow-[0_4px_14px_rgba(99,102,241,0.45)]"
         >
-          <Sparkles className="w-6 h-6" />
+          <Image src="/xyro.webp" alt="Xyro — Xyrenis assistant" width={64} height={64} className="w-16 h-16" priority />
         </button>
       )}
 
@@ -239,9 +240,11 @@ export default function FloatingAssistant() {
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center"><Bot className="w-4 h-4" /></div>
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" />
+              </div>
               <div>
-                <p className="text-[13px] font-bold leading-tight">Xyrenis Assistant</p>
+                <p className="text-[13px] font-bold leading-tight">Xyro</p>
                 <p className="text-[10px] text-white/75 leading-tight">How-to help · portfolio Q&A · create projects</p>
               </div>
             </div>
