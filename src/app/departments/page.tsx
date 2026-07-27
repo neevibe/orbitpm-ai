@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { Building2, ChevronRight, ArrowLeft, Edit3, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
+import { plural } from '@/lib/utils';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
 
@@ -220,7 +221,7 @@ export default function DepartmentsPage() {
                   </div>
                   <div>
                     <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">{dept.name}</h3>
-                    <p className="text-[11px] text-[var(--color-x-text-muted)]">{dept.total} projects</p>
+                    <p className="text-[11px] text-[var(--color-x-text-muted)]">{plural(dept.total, 'project')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-[var(--color-x-text-muted)] group-hover:text-indigo-500 transition-colors">
@@ -230,13 +231,15 @@ export default function DepartmentsPage() {
               </div>
               <div className="grid grid-cols-4 gap-2 mb-3">
                 {[
-                  { label: 'In Progress', val: inProgress, color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { label: 'Delayed', val: delayed, color: 'text-red-500', bg: 'bg-red-50' },
-                  { label: 'Critical', val: critical, color: 'text-orange-500', bg: 'bg-orange-50' },
-                  { label: '% Done', val: `${dept.pctDone}%`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                  // semantic color only when the number carries signal — a red
+                  // "0 Delayed" chip is visual noise shouting about nothing
+                  { label: 'In Progress', val: inProgress, on: inProgress > 0, color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { label: 'Delayed', val: delayed, on: delayed > 0, color: 'text-red-500', bg: 'bg-red-50' },
+                  { label: 'Critical', val: critical, on: critical > 0, color: 'text-orange-500', bg: 'bg-orange-50' },
+                  { label: '% Done', val: `${dept.pctDone}%`, on: dept.pctDone > 0, color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 ].map(s => (
-                  <div key={s.label} className={`rounded-lg p-2 ${s.bg} text-center`}>
-                    <p className={`text-[15px] font-bold ${s.color}`}>{s.val}</p>
+                  <div key={s.label} className={`rounded-lg p-2 text-center ${s.on ? s.bg : 'bg-[var(--color-x-bg)]'}`}>
+                    <p className={`text-[15px] font-bold ${s.on ? s.color : 'text-[var(--color-x-text-muted)]'}`}>{s.val}</p>
                     <p className="text-[9px] text-[var(--color-x-text-muted)] mt-0.5">{s.label}</p>
                   </div>
                 ))}
@@ -259,7 +262,7 @@ export default function DepartmentsPage() {
         <h3 className="text-[12px] font-semibold text-[var(--color-x-text-secondary)] mb-3">Project Status by Department</h3>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 16 }}>
-            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+            <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} width={150} interval={0} />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar dataKey="In Progress" stackId="a" fill="#3b82f6" />

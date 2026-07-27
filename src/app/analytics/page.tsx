@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useData } from '@/lib/data-context';
+import { plural } from '@/lib/utils';
 import { BarChart3, Activity, Target, Download, Settings2, LayoutTemplate, ShieldAlert } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -16,13 +17,23 @@ export default function AnalyticsPage() {
     { id: 'risk', label: 'Risk Analysis', icon: ShieldAlert },
   ];
 
-  const trendData = [
-    { month: 'Jan', completed: 5, started: 8, target: 10 },
-    { month: 'Feb', completed: 8, started: 12, target: 15 },
-    { month: 'Mar', completed: 12, started: 18, target: 20 },
-    { month: 'Apr', completed: 18, started: 22, target: 25 },
-    { month: 'May', completed: kpi.completed, started: kpi.inProgress + kpi.completed, target: 30 },
-  ];
+  // Real per-month series from live project dates (was hardcoded sample data):
+  // "started" = projects whose start date falls in that month, "due" = projects
+  // whose target date falls in that month. Last 6 months.
+  const trendData = (() => {
+    const months: { month: string; started: number; due: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.push({
+        month: d.toLocaleDateString('en-IN', { month: 'short' }),
+        started: projects.filter(p => !p.archived && p.startDate?.startsWith(ym)).length,
+        due: projects.filter(p => !p.archived && p.targetDate?.startsWith(ym)).length,
+      });
+    }
+    return months;
+  })();
 
   const statusData = [
     { name: 'Active', value: kpi.inProgress, color: '#3b82f6' },
@@ -73,7 +84,7 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-4 gap-4">
             {[
               { label: 'Total Volume', value: kpi.totalProjects, sub: 'All recorded projects' },
-              { label: 'Completion Rate', value: `${kpi.totalProjects > 0 ? Math.round((kpi.completed/kpi.totalProjects)*100) : 0}%`, sub: `${kpi.completed} projects delivered` },
+              { label: 'Completion Rate', value: `${kpi.totalProjects > 0 ? Math.round((kpi.completed/kpi.totalProjects)*100) : 0}%`, sub: `${plural(kpi.completed, 'project')} delivered` },
               { label: 'Variance (Delayed)', value: kpi.delayed, sub: 'Projects behind schedule' },
               { label: 'Risk Exposure', value: kpi.openRisks, sub: 'Active logged risks' },
             ].map(m => (
@@ -96,10 +107,10 @@ export default function AnalyticsPage() {
                     <linearGradient id="colorDone" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
                   </defs>
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                  <Area type="monotone" dataKey="target" stroke="#8b5cf6" fill="url(#colorTarget)" name="Target Velocity" strokeDasharray="5 5" />
-                  <Area type="monotone" dataKey="completed" stroke="#10b981" fill="url(#colorDone)" name="Actual Delivered" />
+                  <Area type="monotone" dataKey="due" stroke="#8b5cf6" fill="url(#colorTarget)" name="Deliverables Due" strokeDasharray="5 5" />
+                  <Area type="monotone" dataKey="started" stroke="#10b981" fill="url(#colorDone)" name="Projects Started" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -132,7 +143,7 @@ export default function AnalyticsPage() {
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-4">Department Execution</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={deptData} layout="vertical" margin={{ left: 0 }}>
-                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 10 }} width={150} interval={0} />
                   <Tooltip contentStyle={tooltipStyle} cursor={false} />
                   <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active" radius={[0, 0, 0, 0]} />

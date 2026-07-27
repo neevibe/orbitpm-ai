@@ -157,3 +157,8 @@ export function daysUntil(dateStr: string | null | undefined): number | null {
   }
 }
 
+
+/** "1 project" / "3 projects" — count with correctly pluralized noun. */
+export function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
+}
