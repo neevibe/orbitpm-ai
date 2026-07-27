@@ -9,6 +9,30 @@ export type Permission = 'view' | 'edit' | 'modify' | 'admin';
 export type UserType = 'internal' | 'external';
 
 export const DEMO_SESSION_KEY = 'xyrenis_demo';
+export const PW_RECOVERY_KEY = 'xyrenis_pw_recovery';
+
+export type PasswordRecoveryState = 'active' | 'expired' | null;
+
+/**
+ * Capture Supabase password-recovery tokens from the URL hash at module-eval
+ * time — before supabase-js asynchronously consumes and strips them. The reset
+ * email can land the user anywhere in the app (even the landing page, when the
+ * redirect URL isn't allow-listed and Supabase falls back to the Site URL), so
+ * a sessionStorage flag lets the shell route them to /change-password from
+ * wherever the tokens arrived.
+ */
+if (typeof window !== 'undefined') {
+  try {
+    const hash = window.location.hash.replace(/^#/, '');
+    if (hash.includes('type=recovery')) {
+      sessionStorage.setItem(PW_RECOVERY_KEY, 'active');
+    } else if (hash.includes('error_code=otp_expired') || hash.includes('error=access_denied')) {
+      // Expired / already-used recovery link — Supabase redirects with an error
+      // hash instead of tokens. Recovery is the only email link this app sends.
+      sessionStorage.setItem(PW_RECOVERY_KEY, 'expired');
+    }
+  } catch { /* sessionStorage unavailable — fall back to the PASSWORD_RECOVERY event */ }
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -29,6 +53,9 @@ interface AuthContextValue {
   isSuperAdmin: boolean;
   /** Any signed-in user can view. */
   canView: boolean;
+  /** 'active' while the user arrived via a password-recovery link; 'expired' if the link was dead. */
+  passwordRecovery: PasswordRecoveryState;
+  clearPasswordRecovery: () => void;
   canEditDepartment: (dept?: string | null) => boolean;
   canModifyDepartment: (dept?: string | null) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -100,6 +127,8 @@ const AuthContext = createContext<AuthContextValue>({
   isAdmin: false,
   isSuperAdmin: false,
   canView: false,
+  passwordRecovery: null,
+  clearPasswordRecovery: () => {},
   canEditDepartment: () => false,
   canModifyDepartment: () => false,
   signIn: async () => ({ error: null }),
@@ -112,6 +141,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  // Pick up a recovery flag captured from the URL hash (set at module eval,
+  // possibly on a previous page in this tab). Server and client can disagree on
+  // the initial value, but nothing renders from it until `loading` resolves.
+  const [passwordRecovery, setPasswordRecovery] = useState<PasswordRecoveryState>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = sessionStorage.getItem(PW_RECOVERY_KEY);
+    return stored === 'active' || stored === 'expired' ? stored : null;
+  });
 
   useEffect(() => {
     // Check for active demo session first — no Supabase call needed
@@ -158,7 +195,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        sessionStorage.setItem(PW_RECOVERY_KEY, 'active');
+        setPasswordRecovery('active');
+      } else if (event === 'SIGNED_OUT') {
+        sessionStorage.removeItem(PW_RECOVERY_KEY);
+        setPasswordRecovery(null);
+      }
       setSession(s);
       setUser(s?.user ?? null);
     });
@@ -243,6 +287,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error?.message ?? null };
   };
 
+  const clearPasswordRecovery = () => {
+    if (typeof window !== 'undefined') sessionStorage.removeItem(PW_RECOVERY_KEY);
+    setPasswordRecovery(null);
+  };
+
   const signOut = async () => {
     if (isDemoMode) {
       if (typeof window !== 'undefined') sessionStorage.removeItem(DEMO_SESSION_KEY);
@@ -289,6 +338,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user, session, loading, isDemoMode, role, department,
         permission, userType, isAdmin, isSuperAdmin, canView,
+        passwordRecovery, clearPasswordRecovery,
         canEditDepartment, canModifyDepartment,
         signIn, signUp, signOut,
       }}

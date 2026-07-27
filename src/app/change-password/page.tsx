@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -14,7 +14,7 @@ const rules = [
 ];
 
 export default function ChangePasswordPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, passwordRecovery, clearPasswordRecovery } = useAuth();
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -23,6 +23,12 @@ export default function ChangePasswordPage() {
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // An expired-link flag is one-shot: consume it once this page has rendered so
+  // it can't keep redirecting the user here on later navigation.
+  useEffect(() => {
+    if (!authLoading && passwordRecovery === 'expired') clearPasswordRecovery();
+  }, [authLoading, passwordRecovery, clearPasswordRecovery]);
 
   const allRulesPassed = rules.every(r => r.test(newPassword));
   const passwordsMatch = newPassword === confirm && confirm.length > 0;
@@ -43,10 +49,43 @@ export default function ChangePasswordPage() {
       setLoading(false);
       return;
     }
+    clearPasswordRecovery();
     router.replace('/command-center');
   };
 
   const fullName = user?.user_metadata?.full_name ?? user?.email ?? 'User';
+
+  // No session: the reset link was expired, already used, or the user landed
+  // here directly. Without a session updateUser() can only fail ("Auth session
+  // missing!"), so show guidance instead of a dead form.
+  if (!authLoading && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8" style={{ background: '#0f1623' }}>
+        <div className="w-full max-w-[420px]">
+          <div className="flex items-center gap-2.5 mb-10">
+            <img src="/logo-mark-white.png" alt="Xyrenis" className="h-9 w-auto object-contain" />
+          </div>
+
+          <div className="mb-6 px-4 py-3.5 rounded-xl" style={{ background: '#3a1a1a', border: '1px solid #5a2a2a' }}>
+            <p className="text-[13px] font-semibold mb-0.5" style={{ color: '#f87171' }}>Reset link expired or invalid</p>
+            <p className="text-[12px]" style={{ color: '#8ca4c0' }}>
+              Password reset links can only be used once and expire after a short time.
+              Please request a new link to continue.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => router.replace('/login')}
+            className="w-full py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all cursor-pointer"
+            style={{ background: '#e86c2d' }}
+          >
+            Request a new reset link
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8" style={{ background: '#0f1623' }}>

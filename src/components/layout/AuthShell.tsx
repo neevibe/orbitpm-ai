@@ -15,7 +15,7 @@ const AUTH_PATHS = ['/login', '/change-password'];
 const HOME = '/command-center';
 
 function Shell({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, passwordRecovery } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -23,6 +23,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const isAuthPath = AUTH_PATHS.includes(pathname);
   const isLanding = pathname === '/';
   const mustChangePassword = user?.user_metadata?.must_change_password === true;
+  const inRecovery = passwordRecovery === 'active';
 
   const [playReveal, setPlayReveal] = useState(false);
   const [fadingOut, setFadingOut] = useState(false);
@@ -51,6 +52,19 @@ function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
+    // Password-recovery link: the emailed tokens can land the user anywhere
+    // (Supabase falls back to the Site URL when the redirect isn't
+    // allow-listed) — route them to the reset form from wherever they arrived.
+    if (user && inRecovery && pathname !== '/change-password') {
+      router.replace('/change-password');
+      return;
+    }
+    // Expired/used recovery link: show them the guidance on /change-password
+    // (the page clears the flag once displayed, so this fires at most once).
+    if (!user && passwordRecovery === 'expired' && pathname !== '/change-password') {
+      router.replace('/change-password');
+      return;
+    }
     // Unauthenticated visitors may see standalone pages (landing/login); everything else → login
     if (!user && !isStandalone) {
       router.replace('/login');
@@ -61,11 +75,12 @@ function Shell({ children }: { children: React.ReactNode }) {
       router.replace('/change-password');
       return;
     }
-    // Logged-in users shouldn't sit on login/change-password (once password is set)
-    if (user && !mustChangePassword && isAuthPath) {
+    // Logged-in users shouldn't sit on login/change-password (once password is
+    // set) — unless they're mid password-recovery, which needs the form.
+    if (user && !mustChangePassword && !inRecovery && isAuthPath) {
       router.replace(HOME);
     }
-  }, [user, loading, isStandalone, isAuthPath, isLanding, mustChangePassword, pathname, router]);
+  }, [user, loading, isStandalone, isAuthPath, isLanding, mustChangePassword, inRecovery, passwordRecovery, pathname, router]);
 
   // Logo Reveal Animation Overlay
   if (playReveal) {
