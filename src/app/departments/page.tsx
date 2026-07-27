@@ -6,7 +6,6 @@ import { Building2, ChevronRight, X, Save, AlertTriangle, Zap, ArrowLeft, Edit3,
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import ProjectModal from '@/components/modals/ProjectModal';
-
 import type { Project } from '@/lib/mock-data';
 
 const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On Hold'] as const;
