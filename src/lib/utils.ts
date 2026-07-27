@@ -99,6 +99,37 @@ export function parseINR(input: string | number | null | undefined): number | nu
   return Number.isNaN(n) ? null : n * mult;
 }
 
+/**
+ * Does a project's free-text `owner` field refer to the given user?
+ *
+ * Owner strings come from the imported spreadsheet and are messy: several
+ * names separated by "/" or ",", first names only ("Avishek"), or partial
+ * names ("George Kuruvilla" for "George Bennet Kuruvilla"). Strict equality
+ * against the user's full name locks real owners out of their own projects,
+ * so each listed owner matches when all of its words appear in the user's
+ * full name, or when it equals the user's email prefix.
+ */
+export function isProjectOwner(
+  owner: string | null | undefined,
+  fullName: string | null | undefined,
+  email?: string | null,
+): boolean {
+  if (!owner) return false;
+  const nameWords = (fullName ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+  const emailPrefix = (email ?? '').toLowerCase().split('@')[0];
+
+  return owner
+    .toLowerCase()
+    .split(/[/,&+]|\band\b/)
+    .map(t => t.trim())
+    .filter(Boolean)
+    .some(token => {
+      if (emailPrefix && token === emailPrefix) return true;
+      if (nameWords.length === 0) return false;
+      return token.split(/\s+/).every(w => nameWords.includes(w));
+    });
+}
+
 export function daysUntil(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
   try {
