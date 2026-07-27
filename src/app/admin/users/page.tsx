@@ -179,7 +179,16 @@ export default function UserManagementPage() {
             </thead>
             <tbody>
               {fetching ? (
-                <tr><td colSpan={7} className="py-16 text-center text-[#94a3b8]"><Loader2 className="w-5 h-5 animate-spin inline" /></td></tr>
+                // skeleton rows mimic the final table layout — no layout shift
+                Array.from({ length: 6 }, (_, i) => (
+                  <tr key={`skeleton-${i}`}>
+                    {Array.from({ length: 7 }, (_, j) => (
+                      <td key={j} className="px-4 py-3 border-b border-[#f1f5f9]">
+                        <div className={`x-skeleton h-3.5 ${j === 0 ? 'w-36' : 'w-20'}`} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : filtered.map(u => {
                 const isAdminRole = ['cco', 'admin', 'super_admin'].includes(u.role);
                 return (

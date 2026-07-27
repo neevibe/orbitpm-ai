@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured, getAccessToken } from './supabase';
 import { useAuth } from './auth-context';
 import { generateProjectId, daysUntil, normalizeProjectStatus } from './utils';
+import { toast } from '@/components/ui/Toaster';
 import {
   projects as initialProjects,
   departments as initialDepartments,
@@ -204,7 +205,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }, ...prev]);
   }, []);
 
+  // Forward ref so archiveProject's Undo toast can call restoreProject,
+  // which is defined further down (would otherwise be a use-before-declare).
+  const restoreRef = useRef<((id: string) => void) | null>(null);
+
   // ---- Auto-notify helper ----
+  // Every notification also surfaces as a non-blocking bottom-right toast, so
+  // CRUD feedback is immediate without opening the bell. Toasts sharing the
+  // same title replace each other instead of stacking (rapid edits).
   const notify = useCallback((title: string, message: string, type: Notification['type'] = 'info') => {
     setNotifications(prev => [{
       id: Date.now(),
@@ -214,6 +222,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       time: 'Just now',
       read: false,
     }, ...prev]);
+    toast({
+      kind: type === 'success' ? 'success' : type === 'warning' || type === 'critical' ? 'error' : 'info',
+      text: title === 'Not saved to server' ? `${title} — ${message}` : title,
+      key: title,
+    });
   }, []);
 
   // A failed server save must be loud: local state already shows the change,
@@ -548,6 +561,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (project) {
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: project.name, changes: { archived: { old: false, new: true } } });
       notify('Project Archived', `${project.name} moved to history. Can be restored anytime.`, 'info');
+      // destructive action → toast with inline Undo (restores from history)
+      toast({ kind: 'info', text: `"${project.name}" archived`, undo: () => restoreRef.current?.(id) });
 
       // Fan out a notification to every department that had a mirror of this
       // project via a dependency, so dependent teams aren't surprised when the
@@ -600,6 +615,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       persistProjectMutation({ action: 'restore', project: { id }, audit: { entityName: project?.name } }, saveFailed(`Restoring "${project?.name ?? id}"`));
     }
   }, [projects, logAudit, notify, canModifyDepartment, saveFailed]);
+
+  useEffect(() => { restoreRef.current = restoreProject; }, [restoreProject]);
 
   // Permanent delete — only from archived projects
   const purgeProject = useCallback((id: string) => {

@@ -301,16 +301,28 @@ export default function CommandCenter() {
         </div>
       </div>
 
-      {/* Hero KPI Row */}
+      {/* Hero KPI Row — every card carries Title/Icon, Primary Value and a
+          semantic delta computed from live data (no fabricated trends) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: 'Total Projects', value: localKpi.totalProjects, icon: BarChart3, accent: '#6366f1', filterType: 'all', filterFn: () => true },
-          { label: 'Active', value: localKpi.inProgress, icon: Rocket, accent: '#3b82f6', trend: { dir: 'up', pct: '12%' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
-          { label: 'Completed', value: localKpi.completed, icon: CheckCircle2, accent: '#10b981', trend: { dir: 'up', pct: `${pctComplete}%` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
-          { label: 'Delayed', value: localKpi.delayed, icon: XCircle, accent: '#ef4444', trend: localKpi.delayed > 0 ? { dir: 'down', pct: `${localKpi.delayed}` } : null, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
-          { label: 'Avg Progress', value: `${avgProgress}%`, icon: Target, accent: '#8b5cf6', trend: null, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
-          { label: 'Open Risks', value: localKpi.openRisks, icon: Shield, accent: '#f59e0b', trend: localKpi.openRisks > 3 ? { dir: 'down', pct: `${localKpi.openRisks}` } : null, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
-        ].map((m, i) => {
+        {(() => {
+          const thisMonth = new Date().toISOString().slice(0, 7);
+          const newThisMonth = activeProjects.filter(p => p.startDate?.startsWith(thisMonth)).length;
+          const dueSoon = activeProjects.filter(p => {
+            if (p.status === 'Completed') return false;
+            const d = daysUntil(p.targetDate);
+            return d !== null && d >= 0 && d <= 7;
+          }).length;
+          const stalled = activeProjects.filter(p => p.status === 'In Progress' && p.progress === 0).length;
+          const delayedPct = localKpi.totalProjects ? Math.round((localKpi.delayed / localKpi.totalProjects) * 100) : 0;
+          return [
+            { label: 'Total Projects', value: localKpi.totalProjects, icon: BarChart3, accent: '#6366f1', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
+            { label: 'Active', value: localKpi.inProgress, icon: Rocket, accent: '#3b82f6', trend: { tone: dueSoon > 0 ? 'warn' : 'flat', text: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
+            { label: 'Completed', value: localKpi.completed, icon: CheckCircle2, accent: '#10b981', trend: { tone: 'up', text: `${pctComplete}% of portfolio` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
+            { label: 'Delayed', value: localKpi.delayed, icon: XCircle, accent: '#ef4444', trend: { tone: localKpi.delayed > 0 ? 'down' : 'up', text: localKpi.delayed > 0 ? `${delayedPct}% of portfolio` : 'all on schedule' }, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
+            { label: 'Avg Progress', value: `${avgProgress}%`, icon: Target, accent: '#8b5cf6', trend: { tone: stalled > 0 ? 'warn' : 'flat', text: stalled > 0 ? `${stalled} stalled at 0%` : 'steady pace' }, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
+            { label: 'Open Risks', value: localKpi.openRisks, icon: Shield, accent: '#f59e0b', trend: { tone: highRisks.length > 0 ? 'down' : 'flat', text: highRisks.length > 0 ? `${highRisks.length} high impact` : 'low exposure' }, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
+          ];
+        })().map((m, i) => {
           const isSelected = activeFilter?.type === 'kpi' && activeFilter.label === m.label;
           const isDimmed = activeFilter && !isSelected && !(activeFilter.type === 'kpi' && m.filterType === 'all');
           
@@ -337,15 +349,14 @@ export default function CommandCenter() {
             >
               <div className="flex items-center justify-between mb-2">
                 <m.icon className="w-4 h-4" style={{ color: m.accent }} />
-                {m.trend && (
-                  <span className={`x-metric-trend ${m.trend.dir === 'up' ? 'up' : 'down'}`}>
-                    {m.trend.dir === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                    {m.trend.pct}
-                  </span>
-                )}
               </div>
               <p className="x-metric-value">{m.value}</p>
               <p className="x-metric-label">{m.label}</p>
+              <span className={`x-metric-trend ${m.trend.tone}`}>
+                {m.trend.tone === 'up' && <ArrowUpRight className="w-3 h-3" />}
+                {m.trend.tone === 'down' && <ArrowDownRight className="w-3 h-3" />}
+                {m.trend.text}
+              </span>
             </button>
           );
         })}
@@ -384,11 +395,12 @@ export default function CommandCenter() {
                       }
                     }}
                     className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                      isSelected ? 'ring-2 ring-indigo-500 scale-[1.01] shadow-md bg-white border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
+                      isSelected ? 'ring-2 ring-indigo-500 scale-[1.01] shadow-md bg-[var(--color-x-surface)] border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
                     } ${isDimmed ? 'opacity-40' : 'opacity-100'} ${
-                      insight.severity === 'critical' ? 'bg-red-50/60 border-red-100 hover:bg-red-50' :
-                      insight.severity === 'warning' ? 'bg-amber-50/60 border-amber-100 hover:bg-amber-50' :
-                      insight.severity === 'success' ? 'bg-emerald-50/60 border-emerald-100 hover:bg-emerald-50' : 'bg-blue-50/60 border-blue-100 hover:bg-blue-50'
+                      // translucent severity tints read correctly on light AND dark surfaces
+                      insight.severity === 'critical' ? 'bg-red-500/10 border-red-500/20 hover:bg-red-500/15' :
+                      insight.severity === 'warning' ? 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15' :
+                      insight.severity === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15' : 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15'
                     }`}
                   >
                     <div className="flex items-start gap-2">

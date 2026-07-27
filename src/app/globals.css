@@ -50,19 +50,35 @@
    ================================================ */
 
 :root {
-  --sidebar-w: 248px;
+  --sidebar-w: 212px;
   --topbar-h: 52px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration: 180ms;
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --duration: 200ms;
+  /* macOS-style elevation: each level layers a tight contact shadow, a mid
+     ambient shadow and a soft distant one, so cards feel lifted, not outlined. */
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 1px rgb(15 23 42 / 0.03), 0 2px 4px rgb(15 23 42 / 0.04), 0 4px 8px -2px rgb(15 23 42 / 0.03);
+  --shadow-md: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 8px -2px rgb(15 23 42 / 0.05), 0 10px 20px -5px rgb(15 23 42 / 0.06);
+  --shadow-lg: 0 2px 4px rgb(15 23 42 / 0.04), 0 8px 16px -4px rgb(15 23 42 / 0.06), 0 20px 40px -8px rgb(15 23 42 / 0.08);
+  --shadow-xl: 0 4px 8px rgb(15 23 42 / 0.05), 0 12px 24px -6px rgb(15 23 42 / 0.08), 0 32px 64px -12px rgb(15 23 42 / 0.12);
+}
+
+/* Collapsed left rail: icon-only width, driven from a single root attribute so
+   the sidebar, topbar and content margin all move together. */
+[data-sidebar="collapsed"] {
+  --sidebar-w: 64px;
+}
+
+[data-theme="dark"] {
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 1px rgb(0 0 0 / 0.25), 0 2px 4px rgb(0 0 0 / 0.3), 0 4px 8px -2px rgb(0 0 0 / 0.25);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 10px 20px -5px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 16px -4px rgb(0 0 0 / 0.4), 0 20px 40px -8px rgb(0 0 0 / 0.45);
+  --shadow-xl: 0 4px 8px rgb(0 0 0 / 0.35), 0 12px 24px -6px rgb(0 0 0 / 0.45), 0 32px 64px -12px rgb(0 0 0 / 0.55);
 }
 
 [data-theme="dark"] {
@@ -150,10 +166,11 @@ body {
   border-color: var(--color-x-border-hover);
   box-shadow: var(--shadow-sm);
 }
-.x-card-interactive { cursor: pointer; }
+.x-card-interactive { cursor: pointer; transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease); }
 .x-card-interactive:hover {
   border-color: var(--color-x-accent);
-  box-shadow: 0 0 0 1px var(--color-x-accent), var(--shadow-sm);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .x-card-flush {
@@ -190,8 +207,14 @@ body {
 .x-metric-value { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--color-x-text); }
 .x-metric-label { font-size: 11px; font-weight: 600; color: var(--color-x-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
 .x-metric-trend { font-size: 11px; font-weight: 600; margin-top: 6px; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; }
-.x-metric-trend.up { background: #d1fae5; color: #059669; }
-.x-metric-trend.down { background: #fee2e2; color: #dc2626; }
+.x-metric-trend.up { background: #d1fae5; color: #047857; }
+.x-metric-trend.down { background: #fee2e2; color: #b91c1c; }
+.x-metric-trend.warn { background: #fef3c7; color: #92400e; }
+.x-metric-trend.flat { background: #f3f4f6; color: #4b5563; }
+[data-theme="dark"] .x-metric-trend.up { background: rgba(16,185,129,0.15); color: #34d399; }
+[data-theme="dark"] .x-metric-trend.down { background: rgba(239,68,68,0.15); color: #f87171; }
+[data-theme="dark"] .x-metric-trend.warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
+[data-theme="dark"] .x-metric-trend.flat { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
 /* ================================================
    TABLES
@@ -552,6 +575,69 @@ body {
   /* Tables: keep header with content, avoid splitting rows */
   thead { display: table-header-group !important; }
   tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+}
+
+/* ================================================
+   SKELETON LOADERS — mimic final layout, no spinners
+   ================================================ */
+
+.x-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-x-border) 55%, transparent);
+}
+.x-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-x-surface) 60%, transparent), transparent);
+  animation: x-shimmer 1.6s var(--ease) infinite;
+}
+@keyframes x-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* ================================================
+   TOASTS — non-blocking, bottom-right, auto-dismiss
+   ================================================ */
+
+.x-toast-viewport {
+  position: fixed;
+  /* sits above the Xyro launcher (72px + margins) so they never collide */
+  bottom: 108px;
+  right: 20px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  pointer-events: none;
+}
+.x-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-x-border);
+  background: var(--color-x-surface);
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  color: var(--color-x-text);
+  animation: x-toast-in 0.3s var(--ease) both;
+}
+.x-toast.leaving { animation: x-toast-out 0.25s var(--ease) both; }
+@keyframes x-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes x-toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.97); }
 }
 
 /* ============================================================
