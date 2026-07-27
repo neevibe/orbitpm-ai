@@ -2,16 +2,17 @@
 
 import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Clock, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, Save, X, Trash2, IndianRupee, ListTodo, Plus, LayoutGrid, BarChartHorizontal } from 'lucide-react';
+import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, X, Trash2, IndianRupee, ListTodo, Plus, LayoutGrid, BarChartHorizontal } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import NotesLog from '@/components/NotesLog';
+import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
-import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
-import { departmentDisplayName, resolveHierarchy, TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
+import { formatDate, getStatusColor, formatINR } from '@/lib/utils';
+import { resolveHierarchy } from '@/lib/org-structure';
 import { useToast, useConfirm } from '@/components/ui';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
 import { getAccessToken } from '@/lib/supabase';
-import type { Project, Allocation, ClassifiedDependency } from '@/lib/mock-data';
+import type { Allocation, ClassifiedDependency } from '@/lib/mock-data';
 
 // Unique departments from the employee master, for the task-assignment picker.
 const EMPLOYEE_DEPARTMENTS = Array.from(new Set(BIAL_EMPLOYEES.map(e => e.department))).sort();
@@ -20,8 +21,6 @@ import KanbanBoard, { Task } from '@/components/project/KanbanBoard';
 import GanttChart from '@/components/project/GanttChart';
 import RaciMatrix from '@/components/project/RaciMatrix';
 
-const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
-const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
 
 const generateTaskId = () => Math.random().toString(36).substr(2, 9);
 
@@ -34,8 +33,7 @@ export default function ProjectDetailPage() {
   const project = projects.find(p => p.id === projectId);
   const projectRisks = risks.filter(r => r.projectId === projectId);
   const [activeTab, setActiveTab] = useState('overview');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<Partial<Project>>({});
+  const [showEditModal, setShowEditModal] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskAssignType, setNewTaskAssignType] = useState<'internal' | 'external'>('internal');
@@ -67,8 +65,7 @@ export default function ProjectDetailPage() {
     </div>
   );
 
-  const startEdit = () => { setEditForm({ ...project }); setIsEditing(true); };
-  const saveEdit = () => { updateProject(project.id, editForm); setIsEditing(false); };
+
   const handleDelete = async () => {
     if (await confirm({ title: 'Delete project?', message: `"${project.name}" will be moved to history. You can restore it anytime.`, confirmText: 'Delete', tone: 'danger' })) {
       deleteProject(project.id);
@@ -252,24 +249,15 @@ export default function ProjectDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1.5">
             <span className="text-[12px] font-mono font-semibold text-indigo-600 tracking-wider bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{project.id}</span>
-            {isEditing ? (
-              <select value={editForm.status || project.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as any }))} className="x-input py-1 text-[12px] w-32">
-                {statusOptions.map(s => <option key={s}>{s}</option>)}</select>
-            ) : <span className={`x-badge ${getStatusColor(project.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(project.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(project.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(project.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{project.status}</span>}
-            {isEditing ? (
-              <select value={editForm.priority || project.priority} onChange={e => setEditForm(f => ({ ...f, priority: e.target.value as any }))} className="x-input py-1 text-[12px] w-32">
-                {priorityOptions.map(p => <option key={p}>{p}</option>)}</select>
-            ) : <span className={`x-priority-${project.priority.toLowerCase()}`}>{project.priority}</span>}
+            <span className={`x-badge ${getStatusColor(project.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(project.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(project.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(project.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{project.status}</span>
+            <span className={`x-priority-${project.priority.toLowerCase()}`}>{project.priority}</span>
           </div>
-          {isEditing ? <input value={editForm.name || ''} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="text-2xl font-bold text-[var(--color-x-text)] bg-transparent border-b-2 border-indigo-500 outline-none w-full pb-1" />
-            : <h1 className="text-2xl font-bold text-[var(--color-x-text)] tracking-tight">{project.name}</h1>}
+          <h1 className="text-2xl font-bold text-[var(--color-x-text)] tracking-tight">{project.name}</h1>
         </div>
         <div className="flex items-center gap-2">
-          {isEditing ? (<><button onClick={() => setIsEditing(false)} className="x-btn x-btn-secondary"><X className="w-4 h-4" /> Cancel</button>
-            <button onClick={saveEdit} className="x-btn x-btn-primary"><Save className="w-4 h-4" /> Save</button></>
-          ) : (<><button onClick={handleDelete} className="p-2.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 transition-all border border-red-100"><Trash2 className="w-4 h-4" /></button>
-            <button onClick={openSplitWizard} className="x-btn x-btn-secondary"><Target className="w-4 h-4" /> Split Project</button>
-            <button onClick={startEdit} className="x-btn x-btn-secondary"><Edit3 className="w-4 h-4" /> Edit</button></>)}
+          <button onClick={handleDelete} className="p-2.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 transition-all border border-red-100"><Trash2 className="w-4 h-4" /></button>
+          <button onClick={openSplitWizard} className="x-btn x-btn-secondary"><Target className="w-4 h-4" /> Split Project</button>
+          <button onClick={() => setShowEditModal(true)} className="x-btn x-btn-primary"><Edit3 className="w-4 h-4" /> Edit</button>
         </div>
       </div>
 
@@ -277,64 +265,32 @@ export default function ProjectDetailPage() {
         {/* Owner */}
         <div className="x-card p-4 hover:border-indigo-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><User className="w-4 h-4 text-indigo-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Owner</span></div>
-          {isEditing
-            ? <input value={editForm.owner || ''} onChange={e => setEditForm(f => ({ ...f, owner: e.target.value }))} className="x-input py-1.5 text-[13px]" placeholder="Project owner" />
-            : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{project.owner || '—'}</p>}
+          <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{project.owner || '—'}</p>
         </div>
 
         {/* Department + Subdivision */}
         <div className="x-card p-4 hover:border-indigo-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Building2 className="w-4 h-4 text-purple-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Department</span></div>
-          {isEditing ? (
-            <div className="space-y-1.5">
-              <select
-                value={editForm.department ?? project.department}
-                onChange={e => setEditForm(f => ({ ...f, department: e.target.value, subdivision: null }))}
-                className="x-input py-1.5 text-[12px] w-full"
-              >
-                {TOP_LEVEL_DEPARTMENTS.map(d => (
-                  <option key={d} value={d}>{departmentDisplayName(d)}</option>
-                ))}
-              </select>
-              {hasSubdivisions(editForm.department ?? project.department) && (
-                <select
-                  value={editForm.subdivision ?? project.subdivision ?? ''}
-                  onChange={e => setEditForm(f => ({ ...f, subdivision: e.target.value || null }))}
-                  className="x-input py-1.5 text-[12px] w-full"
-                >
-                  <option value="">Select subdivision…</option>
-                  {getSubdivisions(editForm.department ?? project.department).map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-          ) : (
-            (() => {
-              const h = resolveHierarchy(project.department, project.subdivision);
-              return (
-                <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">
-                  {h.verticalDisplay}{h.subdivision ? ` ↳ ${h.subdivision}` : ''}
-                </p>
-              );
-            })()
-          )}
+          {(() => {
+            const h = resolveHierarchy(project.department, project.subdivision);
+            return (
+              <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">
+                {h.verticalDisplay}{h.subdivision ? ` ↳ ${h.subdivision}` : ''}
+              </p>
+            );
+          })()}
         </div>
 
         {/* Start Date */}
         <div className="x-card p-4 hover:border-indigo-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Calendar className="w-4 h-4 text-emerald-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Start Date</span></div>
-          {isEditing
-            ? <input type="date" value={editForm.startDate ?? project.startDate ?? ''} onChange={e => setEditForm(f => ({ ...f, startDate: e.target.value }))} className="x-input py-1.5 text-[12px]" />
-            : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.startDate) || '—'}</p>}
+          <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.startDate) || '—'}</p>
         </div>
 
         {/* Target Date */}
         <div className="x-card p-4 hover:border-indigo-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-amber-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Target Date</span></div>
-          {isEditing
-            ? <input type="date" value={editForm.targetDate ?? project.targetDate ?? ''} onChange={e => setEditForm(f => ({ ...f, targetDate: e.target.value }))} className="x-input py-1.5 text-[12px]" />
-            : <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.targetDate) || '—'}</p>}
+          <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.targetDate) || '—'}</p>
         </div>
 
         {/* Open Risks (computed) */}
@@ -349,41 +305,21 @@ export default function ProjectDetailPage() {
         {/* Total Budget */}
         <div className="x-card p-4 border border-indigo-100 bg-indigo-50/40">
           <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-indigo-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Total Budget</span></div>
-          {isEditing ? (
-            <input
-              type="text"
-              value={editForm.totalBudget != null ? String(editForm.totalBudget) : ''}
-              onChange={e => setEditForm(f => ({ ...f, totalBudget: parseINR(e.target.value) }))}
-              placeholder="e.g. 25,00,000 or 2.5 Cr"
-              className="x-input py-1 text-[14px] font-bold text-indigo-600 bg-white"
-            />
-          ) : (
-            <p className="text-[18px] font-bold text-indigo-600">{formatINR(project.totalBudget ?? null)}</p>
-          )}
+          <p className="text-[18px] font-bold text-indigo-600">{formatINR(project.totalBudget ?? null)}</p>
         </div>
 
         {/* Utilized Budget */}
         <div className="x-card p-4 border border-amber-100 bg-amber-50/40">
           <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-amber-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Utilized Budget</span></div>
-          {isEditing ? (
-            <input
-              type="text"
-              value={editForm.utilizedBudget != null ? String(editForm.utilizedBudget) : ''}
-              onChange={e => setEditForm(f => ({ ...f, utilizedBudget: parseINR(e.target.value) }))}
-              placeholder="e.g. 15,00,000"
-              className="x-input py-1 text-[14px] font-bold text-amber-600 bg-white"
-            />
-          ) : (
-            <p className="text-[18px] font-bold text-amber-600">{formatINR(project.utilizedBudget ?? null)}</p>
-          )}
+          <p className="text-[18px] font-bold text-amber-600">{formatINR(project.utilizedBudget ?? null)}</p>
         </div>
 
         {/* Balance Budget (always computed) */}
         <div className="x-card p-4 border border-emerald-100 bg-emerald-50/40">
           <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-emerald-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Balance Budget</span></div>
           {(() => {
-            const total = (isEditing ? editForm.totalBudget : project.totalBudget) ?? null;
-            const used = (isEditing ? editForm.utilizedBudget : project.utilizedBudget) ?? null;
+            const total = project.totalBudget ?? null;
+            const used = project.utilizedBudget ?? null;
             const bal = (total != null || used != null) ? (total || 0) - (used || 0) : null;
             return <p className="text-[18px] font-bold text-emerald-600">{formatINR(bal)}</p>;
           })()}
@@ -393,15 +329,11 @@ export default function ProjectDetailPage() {
       <div className="x-card p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Execution Progress</h3>
-          {isEditing ? (
-            <div className="flex items-center gap-4">
-              <input type="range" min="0" max="100" value={editForm.progress ?? project.progress} onChange={e => setEditForm(f => ({ ...f, progress: Number(e.target.value) }))} className="w-48 accent-indigo-600" />
-              <span className="text-xl font-bold text-[var(--color-x-text)] w-12 text-right">{editForm.progress ?? project.progress}%</span></div>
-          ) : <span className="text-xl font-bold text-[var(--color-x-text)]">{project.progress}%</span>}
+          <span className="text-xl font-bold text-[var(--color-x-text)]">{project.progress}%</span>
         </div>
         <div className="w-full h-3 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-full overflow-hidden shadow-inner">
-          <div className={`h-full rounded-full transition-all duration-500 ${(isEditing ? editForm.progress ?? project.progress : project.progress) >= 80 ? 'bg-emerald-500' : (isEditing ? editForm.progress ?? project.progress : project.progress) >= 50 ? 'bg-indigo-500' : (isEditing ? editForm.progress ?? project.progress : project.progress) > 0 ? 'bg-purple-500' : 'bg-[var(--color-x-border)]'}`}
-            style={{ width: `${Math.max(isEditing ? editForm.progress ?? project.progress : project.progress, 2)}%` }} />
+          <div className={`h-full rounded-full transition-all duration-500 ${project.progress >= 80 ? 'bg-emerald-500' : project.progress >= 50 ? 'bg-indigo-500' : project.progress > 0 ? 'bg-purple-500' : 'bg-[var(--color-x-border)]'}`}
+            style={{ width: `${Math.max(project.progress, 2)}%` }} />
         </div>
       </div>
 
@@ -437,18 +369,15 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
             )}
-            {(project.objective || isEditing) && (
+            {project.objective && (
               <div className="x-card p-5"><h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-2">Business Objective</h3>
-                {isEditing ? <textarea value={editForm.objective || ''} onChange={e => setEditForm(f => ({ ...f, objective: e.target.value }))} rows={2} className="x-input resize-none" />
-                  : <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.objective}</p>}</div>)}
-            {(project.kpi || isEditing) && (
+                <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.objective}</p></div>)}
+            {project.kpi && (
               <div className="x-card p-5"><h3 className="text-[13px] font-bold text-emerald-600 mb-2">Key Performance Indicators</h3>
-                {isEditing ? <textarea value={editForm.kpi || ''} onChange={e => setEditForm(f => ({ ...f, kpi: e.target.value }))} rows={2} className="x-input resize-none" />
-                  : <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.kpi}</p>}</div>)}
-            {(project.risks || isEditing) && (
+                <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.kpi}</p></div>)}
+            {project.risks && (
               <div className="x-card p-5 border-amber-200 bg-amber-50/30"><h3 className="text-[13px] font-bold text-amber-700 mb-2 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /> Key Risks Summary</h3>
-                {isEditing ? <textarea value={editForm.risks || ''} onChange={e => setEditForm(f => ({ ...f, risks: e.target.value }))} rows={2} className="x-input resize-none" />
-                  : <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.risks}</p>}</div>)}
+                <p className="text-[13px] text-[var(--color-x-text-secondary)] leading-relaxed">{project.risks}</p></div>)}
             <div className="x-card p-5"><h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3">Notes <span className="text-[11px] font-normal text-[var(--color-x-text-muted)]">— timestamped log</span></h3>
               <NotesLog value={project.notes || ''} onAdd={next => updateProject(project.id, { notes: next })} /></div>
           </div>
@@ -463,30 +392,16 @@ export default function ProjectDetailPage() {
               </p>
             </div>
             
-            {(project.supportTeam || isEditing) && (
+            {project.supportTeam && (
               <div className="x-card p-5">
                 <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-2">Supporting Team</h3>
-                {isEditing ? <input value={editForm.supportTeam || ''} onChange={e => setEditForm(f => ({ ...f, supportTeam: e.target.value }))} className="x-input" placeholder="e.g. IT, Vendors..." />
-                  : <p className="text-[12px] text-[var(--color-x-text-secondary)] font-medium">{project.supportTeam}</p>}
+                <p className="text-[12px] text-[var(--color-x-text-secondary)] font-medium">{project.supportTeam}</p>
               </div>
             )}
             
             <div className="x-card p-5 border-emerald-100">
               <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><IndianRupee className="w-4 h-4 text-emerald-500" /> Financials (₹)</h3>
-              {isEditing ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Total Budget</label>
-                    <input type="text" value={editForm.totalBudget != null ? String(editForm.totalBudget) : ''} onChange={e => setEditForm(f => ({ ...f, totalBudget: parseINR(e.target.value) }))} className="x-input py-1.5 text-[12px]" placeholder="e.g. 2500000 or 2.5 Cr" />
-                    <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(String(editForm.totalBudget)))}</p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Utilized Budget</label>
-                    <input type="text" value={editForm.utilizedBudget != null ? String(editForm.utilizedBudget) : ''} onChange={e => setEditForm(f => ({ ...f, utilizedBudget: parseINR(e.target.value) }))} className="x-input py-1.5 text-[12px]" placeholder="e.g. 15,00,000" />
-                    <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(String(editForm.utilizedBudget)))}</p>
-                  </div>
-                </div>
-              ) : (
+              {(
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-end mb-1">
@@ -520,14 +435,6 @@ export default function ProjectDetailPage() {
                 </div>
               )}
             </div>
-            
-            {/* Legacy dependency string visualization (if any and not migrated) */}
-            {(project.projectDependencies && !project.detailedDependencies?.length && isEditing) && (
-              <div className="x-card p-5">
-                <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-2">Legacy Dependencies</h3>
-                <input value={editForm.projectDependencies || ''} onChange={e => setEditForm(f => ({ ...f, projectDependencies: e.target.value }))} className="x-input" placeholder="e.g. PRDIGI_03..." />
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -768,6 +675,9 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Edit uses the SAME shared form as Create and every other view */}
+      <ProjectModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} editProject={project} />
 
       {/* Split Project Wizard */}
       {isSplitWizardOpen && (
