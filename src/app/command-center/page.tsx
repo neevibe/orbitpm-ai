@@ -365,154 +365,9 @@ export default function CommandCenter() {
 
 
 
-      {/* Main Grid — 3 columns */}
-      <div className="grid grid-cols-12 gap-4">
-        {/* AI Recommendations — left col */}
-        <div className="col-span-12 lg:col-span-4 space-y-3">
-          <div className="x-card p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5 text-white" />
-              </div>
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">AI Recommendations</h3>
-            </div>
-            <div className="space-y-2">
-              {aiInsights.map((insight, i) => {
-                const isSelected = activeFilter?.type === 'ai' && activeFilter.label === insight.title;
-                const isDimmed = activeFilter?.type === 'ai' && activeFilter.label !== insight.title;
-
-                return (
-                  <div
-                    key={i}
-                    onClick={() => {
-                      if (isSelected) {
-                        setActiveFilter(null);
-                      } else {
-                        setActiveFilter({
-                          type: 'ai',
-                          label: insight.title,
-                          filterFn: insight.filterFn
-                        });
-                      }
-                    }}
-                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                      isSelected ? 'ring-2 ring-blue-500 scale-[1.01] shadow-md bg-[var(--color-x-surface)] border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
-                    } ${isDimmed ? 'opacity-40' : 'opacity-100'} ${
-                      // translucent severity tints read correctly on light AND dark surfaces
-                      insight.severity === 'critical' ? 'bg-red-500/10 border-red-500/20 hover:bg-red-500/15' :
-                      insight.severity === 'warning' ? 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15' :
-                      insight.severity === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15' : 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        insight.severity === 'critical' ? 'bg-red-500' :
-                        insight.severity === 'warning' ? 'bg-amber-500' :
-                        insight.severity === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
-                      }`} />
-                      <div>
-                        <p className="text-[12px] font-semibold text-[var(--color-x-text)]">{insight.title}</p>
-                        <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">{insight.desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Stuck Projects */}
-          {stuckProjects.length > 0 && (
-            <div className="x-card p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Flame className="w-4 h-4 text-red-500" />
-                <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Stuck Projects</h3>
-                <span className="x-badge x-badge-red text-[9px]">{stuckProjects.length}</span>
-              </div>
-              <div className="space-y-2">
-                {stuckProjects.map(p => (
-                  <div
-                    key={p.id}
-                    onClick={() => openPanel(p)}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all cursor-pointer group"
-                  >
-                    <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-400' : 'bg-blue-400'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-blue-600">{p.name}</p>
-                      <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-x-text-muted)] flex-wrap">
-                        <span className="font-mono">{p.id}</span>
-                        <span>·</span>
-                        <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
-                        <span>·</span>
-                        <span>{p.owner}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateProject(p.id, { dismissedFromStuck: true });
-                        }}
-                        title="Remove from Stuck list"
-                        className="flex items-center justify-center p-1 text-[var(--color-x-text-muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                      <span className={`x-priority-${p.priority.toLowerCase()} text-[9px]`}>{p.priority}</span>
-                      <div
-                        onClick={() => openPanel(p)}
-                        className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 text-blue-600 text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      >
-                        <Edit3 className="w-2.5 h-2.5" /> Edit
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Priority Breakdown */}
-          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
-            </div>
-            <div className="flex-1 flex flex-col justify-between py-1.5">
-              {priorityRadial.map(p => {
-                const pct = filteredProjects.length > 0 ? Math.round((p.value / filteredProjects.length) * 100) : 0;
-                const isSelected = activeFilter?.type === 'priority' && activeFilter.label === p.name;
-                const isDimmed = activeFilter?.type === 'priority' && activeFilter.label !== p.name;
-                return (
-                  <div
-                    key={p.name}
-                    onClick={() => {
-                      if (isSelected) {
-                        setActiveFilter(null);
-                      } else {
-                        setActiveFilter({
-                          type: 'priority',
-                          label: p.name,
-                          filterFn: (project) => project.priority === p.name
-                        });
-                      }
-                    }}
-                    className={`p-1 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
-                      isSelected ? 'ring-1 ring-blue-500 bg-blue-50/20' : ''
-                    } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.name}</span>
-                      <span className="text-[11px] font-bold text-[var(--color-x-text)]">{p.value} <span className="font-normal text-[var(--color-x-text-muted)]">({pct}%)</span></span>
-                    </div>
-                    <div className="x-progress"><div className="x-progress-bar" style={{ width: `${pct}%`, background: p.fill }} /></div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-         </div>
-
-        {/* Center — Charts */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
+      {/* Widget grid — two rows of three equal-height (310px) cards */}
+      <div className="grid grid-cols-12 gap-4 items-stretch">
+        <div className="col-span-12 lg:col-span-4">
           {/* Project Status Distribution */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
@@ -554,7 +409,8 @@ export default function CommandCenter() {
               </ResponsiveContainer>
             </div>
           </div>
-
+        </div>
+        <div className="col-span-12 lg:col-span-4">
           {/* Department Breakdown */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
@@ -613,9 +469,7 @@ export default function CommandCenter() {
             </div>
           </div>
         </div>
-
-        {/* Right col — Status + Priority + Overloaded */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
+        <div className="col-span-12 lg:col-span-4">
           {/* Portfolio Health */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
@@ -685,7 +539,164 @@ export default function CommandCenter() {
               })}
             </div>
           </div>
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <div className="x-card p-5 h-[310px] flex flex-col">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center">
+                <Zap className="w-3.5 h-3.5 text-white" />
+              </div>
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">AI Recommendations</h3>
+            </div>
+            <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
+              {aiInsights.map((insight, i) => {
+                const isSelected = activeFilter?.type === 'ai' && activeFilter.label === insight.title;
+                const isDimmed = activeFilter?.type === 'ai' && activeFilter.label !== insight.title;
 
+                return (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      if (isSelected) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'ai',
+                          label: insight.title,
+                          filterFn: insight.filterFn
+                        });
+                      }
+                    }}
+                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                      isSelected ? 'ring-2 ring-blue-500 scale-[1.01] shadow-md bg-[var(--color-x-surface)] border-transparent' : 'hover:scale-[1.01] hover:shadow-sm'
+                    } ${isDimmed ? 'opacity-40' : 'opacity-100'} ${
+                      // translucent severity tints read correctly on light AND dark surfaces
+                      insight.severity === 'critical' ? 'bg-red-500/10 border-red-500/20 hover:bg-red-500/15' :
+                      insight.severity === 'warning' ? 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15' :
+                      insight.severity === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15' : 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                        insight.severity === 'critical' ? 'bg-red-500' :
+                        insight.severity === 'warning' ? 'bg-amber-500' :
+                        insight.severity === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
+                      }`} />
+                      <div>
+                        <p className="text-[12px] font-semibold text-[var(--color-x-text)]">{insight.title}</p>
+                        <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">{insight.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          {/* Stuck Projects */}
+          {stuckProjects.length === 0 && (
+            <div className="x-card p-5 h-[310px] flex flex-col">
+              <div className="flex items-center gap-2 mb-3">
+                <Flame className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Stuck Projects</h3>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mb-2" />
+                <p className="text-[13px] font-semibold text-[var(--color-x-text)]">Nothing is stuck</p>
+                <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1">No delayed or overdue projects right now.</p>
+              </div>
+            </div>
+          )}
+          {stuckProjects.length > 0 && (
+            <div className="x-card p-5 h-[310px] flex flex-col">
+              <div className="flex items-center gap-2 mb-3">
+                <Flame className="w-4 h-4 text-red-500" />
+                <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Stuck Projects</h3>
+                <span className="x-badge x-badge-red text-[9px]">{stuckProjects.length}</span>
+              </div>
+              <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
+                {stuckProjects.map(p => (
+                  <div
+                    key={p.id}
+                    onClick={() => openPanel(p)}
+                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all cursor-pointer group"
+                  >
+                    <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-400' : 'bg-blue-400'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-blue-600">{p.name}</p>
+                      <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-x-text-muted)] flex-wrap">
+                        <span className="font-mono">{p.id}</span>
+                        <span>·</span>
+                        <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                        <span>·</span>
+                        <span>{p.owner}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateProject(p.id, { dismissedFromStuck: true });
+                        }}
+                        title="Remove from Stuck list"
+                        className="flex items-center justify-center p-1 text-[var(--color-x-text-muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className={`x-priority-${p.priority.toLowerCase()} text-[9px]`}>{p.priority}</span>
+                      <div
+                        onClick={() => openPanel(p)}
+                        className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 text-blue-600 text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <Edit3 className="w-2.5 h-2.5" /> Edit
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          {/* Priority Breakdown */}
+          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
+            </div>
+            <div className="flex-1 flex flex-col justify-between py-1.5">
+              {priorityRadial.map(p => {
+                const pct = filteredProjects.length > 0 ? Math.round((p.value / filteredProjects.length) * 100) : 0;
+                const isSelected = activeFilter?.type === 'priority' && activeFilter.label === p.name;
+                const isDimmed = activeFilter?.type === 'priority' && activeFilter.label !== p.name;
+                return (
+                  <div
+                    key={p.name}
+                    onClick={() => {
+                      if (isSelected) {
+                        setActiveFilter(null);
+                      } else {
+                        setActiveFilter({
+                          type: 'priority',
+                          label: p.name,
+                          filterFn: (project) => project.priority === p.name
+                        });
+                      }
+                    }}
+                    className={`p-1 rounded-lg transition-all cursor-pointer hover:bg-slate-50 ${
+                      isSelected ? 'ring-1 ring-blue-500 bg-blue-50/20' : ''
+                    } ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-medium text-[var(--color-x-text-secondary)]">{p.name}</span>
+                      <span className="text-[11px] font-bold text-[var(--color-x-text)]">{p.value} <span className="font-normal text-[var(--color-x-text-muted)]">({pct}%)</span></span>
+                    </div>
+                    <div className="x-progress"><div className="x-progress-bar" style={{ width: `${pct}%`, background: p.fill }} /></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -749,9 +760,9 @@ export default function CommandCenter() {
         </div>
       )}
 
-      {/* Milestones / Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="x-card p-5">
+      {/* Milestones / Quick Actions — 8/4 split so both cards fill their height */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        <div className="x-card p-5 lg:col-span-8">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-blue-500" /> Upcoming Milestones</h3>
           <div className="space-y-2">
             {filteredProjects
@@ -772,9 +783,9 @@ export default function CommandCenter() {
             ))}
           </div>
         </div>
-        <div className="x-card p-5 bg-gradient-to-br from-blue-50/60 to-sky-50/40 border-blue-100">
+        <div className="x-card p-5 lg:col-span-4 bg-gradient-to-br from-blue-50/60 to-sky-50/40 border-blue-100">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-500" /> Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-2">
             {[
               { label: 'New Project', icon: FolderKanban, color: 'text-blue-500', href: '/projects' },
               { label: 'Log Risk', icon: AlertTriangle, color: 'text-red-500', href: '/risks' },
