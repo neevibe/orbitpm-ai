@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download, Filter } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { getStatusColor, getPriorityColor, formatDate, isProjectOwner } from '@/lib/utils';
+import { getStatusColor, getPriorityColor, formatDate, isProjectOwner, plural } from '@/lib/utils';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyTaskModal from '@/components/modals/DependencyTaskModal';
@@ -606,7 +606,7 @@ export default function ProjectsPage() {
                       <span className="text-[14px] font-bold text-[var(--color-x-text)]">
                         {departmentDisplayName(dept)}
                       </span>
-                      <span className="text-[12px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{deptProjects.length} projects</span>
+                      <span className="text-[12px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{plural(deptProjects.length, 'project')}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); openNew(dept); }}
                         className="ml-auto flex items-center gap-1.5 text-[12px] text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-md font-semibold transition-colors border border-transparent hover:border-indigo-100"
@@ -627,7 +627,7 @@ export default function ProjectsPage() {
                                   {group.name}
                                 </span>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-[11px] font-medium text-[var(--color-x-text-muted)] bg-white px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{group.projects.length} projects</span>
+                                  <span className="text-[11px] font-medium text-[var(--color-x-text-muted)] bg-white px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{plural(group.projects.length, 'project')}</span>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); openNew(dept, (group.name === 'General / Other' || !group.name) ? undefined : group.name); }}
                                     className="text-[11px] text-indigo-600 hover:text-indigo-850 font-semibold flex items-center gap-0.5"
