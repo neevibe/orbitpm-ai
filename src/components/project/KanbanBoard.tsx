@@ -11,6 +11,10 @@ export interface Task {
   id: string;
   name: string;
   assignee: string;
+  /** Email of the assignee — required for external assignees (used for notifications). */
+  assigneeEmail?: string;
+  /** True when the task is assigned to someone outside the organization. */
+  external?: boolean;
   status: KanbanStatus;
   priority: 'Critical' | 'High' | 'Medium' | 'Low';
   dueDate?: string;

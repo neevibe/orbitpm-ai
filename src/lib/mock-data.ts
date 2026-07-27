@@ -112,12 +112,16 @@ export interface Project {
   utilizedBudget?: number | null;    // Utilized Budget (₹)
   /** v2 classified dependencies (internal/external) for analytics. */
   classifiedDependencies?: ClassifiedDependency[];
+  /** User-created task list (shape mirrors components/project/KanbanBoard Task). */
   tasks?: {
     id: string;
     name: string;
     assignee: string;
+    assigneeEmail?: string;
+    external?: boolean;
     allocations?: Allocation[];
-    status: 'Not Started' | 'In Progress' | 'Done';
+    status: string;
+    [key: string]: unknown;
   }[];
 }
 

@@ -9,127 +9,16 @@ import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import { formatDate, getStatusColor, getPriorityColor, formatINR, parseINR, formatINRCompact } from '@/lib/utils';
 import { departmentDisplayName, resolveHierarchy, TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import { useToast, useConfirm } from '@/components/ui';
+import { BIAL_EMPLOYEES } from '@/lib/employee-data';
+import { getAccessToken } from '@/lib/supabase';
 import type { Project, Allocation, ClassifiedDependency } from '@/lib/mock-data';
+
+// Unique departments from the employee master, for the task-assignment picker.
+const EMPLOYEE_DEPARTMENTS = Array.from(new Set(BIAL_EMPLOYEES.map(e => e.department))).sort();
 
 import KanbanBoard, { Task } from '@/components/project/KanbanBoard';
 import GanttChart from '@/components/project/GanttChart';
 import RaciMatrix from '@/components/project/RaciMatrix';
-
-// Generates 5 realistic project deliverables/tasks with dependencies, priorities, dates, and RACI roles
-const generateDefaultTasks = (proj: Project): Task[] => {
-  const cy = new Date().getFullYear();
-  const start = proj.startDate || `${cy}-06-01`;
-  const target = proj.targetDate || `${cy}-09-01`;
-  
-  const startD = new Date(start);
-  const targetD = new Date(target);
-  const diffTime = Math.abs(targetD.getTime() - startD.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  const step = Math.floor(diffDays / 5);
-
-  const d1 = new Date(startD);
-  const d2 = new Date(startD.getTime() + 86400000 * step);
-  const d3 = new Date(startD.getTime() + 86400000 * step * 2);
-  const d4 = new Date(startD.getTime() + 86400000 * step * 3);
-  const d5 = new Date(startD.getTime() + 86400000 * step * 4);
-  const d6 = new Date(targetD);
-
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
-
-  const t1Id = 'TSK-REQ';
-  const t2Id = 'TSK-DES';
-  const t3Id = 'TSK-DEV';
-  const t4Id = 'TSK-REV';
-  const t5Id = 'TSK-DEP';
-
-  return [
-    {
-      id: t1Id,
-      name: 'Requirements & Scoping Specification',
-      assignee: proj.owner,
-      status: 'Completed',
-      priority: 'High',
-      progress: 100,
-      startDate: fmt(d1),
-      endDate: fmt(d2),
-      dueDate: fmt(d2),
-      tags: ['Planning'],
-      responsible: proj.department,
-      accountable: proj.owner,
-      consulted: 'Digital & Data',
-      informed: 'Operations'
-    },
-    {
-      id: t2Id,
-      name: 'Solution Architecture Design & Approval',
-      assignee: 'Anand Viswanath',
-      status: 'Completed',
-      priority: 'High',
-      progress: 100,
-      startDate: fmt(d2),
-      endDate: fmt(d3),
-      dueDate: fmt(d3),
-      tags: ['Design'],
-      dependencies: [t1Id],
-      responsible: 'Digital & Data',
-      accountable: proj.owner,
-      consulted: proj.owner,
-      informed: 'Operations'
-    },
-    {
-      id: t3Id,
-      name: 'System Implementation & Configuration',
-      assignee: 'Musthaq Ahamed',
-      status: 'In Progress',
-      priority: 'Critical',
-      progress: 45,
-      startDate: fmt(d3),
-      endDate: fmt(d4),
-      dueDate: fmt(d4),
-      tags: ['Development'],
-      dependencies: [t2Id],
-      responsible: 'Digital & Data',
-      accountable: proj.owner,
-      consulted: proj.owner,
-      informed: 'Operations'
-    },
-    {
-      id: t4Id,
-      name: 'Testing & Quality Assurance Review',
-      assignee: 'Neeraj Prakash',
-      status: 'To Do',
-      priority: 'Medium',
-      progress: 0,
-      startDate: fmt(d4),
-      endDate: fmt(d5),
-      dueDate: fmt(d5),
-      tags: ['QA'],
-      dependencies: [t3Id],
-      responsible: 'CCO',
-      accountable: proj.owner,
-      consulted: 'Digital & Data',
-      informed: 'Operations'
-    },
-    {
-      id: t5Id,
-      name: 'Deployment & Enterprise Go-Live Launch',
-      assignee: proj.owner,
-      status: 'To Do',
-      priority: 'High',
-      progress: 0,
-      startDate: fmt(d5),
-      endDate: fmt(d6),
-      dueDate: fmt(d6),
-      tags: ['Ops'],
-      dependencies: [t4Id],
-      isMilestone: true,
-      responsible: proj.department,
-      accountable: proj.owner,
-      consulted: 'Operations',
-      informed: 'All'
-    }
-  ];
-};
 
 const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
@@ -149,19 +38,24 @@ export default function ProjectDetailPage() {
   const [editForm, setEditForm] = useState<Partial<Project>>({});
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState('');
+  const [newTaskAssignType, setNewTaskAssignType] = useState<'internal' | 'external'>('internal');
+  const [newTaskDept, setNewTaskDept] = useState('');
+  const [newTaskEmployeeId, setNewTaskEmployeeId] = useState('');
+  const [newTaskExtName, setNewTaskExtName] = useState('');
+  const [newTaskExtEmail, setNewTaskExtEmail] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
   const [allocationsForm, setAllocationsForm] = useState<Allocation[]>([]);
   const [isSplitWizardOpen, setIsSplitWizardOpen] = useState(false);
   const [splitCount, setSplitCount] = useState<number>(2);
   const [splitsForm, setSplitsForm] = useState<{ department: string, owner: string, percentage: number }[]>([]);
 
+  // Only tasks actually created on this project. (The old behavior of showing a
+  // generated 5-step placeholder list on every project without tasks is gone —
+  // it looked like real data and confused users.)
   const projectTasks = useMemo(() => {
     if (!project) return [];
-    if (project.tasks && project.tasks.length > 0) {
-      return project.tasks as Task[];
-    }
-    return generateDefaultTasks(project);
+    return (project.tasks as unknown as Task[]) ?? [];
   }, [project]);
 
   if (!project) return (
@@ -183,28 +77,81 @@ export default function ProjectDetailPage() {
     }
   };
   
-  const handleAddTask = () => {
+  const resetTaskForm = () => {
+    setNewTaskName('');
+    setNewTaskAssignType('internal');
+    setNewTaskDept('');
+    setNewTaskEmployeeId('');
+    setNewTaskExtName('');
+    setNewTaskExtEmail('');
+    setNewTaskDueDate('');
+  };
+
+  const handleAddTask = async () => {
     if (!newTaskName.trim()) return;
+    const isExternal = newTaskAssignType === 'external';
+    const extEmail = newTaskExtEmail.trim().toLowerCase();
+    const employee = BIAL_EMPLOYEES.find(e => e.id === newTaskEmployeeId);
+
+    if (isExternal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(extEmail)) {
+      toast('Enter a valid email address for the external assignee.', 'error');
+      return;
+    }
+    if (!isExternal && !employee) {
+      toast('Select a department and an employee to assign this task.', 'error');
+      return;
+    }
+
     const today = new Date().toISOString().split('T')[0];
+    const due = newTaskDueDate || today;
     const newTask: Task = {
       id: generateTaskId(),
-      name: newTaskName,
-      assignee: newTaskAssignee || project.owner || 'Unassigned',
+      name: newTaskName.trim(),
+      assignee: isExternal ? (newTaskExtName.trim() || extEmail) : employee!.name,
+      assigneeEmail: isExternal ? extEmail : employee!.email,
+      external: isExternal,
       status: 'To Do',
       priority: 'Medium',
       progress: 0,
       startDate: today,
-      endDate: today,
-      dueDate: today,
-      responsible: project.department,
+      endDate: due,
+      dueDate: due,
+      responsible: isExternal ? 'External' : employee!.department,
       accountable: project.owner || 'Unassigned',
       consulted: '',
       informed: ''
     };
     handleUpdateTasks([...projectTasks, newTask]);
     setIsTaskModalOpen(false);
-    setNewTaskName('');
-    setNewTaskAssignee('');
+    resetTaskForm();
+
+    // External assignee → email them the task details (best-effort; the task
+    // itself is already saved either way).
+    if (isExternal) {
+      try {
+        const token = await getAccessToken();
+        const res = await fetch('/api/notify-task', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+          body: JSON.stringify({
+            to: extEmail,
+            assigneeName: newTaskExtName.trim() || null,
+            taskName: newTask.name,
+            projectId: project.id,
+            projectName: project.name,
+            dueDate: due,
+          }),
+        });
+        const j = await res.json().catch(() => ({} as { sent?: boolean; reason?: string; error?: string }));
+        if (res.ok && j.sent) {
+          toast(`Task saved — notification emailed to ${extEmail}.`, 'success');
+        } else {
+          toast(j.reason || j.error || 'Task saved, but the email notification could not be sent.', 'info');
+        }
+      } catch {
+        toast('Task saved, but the email notification could not be sent.', 'info');
+      }
+    }
   };
 
   const openSplitWizard = () => {
@@ -589,7 +536,12 @@ export default function ProjectDetailPage() {
                     <button className="text-[var(--color-x-text-muted)] hover:text-emerald-500 transition-colors"><CheckCircle2 className="w-4 h-4" /></button>
                     <div>
                       <p className="text-[13px] font-medium text-[var(--color-x-text)]">{task.name}</p>
-                      <p className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1 mt-0.5"><User className="w-3 h-3" /> {task.assignee}</p>
+                      <p className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1 mt-0.5">
+                        <User className="w-3 h-3" /> {task.assignee}
+                        {task.external && (
+                          <span className="ml-1 px-1.5 py-px rounded-full text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">External</span>
+                        )}
+                      </p>
                     </div>
                   </div>
                   <span className={`x-badge ${
@@ -662,28 +614,109 @@ export default function ProjectDetailPage() {
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Task Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newTaskName}
                   onChange={(e) => setNewTaskName(e.target.value)}
-                  className="x-input w-full" 
-                  placeholder="e.g. Gather requirements" 
-                  autoFocus 
+                  className="x-input w-full"
+                  placeholder="e.g. Gather requirements"
+                  autoFocus
                 />
               </div>
+
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Assignee</label>
-                <input 
-                  type="text" 
-                  value={newTaskAssignee}
-                  onChange={(e) => setNewTaskAssignee(e.target.value)}
-                  className="x-input w-full" 
-                  placeholder="e.g. John Doe" 
+                <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Assign To</label>
+                <div className="flex rounded-lg border border-[var(--color-x-border)] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskAssignType('internal')}
+                    className={`flex-1 py-1.5 text-[12px] font-semibold transition-colors ${newTaskAssignType === 'internal' ? 'bg-indigo-600 text-white' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] hover:bg-indigo-50'}`}
+                  >
+                    Organization
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskAssignType('external')}
+                    className={`flex-1 py-1.5 text-[12px] font-semibold transition-colors ${newTaskAssignType === 'external' ? 'bg-indigo-600 text-white' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] hover:bg-indigo-50'}`}
+                  >
+                    External User
+                  </button>
+                </div>
+              </div>
+
+              {newTaskAssignType === 'internal' ? (
+                <>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Department</label>
+                    <select
+                      value={newTaskDept}
+                      onChange={(e) => { setNewTaskDept(e.target.value); setNewTaskEmployeeId(''); }}
+                      className="x-input w-full"
+                    >
+                      <option value="">Select department…</option>
+                      {EMPLOYEE_DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Employee</label>
+                    <select
+                      value={newTaskEmployeeId}
+                      onChange={(e) => setNewTaskEmployeeId(e.target.value)}
+                      className="x-input w-full"
+                      disabled={!newTaskDept}
+                    >
+                      <option value="">{newTaskDept ? 'Select employee…' : 'Select a department first'}</option>
+                      {BIAL_EMPLOYEES.filter(emp => emp.department === newTaskDept).map(emp => (
+                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Name <span className="normal-case font-medium">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={newTaskExtName}
+                      onChange={(e) => setNewTaskExtName(e.target.value)}
+                      className="x-input w-full"
+                      placeholder="e.g. Ravi Kumar (Vendor)"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Email Address</label>
+                    <input
+                      type="email"
+                      value={newTaskExtEmail}
+                      onChange={(e) => setNewTaskExtEmail(e.target.value)}
+                      className="x-input w-full"
+                      placeholder="name@company.com"
+                    />
+                    <p className="text-[10px] text-[var(--color-x-text-muted)] mt-1">The task details will be emailed to this address when you save.</p>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase">Due Date <span className="normal-case font-medium">(optional)</span></label>
+                <input
+                  type="date"
+                  value={newTaskDueDate}
+                  onChange={(e) => setNewTaskDueDate(e.target.value)}
+                  className="x-input w-full"
                 />
               </div>
+
               <div className="pt-2 flex justify-end gap-2 border-t border-[var(--color-x-border)] mt-4">
-                <button onClick={() => setIsTaskModalOpen(false)} className="x-btn x-btn-secondary">Cancel</button>
-                <button onClick={handleAddTask} className="x-btn x-btn-primary" disabled={!newTaskName.trim()}>Save Task</button>
+                <button onClick={() => { setIsTaskModalOpen(false); resetTaskForm(); }} className="x-btn x-btn-secondary">Cancel</button>
+                <button
+                  onClick={handleAddTask}
+                  className="x-btn x-btn-primary"
+                  disabled={!newTaskName.trim() || (newTaskAssignType === 'internal' ? !newTaskEmployeeId : !newTaskExtEmail.trim())}
+                >
+                  Save Task
+                </button>
               </div>
             </div>
           </div>
