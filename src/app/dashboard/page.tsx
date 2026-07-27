@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import {
   BarChart3, TrendingUp, AlertTriangle, CheckCircle2,
-  Clock, Zap, Target, Users, AlertCircle, Shield, Eye, X, Sparkles, Edit3, Save, Calendar, Trash2
+  Clock, Zap, Target, Users, AlertCircle, Shield, Eye, X, Sparkles, Edit3, Trash2
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import {
@@ -13,8 +13,8 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import type { Project } from '@/lib/mock-data';
-import { formatDate } from '@/lib/utils';
 import DepartmentLabel from '@/components/DepartmentLabel';
+import QuickEditPanel from '@/components/project/QuickEditPanel';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
@@ -30,8 +30,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const statusOptions = ['In Progress', 'Not Started', 'Completed', 'Delayed', 'On Hold'];
-const priorityOptions = ['Critical', 'High', 'Medium', 'Low'];
 
 function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -46,8 +44,6 @@ export default function DashboardPage() {
   const { projects, departments, risks, kpi, updateProject } = useData();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Project>>({});
-  const [isEditing, setIsEditing] = useState(false);
 
   // Stuck projects: delayed status OR (targetDate < Today and status !== Completed)
   const stuckProjects = useMemo(() =>
@@ -131,18 +127,7 @@ export default function DashboardPage() {
 
   const criticalProjects = projects.filter(p => p.priority === 'Critical' && p.status === 'In Progress');
 
-  const openPanel = (p: Project) => {
-    setSelectedProject(p);
-    setEditForm({ status: p.status, priority: p.priority, progress: p.progress, owner: p.owner, targetDate: p.targetDate });
-    setIsEditing(false);
-  };
-
-  const saveEdit = () => {
-    if (!selectedProject) return;
-    updateProject(selectedProject.id, editForm);
-    setSelectedProject(prev => prev ? { ...prev, ...editForm } : prev);
-    setIsEditing(false);
-  };
+  const openPanel = (p: Project) => setSelectedProject(p);
 
   const handleCardClick = (filter: string) => {
     if (filter === 'all') {
@@ -481,120 +466,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Edit Side Panel */}
-      {selectedProject && (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.3)' }} onClick={() => setSelectedProject(null)}>
-          <div
-            className="w-full max-w-md bg-white shadow-2xl border-l border-[#e2e8f0] h-full overflow-y-auto"
-            style={{ animation: 'slideInFromRight 0.25s ease-out' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <style>{`@keyframes slideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
-            <div className="px-5 py-4 border-b border-[#f1f5f9] flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50">
-              <div>
-                <p className="text-[10px] font-mono text-indigo-500 font-bold">{selectedProject.id}</p>
-                <h2 className="text-[14px] font-bold text-[#0f172a] leading-tight">{selectedProject.name}</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                {!isEditing ? (
-                  <button onClick={() => setIsEditing(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[12px] font-bold hover:bg-indigo-700 transition-colors">
-                    <Edit3 className="w-3.5 h-3.5" /> Edit
-                  </button>
-                ) : (
-                  <button onClick={saveEdit} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[12px] font-bold hover:bg-emerald-700 transition-colors">
-                    <Save className="w-3.5 h-3.5" /> Save
-                  </button>
-                )}
-                <button onClick={() => setSelectedProject(null)} className="p-1.5 rounded-lg hover:bg-[#f1f5f9] text-[#94a3b8]"><X className="w-4 h-4" /></button>
-              </div>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* Deadline Alert */}
-              {(() => {
-                const days = daysUntil(selectedProject.targetDate);
-                if (days === null) return null;
-                return (
-                  <div className={`rounded-xl p-3 border flex items-center gap-2 ${days < 0 ? 'bg-red-50 border-red-200' : days <= 7 ? 'bg-orange-50 border-orange-200' : 'bg-amber-50 border-amber-200'}`}>
-                    <Calendar className={`w-4 h-4 ${days < 0 ? 'text-red-500' : 'text-amber-500'}`} />
-                    <div>
-                      <p className={`text-[12px] font-bold ${days < 0 ? 'text-red-700' : 'text-amber-700'}`}>
-                        {days < 0 ? `Overdue by ${Math.abs(days)} days` : `${days} days until deadline`}
-                      </p>
-                      <p className="text-[11px] text-[#64748b]">Target: {formatDate(selectedProject.targetDate)}</p>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Status */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Status</label>
-                {isEditing ? (
-                  <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as any }))} className="x-input w-full">
-                    {statusOptions.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                ) : (
-                  <p className="text-[13px] font-semibold text-[#1e293b]">{selectedProject.status}</p>
-                )}
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Priority</label>
-                {isEditing ? (
-                  <select value={editForm.priority} onChange={e => setEditForm(f => ({ ...f, priority: e.target.value as any }))} className="x-input w-full">
-                    {priorityOptions.map(p => <option key={p}>{p}</option>)}
-                  </select>
-                ) : (
-                  <p className="text-[13px] font-semibold text-[#1e293b]">{selectedProject.priority}</p>
-                )}
-              </div>
-
-              {/* Progress */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Progress</label>
-                {isEditing ? (
-                  <div className="flex items-center gap-3">
-                    <input type="range" min="0" max="100" value={editForm.progress ?? 0} onChange={e => setEditForm(f => ({ ...f, progress: Number(e.target.value) }))} className="flex-1 accent-indigo-600" />
-                    <span className="text-[14px] font-bold text-[#0f172a] w-10 text-right">{editForm.progress}%</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2.5 bg-[#f1f5f9] rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${selectedProject.progress}%` }} />
-                    </div>
-                    <span className="text-[14px] font-bold text-[#0f172a]">{selectedProject.progress}%</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Owner */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Owner</label>
-                {isEditing ? (
-                  <input value={editForm.owner || ''} onChange={e => setEditForm(f => ({ ...f, owner: e.target.value }))} className="x-input w-full" />
-                ) : (
-                  <p className="text-[13px] font-semibold text-[#1e293b]">{selectedProject.owner || '—'}</p>
-                )}
-              </div>
-
-              {/* Department */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#64748b] mb-1 uppercase tracking-wider">Department ↳ Subdivision</label>
-                <DepartmentLabel department={selectedProject.department} subdivision={selectedProject.subdivision} variant="stacked" className="text-[13px]" />
-              </div>
-
-              {/* Full detail button */}
-              <button
-                onClick={() => router.push(`/projects/${selectedProject.id}`)}
-                className="w-full mt-2 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[13px] rounded-xl border border-indigo-100 transition-colors"
-              >
-                Open Full Project Detail →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <QuickEditPanel project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
   );
 }
