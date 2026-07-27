@@ -114,9 +114,14 @@ export default function MyWorkPage() {
             <h3 className="text-[14px] font-bold text-[var(--color-x-text)]">My Projects</h3>
           </div>
           {myProjects.length === 0 ? (
-            <p className="px-4 py-10 text-center text-[13px] text-[var(--color-x-text-muted)]">
-              No projects are assigned to you yet.
-            </p>
+            <div className="px-4 py-12 text-center">
+              <FolderKanban className="w-8 h-8 mx-auto text-[var(--color-x-text-faint)] mb-3" />
+              <p className="text-[13px] font-semibold text-[var(--color-x-text)]">Nothing on your plate yet</p>
+              <p className="text-[12px] text-[var(--color-x-text-muted)] mt-1 mb-4">Projects you own will show up here automatically.</p>
+              <Link href="/projects" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 transition-colors">
+                Browse projects
+              </Link>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="x-table">
@@ -163,9 +168,11 @@ export default function MyWorkPage() {
             <span className="text-[11px] font-semibold text-[var(--color-x-text-muted)] uppercase tracking-wider">{openTasks.length} open</span>
           </div>
           {myTasks.length === 0 ? (
-            <p className="px-4 py-10 text-center text-[13px] text-[var(--color-x-text-muted)]">
-              No tasks are assigned to you. Tasks appear here when someone assigns you one from a project&apos;s Tasks tab.
-            </p>
+            <div className="px-4 py-12 text-center">
+              <ListTodo className="w-8 h-8 mx-auto text-[var(--color-x-text-faint)] mb-3" />
+              <p className="text-[13px] font-semibold text-[var(--color-x-text)]">No tasks assigned to you</p>
+              <p className="text-[12px] text-[var(--color-x-text-muted)] mt-1">Tasks appear here when someone assigns you one from a project&apos;s Tasks tab.</p>
+            </div>
           ) : (
             <div className="divide-y divide-[var(--color-x-border)]">
               {myTasks.map(({ task, project }) => {
