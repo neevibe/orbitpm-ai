@@ -6,7 +6,7 @@ import { Building2, ChevronRight, X, Save, AlertTriangle, Zap, ArrowLeft, Edit3,
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import ProjectModal from '@/components/modals/ProjectModal';
-import { getStatusColor, getPriorityColor, isProjectOwner } from '@/lib/utils';
+import { getStatusColor, getPriorityColor } from '@/lib/utils';
 import type { Project } from '@/lib/mock-data';
 
 const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On Hold'] as const;
@@ -34,10 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function DepartmentsPage() {
   const { projects, departments, updateProject } = useData();
-  const { canModifyDepartment, isAdmin, user, isDemoMode } = useAuth();
-  const currentUserName = isDemoMode
-    ? 'Demo User'
-    : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
+  const { canModifyDepartment } = useAuth();
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
@@ -210,7 +207,7 @@ export default function DepartmentsPage() {
                       </div>
                       {p.objective && <p className="text-[11px] text-[#94a3b8] mt-1 italic line-clamp-1">{p.objective}</p>}
                     </div>
-                    {canModifyDepartment(p.department) && (isAdmin || isProjectOwner(p.owner, currentUserName, user?.email)) && (
+                    {canModifyDepartment(p.department) && (
                       <button onClick={() => startEdit(p)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#e2e8f0] text-[12px] font-semibold text-[#475569] hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0">
                         <Edit3 className="w-3.5 h-3.5" /> Edit All Fields
