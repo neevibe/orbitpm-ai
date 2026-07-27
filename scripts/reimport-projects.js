@@ -19,6 +19,11 @@ const XLSX = require('xlsx');
 const { createClient } = require('@supabase/supabase-js');
 
 const WRITE = process.argv.includes('--write');
+// Archiving projects that aren't in the workbook is DESTRUCTIVE to work added
+// through the app (users' projects are not in the master Excel, so a plain
+// reimport used to bury them all in History — this hit A&M on 2026-06-15).
+// It now requires an explicit opt-in.
+const PRUNE = process.argv.includes('--prune');
 const WORKBOOK = process.env.WORKBOOK ||
   path.join(require('os').homedir(), 'Downloads', 'Antigravity Project', 'BIAL_Dashboard_Final_V_Final.xlsx');
 
@@ -153,10 +158,16 @@ async function main() {
 
   // Archive (don't delete) any project no longer present in the sheet, so the active
   // view matches the workbook exactly while old/duplicate rows stay recoverable in History.
+  // OPT-IN (--prune): projects added through the app are NOT in the workbook, so
+  // running this by default silently archives users' live work.
   const sheetCodes = new Set(all.map(p => p.project_code));
   const { data: cur } = await sb.from('projects').select('project_code,archived');
   const stale = (cur || []).filter(p => !sheetCodes.has(p.project_code) && !p.archived).map(p => p.project_code);
-  if (stale.length) {
+  if (stale.length && !PRUNE) {
+    console.log(`\n⚠️  ${stale.length} active projects are NOT in the workbook (likely added through the app):`);
+    console.log('   ' + stale.join(', '));
+    console.log('   Left untouched. Re-run with --prune to archive them (recoverable from History).');
+  } else if (stale.length && PRUNE) {
     const { error } = await sb.from('projects').update({ archived: true, archived_at: new Date().toISOString() }).in('project_code', stale);
     console.log(error ? `archive ERR: ${error.message}` : `📦 Archived ${stale.length} projects not in the sheet (recoverable from History).`);
   }
