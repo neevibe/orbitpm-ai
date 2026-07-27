@@ -32,7 +32,7 @@ export default function AnalyticsPage() {
   ].filter(d => d.value > 0);
 
   const deptData = departments.slice(0, 6).map(d => ({
-    name: d.name.length > 12 ? d.name.substring(0, 10) + '…' : d.name,
+    name: d.name,
     active: d.inProgress,
     done: d.completed,
     delayed: d.delayed
@@ -133,7 +133,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={deptData} layout="vertical" margin={{ left: 0 }}>
                   <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} width={90} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 10 }} width={150} interval={0} />
                   <Tooltip contentStyle={tooltipStyle} cursor={false} />
                   <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="done" stackId="a" fill="#10b981" name="Completed" radius={[0, 4, 4, 0]} />
