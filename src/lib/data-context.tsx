@@ -19,18 +19,28 @@ import { DEMO_PROJECTS, DEMO_RISKS } from './demo-data';
 /**
  * POST a project/risk mutation to the server, attaching the caller's Supabase
  * access token so the persistent audit trail can attribute the change to the
- * real signed-in user (not a hardcoded name). Fire-and-forget; never throws.
+ * real signed-in user (not a hardcoded name). Never throws, but a failed write
+ * MUST reach the user via onFailure — the local state already shows the change,
+ * so a silent server failure means work that evaporates on the next refresh.
  */
-async function persistProjectMutation(body: Record<string, unknown>) {
+async function persistProjectMutation(
+  body: Record<string, unknown>,
+  onFailure?: (message: string) => void,
+) {
   try {
     const token = await getAccessToken();
-    await fetch('/api/projects', {
+    const res = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
       body: JSON.stringify(body),
     });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({} as { error?: string }));
+      throw new Error(j.error || `Server responded ${res.status}`);
+    }
   } catch (err) {
     console.error('Error persisting mutation:', err);
+    onFailure?.(err instanceof Error ? err.message : 'Could not reach the server');
   }
 }
 
@@ -204,6 +214,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }, ...prev]);
   }, []);
 
+  // A failed server save must be loud: local state already shows the change,
+  // so without this the user gets a success toast and loses the work on the
+  // next refresh (reported: 10+ projects added, gone after reload).
+  const saveFailed = useCallback((what: string) => (msg: string) => {
+    notify('Not saved to server', `${what} was NOT saved (${msg}). It will disappear when the page reloads — please retry, and contact an admin if it keeps failing.`, 'critical');
+  }, [notify]);
+
   // ============================================
   // COMPUTED: Departments derived from projects
   // ============================================
@@ -371,10 +388,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }).catch(err => console.error('Error syncing project to local Excel:', err));
 
     if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'create', project: newProject, audit: { entityName: newProject.name } });
+      persistProjectMutation({ action: 'create', project: newProject, audit: { entityName: newProject.name } }, saveFailed(`Project "${newProject.name}"`));
     }
     return id;
-  }, [projects, logAudit, notify, canModifyDepartment]);
+  }, [projects, logAudit, notify, canModifyDepartment, saveFailed]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     let updatedProj: Project | null = null;
@@ -401,7 +418,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       
       if (isSupabaseConfigured()) {
-        persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } });
+        persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
       }
 
       updatedProj = { ...p, ...updates };
@@ -415,7 +432,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ action: 'update', project: updatedProj }),
       }).catch(err => console.error('Error syncing project to local Excel:', err));
     }
-  }, [logAudit, notify, canModifyDepartment]);
+  }, [logAudit, notify, canModifyDepartment, saveFailed]);
 
   // Update one internal dependency task inside its parent project. Unlike
   // updateProject, this is gated on the dependency's TARGET (dependent) department
@@ -551,9 +568,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true, archivedAt: now } : p));
     if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'archive', project: { id }, audit: { entityName: project?.name } });
+      persistProjectMutation({ action: 'archive', project: { id }, audit: { entityName: project?.name } }, saveFailed(`Archiving "${project?.name ?? id}"`));
     }
-  }, [projects, logAudit, notify, canModifyDepartment, collectDependentDepartments, currentUserName]);
+  }, [projects, logAudit, notify, canModifyDepartment, collectDependentDepartments, currentUserName, saveFailed]);
 
   // deleteProject now archives instead of deleting (for safety)
   const deleteProject = archiveProject;
@@ -578,9 +595,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false, archivedAt: undefined } : p));
     if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'restore', project: { id }, audit: { entityName: project?.name } });
+      persistProjectMutation({ action: 'restore', project: { id }, audit: { entityName: project?.name } }, saveFailed(`Restoring "${project?.name ?? id}"`));
     }
-  }, [projects, logAudit, notify, canModifyDepartment]);
+  }, [projects, logAudit, notify, canModifyDepartment, saveFailed]);
 
   // Permanent delete — only from archived projects
   const purgeProject = useCallback((id: string) => {
@@ -613,9 +630,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setProjects(prev => prev.filter(p => p.id !== id));
     setRisks(prev => prev.filter(r => r.projectId !== id));
     if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'delete', project: { id }, audit: { entityName: project?.name } });
+      persistProjectMutation({ action: 'delete', project: { id }, audit: { entityName: project?.name } }, saveFailed(`Deleting "${project?.name ?? id}"`));
     }
-  }, [projects, logAudit, notify, canModifyDepartment, collectDependentDepartments, currentUserName]);
+  }, [projects, logAudit, notify, canModifyDepartment, collectDependentDepartments, currentUserName, saveFailed]);
 
   // ============================================
   // DEPARTMENT CRUD
@@ -644,29 +661,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
     logAudit({ action: 'create', entityType: 'risk', entityId: id, entityName: risk.description, changes: {} });
     notify('Risk Added', `New ${risk.impact} impact risk: ${risk.description.substring(0, 50)}...`, risk.impact === 'High' ? 'critical' : 'warning');
     if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'create_risk', project: { id, ...risk }, audit: { entityName: risk.description } });
+      persistProjectMutation({ action: 'create_risk', project: { id, ...risk }, audit: { entityName: risk.description } }, saveFailed('The new risk'));
     }
-  }, [risks.length, logAudit, notify]);
+  }, [risks.length, logAudit, notify, saveFailed]);
 
   const updateRisk = useCallback((id: string, updates: Partial<Risk>) => {
     setRisks(prev => prev.map(r => {
       if (r.id !== id) return r;
       logAudit({ action: 'update', entityType: 'risk', entityId: id, entityName: r.description, changes: {} });
       if (isSupabaseConfigured()) {
-        persistProjectMutation({ action: 'update_risk', project: { id }, updates, audit: { entityName: r.description } });
+        persistProjectMutation({ action: 'update_risk', project: { id }, updates, audit: { entityName: r.description } }, saveFailed('The risk update'));
       }
       return { ...r, ...updates };
     }));
-  }, [logAudit]);
+  }, [logAudit, saveFailed]);
 
   const deleteRisk = useCallback((id: string) => {
     const risk = risks.find(r => r.id === id);
     if (risk) logAudit({ action: 'delete', entityType: 'risk', entityId: id, entityName: risk.description, changes: {} });
     setRisks(prev => prev.filter(r => r.id !== id));
     if (isSupabaseConfigured()) {
-      persistProjectMutation({ action: 'delete_risk', project: { id }, audit: { entityName: risk?.description } });
+      persistProjectMutation({ action: 'delete_risk', project: { id }, audit: { entityName: risk?.description } }, saveFailed('The risk deletion'));
     }
-  }, [risks, logAudit]);
+  }, [risks, logAudit, saveFailed]);
 
   // ============================================
   // BULK IMPORT
