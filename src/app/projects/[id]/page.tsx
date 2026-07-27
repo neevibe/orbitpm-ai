@@ -555,7 +555,6 @@ export default function ProjectDetailPage() {
           {projectTasks.length > 0 ? (
             <div className="space-y-2">
               {projectTasks.map(task => (
-<<<<<<< HEAD
                 <div key={task.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[var(--color-x-border)] hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors group">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
@@ -567,22 +566,12 @@ export default function ProjectDetailPage() {
                     </button>
                     <div className="min-w-0">
                       <p className={`text-[13px] font-medium truncate ${(task.status as string) === 'Completed' ? 'text-[var(--color-x-text-muted)] line-through' : 'text-[var(--color-x-text)]'}`}>{task.name}</p>
-=======
-                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-[var(--color-x-border)] hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <button className="text-[var(--color-x-text-muted)] hover:text-emerald-500 transition-colors"><CheckCircle2 className="w-4 h-4" /></button>
-                    <div>
-                      <p className="text-[13px] font-medium text-[var(--color-x-text)]">{task.name}</p>
->>>>>>> origin/main
                       <p className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1 mt-0.5">
                         <User className="w-3 h-3" /> {task.assignee}
                         {task.external && (
                           <span className="ml-1 px-1.5 py-px rounded-full text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">External</span>
                         )}
-<<<<<<< HEAD
                         {task.dueDate && <span className="ml-1.5">· due {formatDate(task.dueDate)}</span>}
-=======
->>>>>>> origin/main
                       </p>
                     </div>
                   </div>
