@@ -4,7 +4,8 @@ import { useData } from '@/lib/data-context';
 import {
   Activity, TrendingUp, AlertTriangle, Users, Target, Shield,
   ArrowUpRight, ArrowDownRight, Zap, Clock, BarChart3, Eye,
-  Rocket, CheckCircle2, XCircle, Flame, Calendar, Edit3, X, Trash2, Download
+  Rocket, CheckCircle2, XCircle, Flame, Calendar, Edit3, X, Trash2, Download,
+  FolderKanban, Sparkles
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -775,15 +776,15 @@ export default function CommandCenter() {
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Zap className="w-4 h-4 text-indigo-500" /> Quick Actions</h3>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { label: 'New Project', icon: '📁', href: '/projects' },
-              { label: 'Log Risk', icon: '⚠️', href: '/risks' },
-              { label: 'View Reports', icon: '📊', href: '/analytics' },
-              { label: 'Ask Xyro', icon: '🤖', href: '/ai' },
-              { label: 'Team Status', icon: '👥', href: '/workforce' },
-              { label: 'Export Data', icon: '📥', href: '/admin' },
+              { label: 'New Project', icon: FolderKanban, color: 'text-indigo-500', href: '/projects' },
+              { label: 'Log Risk', icon: AlertTriangle, color: 'text-red-500', href: '/risks' },
+              { label: 'View Reports', icon: BarChart3, color: 'text-orange-500', href: '/analytics' },
+              { label: 'Ask Xyro', icon: Sparkles, color: 'text-purple-500', href: '/ai' },
+              { label: 'Team Status', icon: Users, color: 'text-emerald-500', href: '/workforce' },
+              { label: 'Export Data', icon: Download, color: 'text-blue-500', href: '/admin' },
             ].map(a => (
               <a key={a.label} href={a.href} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/60 border border-[var(--color-x-border)] hover:border-indigo-200 hover:shadow-sm transition-all cursor-pointer">
-                <span className="text-[16px]">{a.icon}</span>
+                <a.icon className={`w-4 h-4 flex-shrink-0 ${a.color}`} />
                 <span className="text-[12px] font-medium text-[var(--color-x-text-secondary)]">{a.label}</span>
               </a>
             ))}
