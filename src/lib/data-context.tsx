@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured, getAccessToken } from './supabase';
 import { useAuth } from './auth-context';
-import { generateProjectId, daysUntil } from './utils';
+import { generateProjectId, daysUntil, normalizeProjectStatus } from './utils';
 import {
   projects as initialProjects,
   departments as initialDepartments,
@@ -167,7 +167,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return Array.from(set);
   }, []);
 
-  const [projects, setProjects] = useState<Project[]>(isDemoMode ? DEMO_PROJECTS : initialProjects);
+  const [projects, setProjects] = useState<Project[]>(
+    (isDemoMode ? DEMO_PROJECTS : initialProjects).map(normalizeProjectStatus),
+  );
   const [risks, setRisks] = useState<Risk[]>(isDemoMode ? DEMO_RISKS : initialRisks);
   const [notifications, setNotifications] = useState<Notification[]>(isDemoMode ? [] : initialNotifications);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
@@ -182,7 +184,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const res = await fetch('/api/projects');
         if (!res.ok) throw new Error('API request failed');
         const data = await res.json();
-        if (data.projects && data.projects.length > 0) setProjects(data.projects);
+        if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
       } catch (err) {
         console.error('[DataContext] Error fetching live data:', err);
@@ -375,7 +377,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return '';
     }
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
-    const newProject: Project = { ...project, id, archived: false } as Project;
+    const newProject: Project = normalizeProjectStatus({ ...project, id, archived: false } as Project);
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
@@ -421,7 +423,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
       }
 
-      updatedProj = { ...p, ...updates };
+      updatedProj = normalizeProjectStatus({ ...p, ...updates });
       return updatedProj;
     }));
 

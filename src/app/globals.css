@@ -460,8 +460,17 @@ body {
 .bg-mesh { background: var(--color-x-bg); }
 
 /* ================================================
-   PRINT MEDIA RULES (A4 Optimized)
+   PRINT MEDIA RULES (PDF export via window.print)
    ================================================ */
+
+/* Landscape keeps the page wider than Tailwind's lg breakpoint (1024px), so
+   the printed report uses the SAME grid layout the user sees on screen —
+   6-column KPI row, 12-column main grid — instead of a reflowed one. */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
 @media print {
   body, html, main, .x-page {
     background: #ffffff !important;
@@ -477,82 +486,70 @@ body {
     overflow: visible !important;
   }
 
-  /* Hide sidebar, topbar, buttons, modals, overlays, and anything with class 'no-print' */
-  aside,
-  header,
-  .no-print,
-  .no-print *,
-  button,
-  .x-btn,
-  .btn-primary,
-  a[href*="edit"],
-  .fixed,
-  .absolute {
-    display: none !important;
-  }
-
-  /* Reset layout margins/paddings from sidebar and topbar */
-  main {
-    margin-left: 0 !important;
-    margin-top: 0 !important;
-    padding: 10px !important;
-  }
-
-  /* Ensure colors and backgrounds render in PDF print */
+  /* Entry animations use `animation-fill-mode: both`, which leaves elements at
+     opacity 0 when animations don't run — and they don't run in print, so
+     animated cards rendered invisible. Freeze everything fully visible. */
   * {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Format cards for A4 Grid */
-  .grid {
-    display: grid !important;
-    gap: 12px !important;
+  /* Hide app chrome and interactive-only elements.
+     IMPORTANT: `.x-metric` KPI tiles are rendered as <button>s (click-to-
+     filter), so a blanket `button { display:none }` erased every KPI card
+     from the export. Keep them — they're data, not chrome. */
+  aside,
+  header,
+  .no-print,
+  .no-print *,
+  button:not(.x-metric),
+  .x-btn,
+  .fixed {
+    display: none !important;
+  }
+
+  /* KPI tiles: restore block layout (they're buttons) and full tile width */
+  button.x-metric {
+    display: block !important;
     width: 100% !important;
-  }
-  
-  .grid-cols-6 {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    transform: none !important; /* selected-state scale would overflow its cell */
   }
 
-  .grid-cols-12 {
-    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  /* Reset offsets that made room for the (now hidden) sidebar and topbar */
+  main {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
   }
 
-  .col-span-12 {
-    grid-column: span 12 / span 12 !important;
-  }
-
-  .lg\:col-span-4 {
-    grid-column: span 6 / span 6 !important;
-  }
-
-  .lg\:col-span-5 {
-    grid-column: span 6 / span 6 !important;
-  }
-
-  .lg\:col-span-3 {
-    grid-column: span 12 / span 12 !important;
-  }
-
+  /* Cards keep their frame, never split across pages */
   .x-card, .x-card-flush, .x-metric {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     border: 1px solid #d1d5db !important;
     box-shadow: none !important;
     background: #ffffff !important;
-    color: #000000 !important;
-    padding: 12px !important;
   }
 
-  /* Optimize charts inside grid */
+  /* Recharts: the ResponsiveContainer's inner measurement div and wrapper hold
+     JS-computed pixel sizes that go stale (or zero) in print layout, blanking
+     the charts. Force the whole chain to fill the container — the SVG's
+     viewBox then scales the chart to fit. Never use `height: auto` on the SVG:
+     SVGs have an intrinsic RATIO but no intrinsic size, so it collapses to 0. */
   .recharts-responsive-container {
+    max-width: 100% !important;
+  }
+  .recharts-responsive-container > div,
+  .recharts-wrapper,
+  .recharts-wrapper svg.recharts-surface {
     width: 100% !important;
-    height: 180px !important;
+    height: 100% !important;
   }
 
-  /* Hide custom interactive elements inside stuck list */
-  [onClick*="openPanel"], [onClick*="updateProject"] {
-    cursor: default !important;
-  }
+  /* Tables: keep header with content, avoid splitting rows */
+  thead { display: table-header-group !important; }
+  tr { page-break-inside: avoid !important; break-inside: avoid !important; }
 }
