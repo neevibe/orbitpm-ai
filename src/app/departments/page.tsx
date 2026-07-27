@@ -2,22 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Building2, ChevronRight, X, Save, AlertTriangle, Zap, ArrowLeft, Edit3, Plus } from 'lucide-react';
+import { Building2, ChevronRight, ArrowLeft, Edit3, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
 
 const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On Hold'] as const;
-const PRIORITY_OPTIONS = ['Critical', 'High', 'Medium', 'Low'] as const;
-
-type EditForm = {
-  name: string; department: string; owner: string;
-  status: Project['status']; priority: Project['priority'];
-  progress: number; startDate: string; targetDate: string;
-  risks: string; objective: string; projectDependencies: string;
-  kpi: string; supportTeam: string; notes: string;
-};
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
@@ -32,11 +23,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function DepartmentsPage() {
-  const { projects, departments, updateProject } = useData();
+  const { projects, departments } = useData();
   const { canModifyDepartment } = useAuth();
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editModalProject, setEditModalProject] = useState<Project | null>(null);
   const [deptSearch, setDeptSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
@@ -74,40 +64,6 @@ export default function DepartmentsPage() {
     });
   }, [deptProjects, statusFilter, deptSearch, sortBy]);
 
-  const startEdit = (p: Project) => {
-    setEditingId(p.id);
-    setEditForm({
-      name: p.name, department: p.department, owner: p.owner || '',
-      status: p.status, priority: p.priority, progress: p.progress,
-      startDate: p.startDate || '', targetDate: p.targetDate || '',
-      risks: p.risks || '', objective: p.objective || '',
-      projectDependencies: p.projectDependencies || '',
-      kpi: p.kpi || '', supportTeam: p.supportTeam || '', notes: p.notes || '',
-    });
-  };
-
-  const saveEdit = (id: string) => {
-    if (editForm) {
-      updateProject(id, {
-        ...editForm,
-        startDate: editForm.startDate || null,
-        targetDate: editForm.targetDate || null,
-      });
-    }
-    setEditingId(null);
-    setEditForm(null);
-  };
-
-  const cancelEdit = () => { setEditingId(null); setEditForm(null); };
-
-  const set = (field: keyof EditForm, value: any) => {
-    setEditForm(f => f ? { ...f, [field]: value } : f);
-  };
-
-  // styles
-  const inputCls = "x-input w-full";
-  const labelCls = "block text-[10px] font-semibold text-[var(--color-x-text-secondary)] mb-1 uppercase tracking-wider";
-
   // ══════════════════════════════════════════════
   // DEPARTMENT DRILL-DOWN VIEW
   // ══════════════════════════════════════════════
@@ -120,7 +76,7 @@ export default function DepartmentsPage() {
       <div className="space-y-4 animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={() => { setSelectedDept(null); setEditingId(null); setEditForm(null); }}
+          <button onClick={() => { setSelectedDept(null); setEditModalProject(null); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:border-indigo-200 hover:text-indigo-600 transition-all">
             <ArrowLeft className="w-3.5 h-3.5" /> All Departments
           </button>
@@ -175,13 +131,9 @@ export default function DepartmentsPage() {
           )}
 
           {filteredProjects.map(p => {
-            const isEditing = editingId === p.id;
-
             return (
-              <div key={p.id} className={`x-card transition-all ${isEditing ? 'border-indigo-200 shadow-md' : 'hover:border-indigo-200'}`}>
-                {/* ── Collapsed row (view mode) ── */}
-                {!isEditing && (
-                  <div className="p-4 flex items-start gap-3">
+              <div key={p.id} className="x-card transition-all hover:border-indigo-200">
+                <div className="p-4 flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
@@ -212,130 +164,12 @@ export default function DepartmentsPage() {
                       {p.objective && <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1 italic line-clamp-1">{p.objective}</p>}
                     </div>
                     {canModifyDepartment(p.department) && (
-                      <button onClick={() => startEdit(p)}
+                      <button onClick={() => setEditModalProject(p)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-semibold text-[var(--color-x-text-secondary)] hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0">
                         <Edit3 className="w-3.5 h-3.5" /> Edit All Fields
                       </button>
                     )}
                   </div>
-                )}
-
-                {/* ── Expanded edit form (edit mode) ── */}
-                {isEditing && editForm && (
-                  <div className="p-5">
-                    {/* Edit header */}
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--color-x-border)]">
-                      <div>
-                        <p className="text-[12px] font-bold text-indigo-600">Editing: <span className="font-mono">{p.id}</span></p>
-                        <p className="text-[11px] text-[var(--color-x-text-muted)] mt-0.5">All changes save to the project register when you click Save</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={cancelEdit} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] transition-all">
-                          <X className="w-3.5 h-3.5" /> Cancel
-                        </button>
-                        <button onClick={() => saveEdit(p.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 transition-all shadow-sm">
-                          <Save className="w-3.5 h-3.5" /> Save All Changes
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* ── Row 1: Name + Department ── */}
-                    <div className="grid grid-cols-3 gap-3 mb-3">
-                      <div className="col-span-2">
-                        <label className={labelCls}>Project Name</label>
-                        <input type="text" value={editForm.name} onChange={e => set('name', e.target.value)} className={inputCls} placeholder="Project name" />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Department</label>
-                        <select value={editForm.department} onChange={e => set('department', e.target.value)} className={inputCls}>
-                          {departments.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* ── Row 2: Owner + Status + Priority ── */}
-                    <div className="grid grid-cols-3 gap-3 mb-3">
-                      <div>
-                        <label className={labelCls}>Project Owner</label>
-                        <input type="text" value={editForm.owner} onChange={e => set('owner', e.target.value)} className={inputCls} placeholder="Owner name" />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Current Status</label>
-                        <select value={editForm.status} onChange={e => set('status', e.target.value as Project['status'])} className={inputCls}>
-                          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelCls}>Priority / Criticality</label>
-                        <select value={editForm.priority} onChange={e => set('priority', e.target.value as Project['priority'])} className={inputCls}>
-                          {PRIORITY_OPTIONS.map(pr => <option key={pr} value={pr}>{pr}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* ── Row 3: Progress + Start Date + End Date ── */}
-                    <div className="grid grid-cols-3 gap-3 mb-3">
-                      <div>
-                        <label className={labelCls}>Progress %</label>
-                        <input type="number" min={0} max={100} value={editForm.progress} onChange={e => set('progress', Number(e.target.value))} className={inputCls} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Start Date</label>
-                        <input type="date" value={editForm.startDate} onChange={e => set('startDate', e.target.value)} className={inputCls} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>End / Target Date</label>
-                        <input type="date" value={editForm.targetDate} onChange={e => set('targetDate', e.target.value)} className={inputCls} />
-                      </div>
-                    </div>
-
-                    {/* ── Row 4: Dependencies + Supporting Team ── */}
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div>
-                        <label className={labelCls}>Dependencies</label>
-                        <input type="text" value={editForm.projectDependencies} onChange={e => set('projectDependencies', e.target.value)} className={inputCls} placeholder="e.g. PRDIGI_03, PROPR_01" />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Supporting Team</label>
-                        <input type="text" value={editForm.supportTeam} onChange={e => set('supportTeam', e.target.value)} className={inputCls} placeholder="e.g. IT Team, Vendor XYZ" />
-                      </div>
-                    </div>
-
-                    {/* ── Row 5: Business Objective ── */}
-                    <div className="mb-3">
-                      <label className={labelCls}>Business Objective</label>
-                      <textarea value={editForm.objective} onChange={e => set('objective', e.target.value)} rows={2} placeholder="What outcome does this project achieve?" className={`${inputCls} resize-none`} />
-                    </div>
-
-                    {/* ── Row 6: KPI ── */}
-                    <div className="mb-3">
-                      <label className={labelCls}>KPI (Key Performance Indicators)</label>
-                      <textarea value={editForm.kpi} onChange={e => set('kpi', e.target.value)} rows={2} placeholder="e.g. 90% uptime, 15% revenue increase, NPS > 8, ₹10Cr savings" className={`${inputCls} resize-none`} />
-                    </div>
-
-                    {/* ── Row 7: Key Risks / Blockers ── */}
-                    <div className="mb-3">
-                      <label className={labelCls}>Key Risks / Blockers</label>
-                      <textarea value={editForm.risks} onChange={e => set('risks', e.target.value)} rows={2} placeholder="Known risks, blockers..." className={`${inputCls} resize-none`} />
-                    </div>
-
-                    {/* ── Row 8: Notes ── */}
-                    <div className="mb-4">
-                      <label className={labelCls}>Notes</label>
-                      <textarea value={editForm.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Additional notes..." className={`${inputCls} resize-none`} />
-                    </div>
-
-                    {/* Save footer */}
-                    <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--color-x-border)]">
-                      <button onClick={cancelEdit} className="px-4 py-2 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] transition-all">
-                        Cancel
-                      </button>
-                      <button onClick={() => saveEdit(p.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-white text-[12px] font-bold hover:bg-indigo-700 transition-all shadow-md">
-                        <Save className="w-3.5 h-3.5" /> Save All Changes to {p.id}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}
@@ -344,6 +178,12 @@ export default function DepartmentsPage() {
           isOpen={showModal}
           onClose={() => { setShowModal(false); setNewProjectDept(null); }}
           defaultDepartment={newProjectDept || undefined}
+        />
+        {/* Editing uses the SAME shared form as Create and the Projects page */}
+        <ProjectModal
+          isOpen={!!editModalProject}
+          onClose={() => setEditModalProject(null)}
+          editProject={editModalProject}
         />
       </div>
     );
