@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button className="x-btn x-btn-secondary"><Settings2 className="w-4 h-4" /> Filters</button>
-          <button className="x-btn x-btn-primary"><Download className="w-4 h-4" /> Export PDF</button>
+          <button onClick={() => window.print()} className="x-btn x-btn-primary"><Download className="w-4 h-4" /> Export PDF</button>
         </div>
       </div>
 

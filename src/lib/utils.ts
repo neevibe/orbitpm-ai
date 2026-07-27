@@ -130,6 +130,19 @@ export function isProjectOwner(
     });
 }
 
+/**
+ * A project whose target date is still in the future is not late — show it as
+ * In Progress even if its stored status says "Delayed" (stale imports and
+ * moved-out target dates left projects wrongly flagged). "Delayed" only
+ * displays when the target date is today, past, or missing.
+ */
+export function normalizeProjectStatus<T extends { status: string; targetDate?: string | null }>(p: T): T {
+  if (p.status !== 'Delayed') return p;
+  const du = daysUntil(p.targetDate);
+  if (du !== null && du > 0) return { ...p, status: 'In Progress' };
+  return p;
+}
+
 export function daysUntil(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
   try {
