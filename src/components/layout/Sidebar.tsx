@@ -76,8 +76,26 @@ export default function Sidebar() {
   );
   useEffect(() => {
     document.documentElement.setAttribute('data-sidebar', collapsed ? 'collapsed' : 'expanded');
-    localStorage.setItem('xyrenis_sidebar', collapsed ? 'collapsed' : 'expanded');
+    // Persist only desktop choices — the forced mobile collapse (below) must
+    // not overwrite the user's saved preference.
+    if (window.innerWidth >= 1024) {
+      localStorage.setItem('xyrenis_sidebar', collapsed ? 'collapsed' : 'expanded');
+    }
   }, [collapsed]);
+
+  // Below the desktop breakpoint the expanded 212px rail crushes content into
+  // ~160px, so force the icon-only rail there. Viewport-driven, not persisted:
+  // returning to desktop restores the user's saved preference.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const apply = () => {
+      if (mq.matches) setCollapsed(true);
+      else setCollapsed(localStorage.getItem('xyrenis_sidebar') === 'collapsed');
+    };
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'User';
   const roleLabel = isSuperAdmin ? 'Super Admin' : (role && role !== 'user' ? role.replace(/_/g, ' ') : 'Member');
