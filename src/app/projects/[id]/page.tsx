@@ -125,32 +125,16 @@ export default function ProjectDetailPage() {
     setIsTaskModalOpen(false);
     resetTaskForm();
 
-    // External assignee → email them the task details (best-effort; the task
-    // itself is already saved either way).
-    if (isExternal) {
-      try {
-        const token = await getAccessToken();
-        const res = await fetch('/api/notify-task', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
-          body: JSON.stringify({
-            to: extEmail,
-            assigneeName: newTaskExtName.trim() || null,
-            taskName: newTask.name,
-            projectId: project.id,
-            projectName: project.name,
-            dueDate: due,
-          }),
-        });
-        const j = await res.json().catch(() => ({} as { sent?: boolean; reason?: string; error?: string }));
-        if (res.ok && j.sent) {
-          toast(`Task saved — notification emailed to ${extEmail}.`, 'success');
-        } else {
-          toast(j.reason || j.error || 'Task saved, but the email notification could not be sent.', 'info');
-        }
-      } catch {
-        toast('Task saved, but the email notification could not be sent.', 'info');
-      }
+    // Every assignee with an email — internal employee or external user —
+    // gets notified of their new task.
+    const to = isExternal ? extEmail : employee!.email;
+    if (to) {
+      await notifyAssignee({
+        to,
+        assigneeName: isExternal ? (newTaskExtName.trim() || null) : employee!.name,
+        taskName: newTask.name,
+        dueDate: due,
+      });
     }
   };
 
@@ -197,6 +181,46 @@ export default function ProjectDetailPage() {
 
   const handleUpdateTasks = (updated: Task[]) => {
     updateProject(project.id, { tasks: updated as any });
+  };
+
+  const handleTaskStatusChange = (taskId: string, status: Task['status']) => {
+    handleUpdateTasks(projectTasks.map(t =>
+      t.id === taskId
+        ? { ...t, status, progress: (status as string) === 'Completed' ? 100 : t.progress }
+        : t,
+    ));
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    if (await confirm({ title: 'Delete task?', message: `"${task.name}" will be removed from this project.`, confirmText: 'Delete', tone: 'danger' })) {
+      handleUpdateTasks(projectTasks.filter(t => t.id !== task.id));
+      toast('Task deleted.', 'info');
+    }
+  };
+
+  // Email the assignee their new task (internal employees and external users
+  // alike). Best-effort — the task is already saved either way.
+  const notifyAssignee = async (args: { to: string; assigneeName: string | null; taskName: string; dueDate: string }) => {
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/notify-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+        body: JSON.stringify({
+          to: args.to,
+          assigneeName: args.assigneeName,
+          taskName: args.taskName,
+          projectId: project.id,
+          projectName: project.name,
+          dueDate: args.dueDate,
+        }),
+      });
+      const j = await res.json().catch(() => ({} as { sent?: boolean; reason?: string; error?: string }));
+      if (res.ok && j.sent) toast(`Task saved — notification emailed to ${args.to}.`, 'success');
+      else toast(j.reason || j.error || 'Task saved, but the email notification could not be sent.', 'info');
+    } catch {
+      toast('Task saved, but the email notification could not be sent.', 'info');
+    }
   };
 
   // Dependency section is only shown when a dependency actually exists — no
@@ -531,26 +555,48 @@ export default function ProjectDetailPage() {
           {projectTasks.length > 0 ? (
             <div className="space-y-2">
               {projectTasks.map(task => (
-                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-[var(--color-x-border)] hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <button className="text-[var(--color-x-text-muted)] hover:text-emerald-500 transition-colors"><CheckCircle2 className="w-4 h-4" /></button>
-                    <div>
-                      <p className="text-[13px] font-medium text-[var(--color-x-text)]">{task.name}</p>
+                <div key={task.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[var(--color-x-border)] hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      onClick={() => handleTaskStatusChange(task.id, (task.status as string) === 'Completed' ? 'To Do' : 'Completed')}
+                      title={(task.status as string) === 'Completed' ? 'Reopen task' : 'Mark completed'}
+                      className={`transition-colors flex-shrink-0 ${(task.status as string) === 'Completed' ? 'text-emerald-500' : 'text-[var(--color-x-text-muted)] hover:text-emerald-500'}`}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                    <div className="min-w-0">
+                      <p className={`text-[13px] font-medium truncate ${(task.status as string) === 'Completed' ? 'text-[var(--color-x-text-muted)] line-through' : 'text-[var(--color-x-text)]'}`}>{task.name}</p>
                       <p className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1 mt-0.5">
                         <User className="w-3 h-3" /> {task.assignee}
                         {task.external && (
                           <span className="ml-1 px-1.5 py-px rounded-full text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">External</span>
                         )}
+                        {task.dueDate && <span className="ml-1.5">· due {formatDate(task.dueDate)}</span>}
                       </p>
                     </div>
                   </div>
-                  <span className={`x-badge ${
-                    (task.status as string) === 'Completed' || (task.status as string) === 'Done' ? 'x-badge-green' : 
-                    task.status === 'In Progress' ? 'x-badge-blue' : 
-                    task.status === 'Review' ? 'x-badge-amber' : 
-                    task.status === 'To Do' ? 'x-badge-indigo' : 
-                    'x-badge-gray'
-                  }`}>{task.status}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <select
+                      value={task.status}
+                      onChange={e => handleTaskStatusChange(task.id, e.target.value as Task['status'])}
+                      className={`text-[11px] font-semibold rounded-full px-2.5 py-1 border cursor-pointer outline-none transition-colors ${
+                        (task.status as string) === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        task.status === 'Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        task.status === 'To Do' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)]'
+                      }`}
+                    >
+                      {['Backlog', 'To Do', 'In Progress', 'Review', 'Completed'].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <button
+                      onClick={() => handleDeleteTask(task)}
+                      title="Delete task"
+                      className="p-1.5 rounded-md text-[var(--color-x-text-muted)] opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-red-50 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
