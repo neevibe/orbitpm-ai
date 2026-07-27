@@ -32,7 +32,7 @@ function getSupabase() {
 // whole statement. This detects that specific failure so we can transparently
 // retry with the v2 fields stripped — existing edits never break, and the v2
 // fields begin persisting automatically the moment the columns are added.
-const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'classified_dependencies'];
+const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'classified_dependencies', 'tasks'];
 function isMissingV2Column(error: { message?: string } | null): boolean {
   if (!error?.message) return false;
   const m = error.message.toLowerCase();
@@ -78,7 +78,8 @@ export async function GET() {
       subdivision: p.subdivision ?? null,
       totalBudget: p.total_budget ?? null,
       utilizedBudget: p.utilized_budget ?? null,
-      classifiedDependencies: p.classified_dependencies ?? null
+      classifiedDependencies: p.classified_dependencies ?? null,
+      tasks: p.tasks ?? null
     }));
 
     // Fetch risks
@@ -163,6 +164,7 @@ export async function POST(request: NextRequest) {
         total_budget: project.totalBudget ?? null,
         utilized_budget: project.utilizedBudget ?? null,
         classified_dependencies: project.classifiedDependencies ?? null,
+        tasks: project.tasks ?? null,
       };
       let { error } = await db.from('projects').insert(v2Row);
       if (error && isMissingV2Column(error)) {
@@ -195,6 +197,7 @@ export async function POST(request: NextRequest) {
       if (updates.totalBudget !== undefined) v2Updates.total_budget = updates.totalBudget;
       if (updates.utilizedBudget !== undefined) v2Updates.utilized_budget = updates.utilizedBudget;
       if (updates.classifiedDependencies !== undefined) v2Updates.classified_dependencies = updates.classifiedDependencies;
+      if (updates.tasks !== undefined) v2Updates.tasks = updates.tasks;
 
       const fullUpdates = { ...dbUpdates, ...v2Updates };
       if (Object.keys(fullUpdates).length > 0) {
