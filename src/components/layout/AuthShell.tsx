@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { DataProvider } from '@/lib/data-context';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import FloatingAssistant from '@/components/assistant/FloatingAssistant';
 
 const FULL_BLEED_PAGES = ['/projects'];
 // Pages that render standalone (no sidebar/topbar) and don't require auth.
@@ -134,6 +135,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
+      <FloatingAssistant />
     </DataProvider>
   );
 }
