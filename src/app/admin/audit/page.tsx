@@ -271,7 +271,16 @@ export default function AuditDashboardPage() {
             </thead>
             <tbody>
               {fetching ? (
-                <tr><td colSpan={8} className="py-16 text-center text-[#94a3b8]"><Loader2 className="w-5 h-5 animate-spin inline" /></td></tr>
+                // skeleton rows mimic the final table layout — no layout shift
+                Array.from({ length: 8 }, (_, i) => (
+                  <tr key={`skeleton-${i}`}>
+                    {Array.from({ length: 8 }, (_, j) => (
+                      <td key={j} className="px-4 py-3 border-b border-[#f1f5f9]">
+                        <div className={`x-skeleton h-3.5 ${j === 1 ? 'w-32' : 'w-16'}`} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : rows.map(r => (
                 <tr key={r.id} className="hover:bg-[#f8fafc] transition-colors align-top">
                   <td className="px-4 py-3 border-b border-[#f1f5f9] text-[12px] text-[#64748b] whitespace-nowrap" title={new Date(r.created_at).toLocaleString()}>{timeAgo(r.created_at)}</td>

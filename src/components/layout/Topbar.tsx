@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth-context';
 
 const routeNames: Record<string, string> = {
   '/': 'Command Center', '/command-center': 'Command Center', '/dashboard': 'Command Center',
-  '/projects': 'Projects', '/portfolio': 'Portfolio', '/workforce': 'Workforce',
+  '/projects': 'Projects', '/portfolio': 'Portfolio', '/workforce': 'Workforce', '/my-work': 'My Work',
   '/departments': 'Departments', '/knowledge': 'Knowledge', '/ai': 'Xyro AI',
   '/ai-insights': 'Xyro AI', '/ai-assistant': 'Xyro AI',
   '/analytics': 'Analytics', '/risks': 'Risk Register', '/dependencies': 'Dependencies',
@@ -82,6 +82,7 @@ export default function Topbar() {
 
   const pageItems = [
     { name: 'Dashboard', href: '/command-center', icon: LayoutDashboard },
+    { name: 'My Work', href: '/my-work', icon: FolderKanban },
     { name: 'Projects', href: '/projects', icon: FolderKanban },
     { name: 'Portfolio', href: '/portfolio', icon: Briefcase },
     { name: 'Dependencies', href: '/dependencies', icon: Link2 },
@@ -110,7 +111,7 @@ export default function Topbar() {
   const currentRoute = routeNames[pathname] || routeNames['/' + segments[0]] || segments[0] || 'Command Center';
 
   return (
-    <header className="fixed top-0 left-[212px] right-0 h-[52px] bg-[var(--color-x-surface)]/90 backdrop-blur-xl border-b border-[var(--color-x-border)] flex items-center justify-between px-5 z-30">
+    <header className="fixed top-0 left-[var(--sidebar-w)] right-0 h-[52px] bg-[var(--color-x-surface)]/90 backdrop-blur-xl border-b border-[var(--color-x-border)] flex items-center justify-between px-5 z-30 transition-[left] duration-200 ease-in-out">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-[13px]">
         <span className="text-[var(--color-x-text-muted)]">Xyrenis</span>

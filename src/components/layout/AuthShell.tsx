@@ -7,6 +7,7 @@ import { DataProvider } from '@/lib/data-context';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import FloatingAssistant from '@/components/assistant/FloatingAssistant';
+import Toaster from '@/components/ui/Toaster';
 
 const FULL_BLEED_PAGES = ['/projects'];
 // Pages that render standalone (no sidebar/topbar) and don't require auth.
@@ -130,12 +131,13 @@ function Shell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <Topbar />
       <main
-        className="ml-[212px] mt-[52px]"
-        style={{ background: '#f8f9fa', padding: isFullBleed ? 0 : '24px', minHeight: 'calc(100vh - 52px)' }}
+        className="ml-[var(--sidebar-w)] mt-[52px] transition-[margin-left] duration-200 ease-in-out"
+        style={{ background: 'var(--color-x-bg)', padding: isFullBleed ? 0 : '24px', minHeight: 'calc(100vh - 52px)' }}
       >
         {children}
       </main>
       <FloatingAssistant />
+      <Toaster />
     </DataProvider>
   );
 }

@@ -162,7 +162,7 @@ try {
   }
 
   // ---------- remaining feature pages just need to render crash-free ----------
-  for (const path of ['/dashboard', '/departments', '/analytics', '/risks', '/workforce', '/reports', '/portfolio', '/dependencies']) {
+  for (const path of ['/dashboard', '/my-work', '/departments', '/analytics', '/risks', '/workforce', '/reports', '/portfolio', '/dependencies']) {
     try {
       await visit(path);
       check(`${path} renders without JS crashes`, pageErrors.length === 0, pageErrors[0] || '');
