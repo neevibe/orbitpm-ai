@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 const mockIntegrations = [
   { id: '1', name: 'Jira Software', desc: 'Sync issues, epics, and sprints bi-directionally.', icon: GitPullRequest, category: 'Development', status: 'Connected', color: 'text-blue-500', bg: 'bg-blue-50' },
   { id: '2', name: 'Slack', desc: 'Receive portfolio alerts and risk escalations in channels.', icon: MessageSquare, category: 'Communication', status: 'Connected', color: 'text-purple-500', bg: 'bg-purple-50' },
-  { id: '3', name: 'Microsoft Teams', desc: 'Bot integration for status updates and meetings.', icon: Globe, category: 'Communication', status: 'Not Connected', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+  { id: '3', name: 'Microsoft Teams', desc: 'Bot integration for status updates and meetings.', icon: Globe, category: 'Communication', status: 'Not Connected', color: 'text-blue-500', bg: 'bg-blue-50' },
   { id: '4', name: 'Snowflake', desc: 'Export analytics data directly to data warehouse.', icon: Database, category: 'Data', status: 'Not Connected', color: 'text-sky-500', bg: 'bg-sky-50' },
   { id: '5', name: 'Outlook Calendar', desc: 'Sync project milestones and workforce capacity.', icon: Mail, category: 'Productivity', status: 'Connected', color: 'text-blue-600', bg: 'bg-blue-50' },
   { id: '6', name: 'AWS S3', desc: 'Store knowledge base documents and attachments.', icon: Cloud, category: 'Storage', status: 'Not Connected', color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -36,7 +36,7 @@ export default function IntegrationsPage() {
     <div className="x-page space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="x-page-title flex items-center gap-2"><Puzzle className="w-5 h-5 text-indigo-500" /> Integrations</h1>
+          <h1 className="x-page-title flex items-center gap-2"><Puzzle className="w-5 h-5 text-blue-500" /> Integrations</h1>
           <p className="x-page-subtitle">Connect Xyrenis with your enterprise ecosystem</p>
         </div>
         <div className="relative w-72">
@@ -47,7 +47,7 @@ export default function IntegrationsPage() {
 
       <div className="grid grid-cols-3 gap-4 animate-fade-in">
         {filtered.map(app => (
-          <div key={app.id} className="x-card p-5 flex flex-col h-full hover:border-indigo-300 transition-all">
+          <div key={app.id} className="x-card p-5 flex flex-col h-full hover:border-blue-300 transition-all">
             <div className="flex items-start justify-between mb-4">
               <div className={`w-12 h-12 rounded-xl ${app.bg} flex items-center justify-center`}>
                 <app.icon className={`w-6 h-6 ${app.color}`} />
@@ -67,7 +67,7 @@ export default function IntegrationsPage() {
               {app.status === 'Connected' ? (
                 <button className="text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:text-[var(--color-x-text)] flex items-center gap-1">Configure <ExternalLink className="w-3 h-3" /></button>
               ) : (
-                <button className="text-[12px] font-medium text-indigo-600 hover:text-indigo-700">Connect</button>
+                <button className="text-[12px] font-medium text-blue-600 hover:text-blue-700">Connect</button>
               )}
             </div>
           </div>

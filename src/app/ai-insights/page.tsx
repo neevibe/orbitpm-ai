@@ -40,17 +40,17 @@ export default function AIInsightsPage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="glass-card p-4 bg-red-50 border-red-100"><p className="text-2xl font-bold text-red-500">{insights.filter(i => i.severity === 'High').length}</p><p className="text-[11px] text-[#64748b]">Critical Alerts</p></div>
         <div className="glass-card p-4 bg-amber-50 border-amber-100"><p className="text-2xl font-bold text-amber-500">{insights.filter(i => i.severity === 'Medium').length}</p><p className="text-[11px] text-[#64748b]">Warnings</p></div>
-        <div className="glass-card p-4 bg-indigo-50 border-indigo-100"><p className="text-2xl font-bold text-indigo-500">{insights.length}</p><p className="text-[11px] text-[#64748b]">Total Insights</p></div>
+        <div className="glass-card p-4 bg-blue-50 border-blue-100"><p className="text-2xl font-bold text-blue-500">{insights.length}</p><p className="text-[11px] text-[#64748b]">Total Insights</p></div>
       </div>
       <div className="space-y-2.5">
         {insights.map((insight, i) => (
-          <div key={i} className="glass-card p-4 hover:border-indigo-200 transition-all">
+          <div key={i} className="glass-card p-4 hover:border-blue-200 transition-all">
             <div className="flex items-start gap-3">
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                insight.type === 'critical' ? 'bg-red-50' : insight.type === 'warning' ? 'bg-amber-50' : insight.type === 'success' ? 'bg-emerald-50' : 'bg-indigo-50'
+                insight.type === 'critical' ? 'bg-red-50' : insight.type === 'warning' ? 'bg-amber-50' : insight.type === 'success' ? 'bg-emerald-50' : 'bg-blue-50'
               }`}>
                 <insight.icon className={`w-4 h-4 ${
-                  insight.type === 'critical' ? 'text-red-500' : insight.type === 'warning' ? 'text-amber-500' : insight.type === 'success' ? 'text-emerald-500' : 'text-indigo-500'
+                  insight.type === 'critical' ? 'text-red-500' : insight.type === 'warning' ? 'text-amber-500' : insight.type === 'success' ? 'text-emerald-500' : 'text-blue-500'
                 }`} />
               </div>
               <div className="flex-1">

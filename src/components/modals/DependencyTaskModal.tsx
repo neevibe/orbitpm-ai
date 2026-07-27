@@ -65,7 +65,7 @@ export default function DependencyTaskModal({ parentId, depId, onClose }: Props)
   };
 
   const input =
-    'w-full bg-white border border-[var(--color-x-border)] rounded-lg px-3 py-2 text-[13px] text-[var(--color-x-text)] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50';
+    'w-full bg-white border border-[var(--color-x-border)] rounded-lg px-3 py-2 text-[13px] text-[var(--color-x-text)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50';
   const label = 'block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase tracking-wider';
 
   return (
@@ -89,7 +89,7 @@ export default function DependencyTaskModal({ parentId, depId, onClose }: Props)
 
       {/* Editable task fields */}
       <div className="px-6 py-5 space-y-4">
-        <h3 className="text-[12px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1.5">
+        <h3 className="text-[12px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
           <Link2 className="w-3.5 h-3.5" /> Your dependency task
         </h3>
         <div className="grid grid-cols-2 gap-4">
@@ -106,7 +106,7 @@ export default function DependencyTaskModal({ parentId, depId, onClose }: Props)
           <div>
             <label className={label}>Progress %</label>
             <div className="flex items-center gap-3">
-              <input type="range" min={0} max={100} value={form.progress ?? 0} onChange={e => setForm(f => ({ ...f, progress: Number(e.target.value) }))} className="flex-1 accent-indigo-600" />
+              <input type="range" min={0} max={100} value={form.progress ?? 0} onChange={e => setForm(f => ({ ...f, progress: Number(e.target.value) }))} className="flex-1 accent-blue-600" />
               <span className="text-[13px] font-bold text-[var(--color-x-text)] w-10 text-right">{form.progress ?? 0}%</span>
             </div>
           </div>
@@ -155,11 +155,11 @@ function Shell({ children, onClose, fromDept }: { children: React.ReactNode; onC
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Dependency task" className="bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-[var(--color-x-border)] flex items-center justify-between bg-[var(--color-x-bg)]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><Link2 className="w-4 h-4 text-indigo-600" /></div>
+            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"><Link2 className="w-4 h-4 text-blue-600" /></div>
             <div>
               <h2 className="text-[15px] font-bold text-[var(--color-x-text)]">Dependency Task</h2>
               {fromDept && (
-                <span className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-600">
+                <span className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-semibold text-blue-600">
                   <GitMerge className="w-3 h-3" /> Task Migrated from {fromDept}
                 </span>
               )}

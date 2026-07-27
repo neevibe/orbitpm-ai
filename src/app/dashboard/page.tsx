@@ -83,7 +83,7 @@ export default function DashboardPage() {
   }, [projects]);
 
   const kpiCards = [
-    { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, iconBg: 'bg-indigo-50', iconColor: 'text-indigo-500', filter: 'all' },
+    { label: 'Total Projects', value: kpi.totalProjects, icon: BarChart3, iconBg: 'bg-blue-50', iconColor: 'text-blue-500', filter: 'all' },
     { label: 'In Progress', value: kpi.inProgress, icon: TrendingUp, iconBg: 'bg-blue-50', iconColor: 'text-blue-500', filter: 'In Progress' },
     { label: 'Completed', value: kpi.completed, icon: CheckCircle2, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', filter: 'Completed' },
     { label: 'Delayed', value: kpi.delayed, icon: Clock, iconBg: 'bg-red-50', iconColor: 'text-red-500', alert: true, filter: 'Delayed' },
@@ -157,7 +157,7 @@ export default function DashboardPage() {
           {activeFilter && (
             <button 
               onClick={() => setActiveFilter(null)}
-              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100 flex items-center gap-1"
+              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 flex items-center gap-1"
             >
               <X className="w-3 h-3" /> Clear Filter: {activeFilter}
             </button>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
       {/* CCO Decision View */}
       <div className="glass-card p-4">
         <h2 className="text-[12px] font-semibold text-[#64748b] mb-3 flex items-center gap-2 uppercase tracking-wider">
-          <Target className="w-3.5 h-3.5 text-indigo-500" />
+          <Target className="w-3.5 h-3.5 text-blue-500" />
           CCO Decision View — Focus Areas
         </h2>
         <div className="grid grid-cols-3 gap-3">
@@ -216,10 +216,10 @@ export default function DashboardPage() {
 
       {/* Drill-down Results */}
       {activeFilter && (
-        <div className="glass-card p-4 animate-scale-in border-indigo-200 shadow-md">
+        <div className="glass-card p-4 animate-scale-in border-blue-200 shadow-md">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[13px] font-bold text-[#0f172a] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-500" />
+              <Sparkles className="w-4 h-4 text-blue-500" />
               {activeFilter === 'stuck'
                 ? `${filteredProjects.length} Stuck Projects (Deadline ≤ 7 days)`
                 : `${filteredProjects.length} Projects matching "${activeFilter}"`}
@@ -235,12 +235,12 @@ export default function DashboardPage() {
                 <div
                   key={p.id}
                   onClick={() => openPanel(p)}
-                  className="flex items-center justify-between p-3 bg-white border border-[#f1f5f9] rounded-lg hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors cursor-pointer group"
+                  className="flex items-center justify-between p-3 bg-white border border-[#f1f5f9] rounded-lg hover:border-blue-400 hover:bg-blue-50/40 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${isOverdue ? 'bg-red-500' : isUrgent ? 'bg-orange-400' : p.status === 'Delayed' ? 'bg-red-400' : 'bg-blue-400'}`} />
                     <div className="min-w-0">
-                      <p className="text-[12px] font-bold text-[#1e293b] group-hover:text-indigo-700 transition-colors truncate">{p.name}</p>
+                      <p className="text-[12px] font-bold text-[#1e293b] group-hover:text-blue-700 transition-colors truncate">{p.name}</p>
                       <div className="flex items-center gap-1.5 text-[10px] text-[#64748b] flex-wrap mt-0.5">
                         <span className="font-mono">{p.id}</span>
                         <span>·</span>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1.5 text-indigo-600 text-[11px] font-bold group-hover:bg-indigo-100 transition-colors">
+                      <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5 text-blue-600 text-[11px] font-bold group-hover:bg-blue-100 transition-colors">
                         <Edit3 className="w-3 h-3" />
                         Edit
                       </div>
@@ -341,7 +341,7 @@ export default function DashboardPage() {
             </tr></thead>
             <tbody>
               {filteredDepartments.map((d) => (
-                <tr key={d.name} className={activeFilter ? 'bg-indigo-50/30' : ''}>
+                <tr key={d.name} className={activeFilter ? 'bg-blue-50/30' : ''}>
                   <td><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
                     <span className="font-medium text-[#1e293b] text-[13px]">{d.name}</span></div></td>
                   <td className="text-center font-semibold text-[#0f172a]">{activeFilter && activeFilter !== 'all' ? d.matchedCount : d.total}</td>
@@ -387,7 +387,7 @@ export default function DashboardPage() {
                 <div
                   key={p.id}
                   onClick={() => openPanel(p)}
-                  className="px-4 py-2.5 hover:bg-indigo-50/40 hover:border-l-2 hover:border-indigo-400 transition-all flex items-center gap-3 cursor-pointer group"
+                  className="px-4 py-2.5 hover:bg-blue-50/40 hover:border-l-2 hover:border-blue-400 transition-all flex items-center gap-3 cursor-pointer group"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
@@ -399,14 +399,14 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[12px] font-medium text-[#334155] truncate group-hover:text-indigo-700">{p.name}</p>
+                    <p className="text-[12px] font-medium text-[#334155] truncate group-hover:text-blue-700">{p.name}</p>
                     <p className="text-[10px] text-[#94a3b8] mt-0.5">{p.owner} · {p.department}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
                       <p className="text-[15px] font-bold text-[#64748b]">{p.progress}%</p>
                     </div>
-                    <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 text-indigo-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1 text-blue-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                       <Edit3 className="w-3 h-3" /> Edit
                     </div>
                   </div>
@@ -448,13 +448,13 @@ export default function DashboardPage() {
       </div>
 
       {/* AI Insight Banner */}
-      <div className="glass-card p-4 border-indigo-100 bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+      <div className="glass-card p-4 border-blue-100 bg-gradient-to-r from-blue-50/50 to-sky-50/40">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center flex-shrink-0">
             <Zap className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-[12px] font-semibold text-indigo-700 mb-0.5">AI Executive Summary</h3>
+            <h3 className="text-[12px] font-semibold text-blue-700 mb-0.5">AI Executive Summary</h3>
             <p className="text-[12px] text-[#475569] leading-relaxed">
               The Commercial Department has <span className="text-[#0f172a] font-semibold">{kpi.totalProjects} active projects</span> across {departments.length} departments.
               {kpi.delayed > 0 && <><span className="text-red-600 font-semibold"> {kpi.delayed} project{kpi.delayed > 1 ? 's are' : ' is'} delayed</span> and</>}

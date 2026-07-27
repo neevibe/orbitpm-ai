@@ -44,7 +44,7 @@ export default function RiskModal({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
-  const inputCls = "w-full bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#1e293b] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 placeholder:text-[#94a3b8]";
+  const inputCls = "w-full bg-white border border-[#e2e8f0] rounded-lg px-3 py-2 text-[13px] text-[#1e293b] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 placeholder:text-[#94a3b8]";
   const labelCls = "block text-[11px] font-semibold text-[#64748b] mb-1 uppercase tracking-wider";
 
   return (

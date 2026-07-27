@@ -22,14 +22,14 @@ interface Message {
 function TypingIndicator() {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
         <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" />
       </div>
       <div className="bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-2xl px-4 py-3">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
@@ -45,13 +45,13 @@ function MessageBubble({ msg }: { msg: Message }) {
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${
         isUser
           ? 'bg-[var(--color-x-surface)] border border-[var(--color-x-border)]'
-          : 'bg-gradient-to-br from-indigo-500 to-purple-500 shadow-sm'
+          : 'bg-gradient-to-br from-blue-500 to-purple-500 shadow-sm'
       }`}>
         {isUser ? <User className="w-4 h-4 text-[var(--color-x-text-muted)]" /> : <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" />}
       </div>
       <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
         isUser
-          ? 'bg-indigo-600 text-white shadow-sm'
+          ? 'bg-blue-600 text-white shadow-sm'
           : 'bg-[var(--color-x-bg)] border border-[var(--color-x-border)] text-[var(--color-x-text)]'
       }`}>
         {lines.map((line, i) => {
@@ -64,7 +64,7 @@ function MessageBubble({ msg }: { msg: Message }) {
             </p>
           );
         })}
-        <p className={`text-[10px] mt-1.5 ${isUser ? 'text-indigo-200' : 'text-[var(--color-x-text-muted)]'}`}>
+        <p className={`text-[10px] mt-1.5 ${isUser ? 'text-blue-200' : 'text-[var(--color-x-text-muted)]'}`}>
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -192,7 +192,7 @@ export default function AICopilotPage() {
     <div className="x-page h-[calc(100vh-100px)] flex flex-col">
       <div className="mb-4">
         <h1 className="x-page-title flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm overflow-hidden">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-sm overflow-hidden">
             <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" priority />
           </span>
           Xyro
@@ -210,7 +210,7 @@ export default function AICopilotPage() {
                 <button key={m.id} onClick={() => handleModeChange(m.id)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all ${
                     activeMode === m.id
-                      ? 'bg-white shadow-sm text-indigo-600'
+                      ? 'bg-white shadow-sm text-blue-600'
                       : 'text-[var(--color-x-text-secondary)] hover:text-[var(--color-x-text)] hover:bg-black/5'
                   }`}>
                   <m.icon className="w-3.5 h-3.5" /> {m.label}
@@ -242,7 +242,7 @@ export default function AICopilotPage() {
                 <div className="grid grid-cols-2 gap-2 max-w-[80%]">
                   {quickPrompts.map(p => (
                     <button key={p} onClick={() => sendMessage(p)}
-                      className="text-left px-3 py-2 rounded-lg border border-[var(--color-x-border)] bg-[var(--color-x-surface)] hover:border-indigo-300 hover:bg-indigo-50 text-[12px] text-[var(--color-x-text-secondary)] hover:text-indigo-700 transition-all">
+                      className="text-left px-3 py-2 rounded-lg border border-[var(--color-x-border)] bg-[var(--color-x-surface)] hover:border-blue-300 hover:bg-blue-50 text-[12px] text-[var(--color-x-text-secondary)] hover:text-blue-700 transition-all">
                       {p}
                     </button>
                   ))}
@@ -263,12 +263,12 @@ export default function AICopilotPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
                 placeholder={`Ask about your ${kpi.totalProjects} projects...`}
                 disabled={isLoading}
-                className="w-full bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl py-3 pl-4 pr-12 text-[13px] shadow-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all disabled:opacity-60"
+                className="w-full bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-xl py-3 pl-4 pr-12 text-[13px] shadow-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all disabled:opacity-60"
               />
               <button
                 onClick={() => sendMessage(input)}
                 disabled={isLoading || !input.trim()}
-                className="absolute right-2 p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="absolute right-2 p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -281,20 +281,20 @@ export default function AICopilotPage() {
 
         {/* Right Sidebar */}
         <div className="w-[280px] flex flex-col gap-4">
-          <div className="x-card p-4 bg-gradient-to-b from-indigo-50/50 to-transparent border-indigo-100/50">
+          <div className="x-card p-4 bg-gradient-to-b from-blue-50/50 to-transparent border-blue-100/50">
             <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-4 flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-indigo-500" /> Auto-Insights
+              <Zap className="w-4 h-4 text-blue-500" /> Auto-Insights
             </h3>
             <div className="space-y-3">
               {insights.map((insight, i) => (
                 <button key={i} onClick={() => sendMessage(insight.prompt)}
-                  className="w-full text-left p-3 rounded-xl border border-[var(--color-x-border)] bg-[var(--color-x-surface)] hover:shadow-sm hover:border-indigo-200 transition-all group">
+                  className="w-full text-left p-3 rounded-xl border border-[var(--color-x-border)] bg-[var(--color-x-surface)] hover:shadow-sm hover:border-blue-200 transition-all group">
                   <div className="flex items-center gap-2 mb-1">
                     <div className={`w-2 h-2 rounded-full ${insight.dot}`} />
                     <span className="text-[11px] font-semibold text-[var(--color-x-text)]">{insight.title}</span>
                   </div>
                   <p className="text-[11px] text-[var(--color-x-text-secondary)] leading-relaxed">{insight.desc}</p>
-                  <div className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 text-[10px] font-medium text-blue-600 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     Ask Xyro <ChevronRight className="w-3 h-3" />
                   </div>
                 </button>
@@ -307,7 +307,7 @@ export default function AICopilotPage() {
             <h3 className="text-[12px] font-bold text-[var(--color-x-text)] mb-3">Portfolio Snapshot</h3>
             <div className="space-y-2">
               {[
-                { label: 'Total Projects', value: kpi.totalProjects, color: 'text-indigo-600' },
+                { label: 'Total Projects', value: kpi.totalProjects, color: 'text-blue-600' },
                 { label: 'In Progress', value: stats.inProgress, color: 'text-blue-600' },
                 { label: 'Completed', value: kpi.completed, color: 'text-emerald-600' },
                 { label: 'Delayed', value: kpi.delayed, color: 'text-red-600' },

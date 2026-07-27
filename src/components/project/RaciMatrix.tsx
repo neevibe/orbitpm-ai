@@ -121,7 +121,7 @@ export default function RaciMatrix({ tasks, onUpdateTasks, projectDepartment }: 
             <select
               value={filterAssignee}
               onChange={e => setFilterAssignee(e.target.value)}
-              className="bg-white border border-slate-200 rounded-lg py-1 px-2.5 text-[11.5px] font-semibold text-slate-650 outline-none focus:border-indigo-400"
+              className="bg-white border border-slate-200 rounded-lg py-1 px-2.5 text-[11.5px] font-semibold text-slate-650 outline-none focus:border-blue-400"
             >
               <option value="All">All Resource Roles</option>
               {assigneesList.map(item => (
@@ -137,7 +137,7 @@ export default function RaciMatrix({ tasks, onUpdateTasks, projectDepartment }: 
               <select
                 value={filterRole}
                 onChange={e => setFilterRole(e.target.value as any)}
-                className="bg-white border border-slate-200 rounded-lg py-1 px-2.5 text-[11.5px] font-semibold text-slate-650 outline-none focus:border-indigo-400"
+                className="bg-white border border-slate-200 rounded-lg py-1 px-2.5 text-[11.5px] font-semibold text-slate-650 outline-none focus:border-blue-400"
               >
                 <option value="All">Any Role (R/A/C/I)</option>
                 <option value="R">Responsible (R)</option>
@@ -160,7 +160,7 @@ export default function RaciMatrix({ tasks, onUpdateTasks, projectDepartment }: 
           </button>
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-[11.5px] font-bold transition-all shadow-xs cursor-pointer"
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-[11.5px] font-bold transition-all shadow-xs cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             Export CSV
@@ -286,11 +286,11 @@ export default function RaciMatrix({ tasks, onUpdateTasks, projectDepartment }: 
           value={newDeliverableText}
           onChange={e => setNewDeliverableText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAddDeliverable()}
-          className="bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-[12px] text-slate-700 placeholder:text-slate-400 outline-none focus:border-indigo-400 flex-1"
+          className="bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-[12px] text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-400 flex-1"
         />
         <button
           onClick={handleAddDeliverable}
-          className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[12px] font-bold transition-all shadow-xs cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12px] font-bold transition-all shadow-xs cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           Add Row

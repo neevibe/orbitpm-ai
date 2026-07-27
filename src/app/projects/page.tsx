@@ -303,9 +303,9 @@ export default function ProjectsPage() {
               setSelectedDept('All');
               setSelectedSub(null);
             }}
-            className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${selectedDept === 'All' ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
+            className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${selectedDept === 'All' ? 'bg-blue-50/80 text-blue-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
           >
-            <FolderOpen className={`w-4 h-4 flex-shrink-0 ${selectedDept === 'All' ? 'text-indigo-600' : 'text-[var(--color-x-text-muted)]'}`} />
+            <FolderOpen className={`w-4 h-4 flex-shrink-0 ${selectedDept === 'All' ? 'text-blue-600' : 'text-[var(--color-x-text-muted)]'}`} />
             <span className="truncate">All Departments</span>
             <span className="ml-auto text-[11px] font-mono">{activeProjects.length}</span>
           </button>
@@ -321,16 +321,16 @@ export default function ProjectsPage() {
                     setSelectedDept(dept);
                     setSelectedSub(null);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${isSelected && !selectedSub ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-[13px] flex items-center gap-2.5 transition-all ${isSelected && !selectedSub ? 'bg-blue-50/80 text-blue-700 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
                 >
                   <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                    <span className={`w-2 h-2 rounded-full ${isSelected && !selectedSub ? 'bg-indigo-600' : 'bg-[var(--color-x-text-muted)] opacity-50'}`} />
+                    <span className={`w-2 h-2 rounded-full ${isSelected && !selectedSub ? 'bg-blue-600' : 'bg-[var(--color-x-text-muted)] opacity-50'}`} />
                   </div>
                   <span className="truncate flex-1">{departmentDisplayName(dept)}</span>
-                  <span className={`ml-auto text-[11px] font-mono ${isSelected && !selectedSub ? 'text-indigo-500' : 'text-[var(--color-x-text-muted)]'}`}>{count}</span>
+                  <span className={`ml-auto text-[11px] font-mono ${isSelected && !selectedSub ? 'text-blue-500' : 'text-[var(--color-x-text-muted)]'}`}>{count}</span>
                 </button>
                 {isSelected && subdivisions.length > 0 && (
-                  <div className="pl-6 space-y-0.5 border-l border-indigo-100/50 ml-5 my-0.5">
+                  <div className="pl-6 space-y-0.5 border-l border-blue-100/50 ml-5 my-0.5">
                     {subdivisions.map((sub: string) => {
                       const subCount = activeProjects.filter(p => {
                         const h = resolveHierarchy(p.department, p.subdivision);
@@ -341,10 +341,10 @@ export default function ProjectsPage() {
                         <button
                           key={sub}
                           onClick={() => setSelectedSub(sub)}
-                          className={`w-full text-left px-2.5 py-1 rounded-md text-[12px] flex items-center gap-2 transition-all ${isSubSelected ? 'bg-indigo-50/60 text-indigo-600 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
+                          className={`w-full text-left px-2.5 py-1 rounded-md text-[12px] flex items-center gap-2 transition-all ${isSubSelected ? 'bg-blue-50/60 text-blue-600 font-semibold shadow-sm' : 'text-[var(--color-x-text-secondary)] hover:bg-[var(--color-x-bg)] hover:text-[var(--color-x-text)]'}`}
                         >
                           <span className="truncate flex-1">{sub}</span>
-                          <span className={`text-[10px] font-mono ${isSubSelected ? 'text-indigo-500 font-bold' : 'text-[var(--color-x-text-muted)]'}`}>{subCount}</span>
+                          <span className={`text-[10px] font-mono ${isSubSelected ? 'text-blue-500 font-bold' : 'text-[var(--color-x-text-muted)]'}`}>{subCount}</span>
                         </button>
                       );
                     })}
@@ -401,13 +401,13 @@ export default function ProjectsPage() {
           <div ref={filtersPanelRef} className="relative flex-shrink-0">
             <button
               onClick={() => setShowFiltersPanel(v => !v)}
-              className={`flex items-center gap-1.5 px-2.5 rounded-md border text-[12px] font-semibold transition-colors ${(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300 hover:text-[var(--color-x-text)]'}`}
+              className={`flex items-center gap-1.5 px-2.5 rounded-md border text-[12px] font-semibold transition-colors ${(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') ? 'bg-blue-50 text-blue-700 border-blue-300' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-blue-300 hover:text-[var(--color-x-text)]'}`}
               style={{ height: 32 }}
             >
               <Filter className="w-3.5 h-3.5" />
               Filters
               {(ownerFilter !== 'All' || myProjectsOnly || sortBy !== 'id') && (
-                <span className="inline-flex w-4 h-4 rounded-full bg-indigo-600 text-white text-[9px] items-center justify-center font-bold">
+                <span className="inline-flex w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] items-center justify-center font-bold">
                   {(ownerFilter !== 'All' ? 1 : 0) + (myProjectsOnly ? 1 : 0) + (sortBy !== 'id' ? 1 : 0)}
                 </span>
               )}
@@ -431,7 +431,7 @@ export default function ProjectsPage() {
                     <span className="text-[12px] font-medium text-[var(--color-x-text)]">My Projects only</span>
                     <button
                       onClick={() => setMyProjectsOnly(v => !v)}
-                      className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${myProjectsOnly ? 'bg-indigo-600' : 'bg-[var(--color-x-border)]'}`}
+                      className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${myProjectsOnly ? 'bg-blue-600' : 'bg-[var(--color-x-border)]'}`}
                     >
                       <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${myProjectsOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
                     </button>
@@ -442,11 +442,11 @@ export default function ProjectsPage() {
                   <div className="flex gap-1.5">
                     <button
                       onClick={() => setSortBy('id')}
-                      className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg border transition-all ${sortBy === 'id' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300'}`}
+                      className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg border transition-all ${sortBy === 'id' ? 'bg-blue-600 text-white border-blue-600' : 'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-blue-300'}`}
                     >ID</button>
                     <button
                       onClick={() => setSortBy('owner')}
-                      className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg border transition-all ${sortBy === 'owner' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-indigo-300'}`}
+                      className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg border transition-all ${sortBy === 'owner' ? 'bg-blue-600 text-white border-blue-600' : 'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-blue-300'}`}
                     >Owner</button>
                   </div>
                 </div>
@@ -470,7 +470,7 @@ export default function ProjectsPage() {
                 setBottlenecksFilter(false);
                 router.replace('/projects');
               }}
-              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100 flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 flex items-center gap-1 cursor-pointer transition-colors"
               style={{ height: 32 }}
             >
               Clear Special Filter
@@ -479,9 +479,9 @@ export default function ProjectsPage() {
 
           {/* View toggle */}
           <div className="flex items-center gap-0.5 ml-auto flex-shrink-0 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg p-0.5">
-            <button onClick={() => setView('list')} title="List" className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><Table2 className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setView('kanban')} title="Kanban" className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setView('gantt')} title="Gantt" className={`p-1.5 rounded-md transition-all ${view === 'gantt' ? 'bg-[var(--color-x-surface)] shadow-sm text-indigo-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setView('list')} title="List" className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-[var(--color-x-surface)] shadow-sm text-blue-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><Table2 className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setView('kanban')} title="Kanban" className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-[var(--color-x-surface)] shadow-sm text-blue-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setView('gantt')} title="Gantt" className={`p-1.5 rounded-md transition-all ${view === 'gantt' ? 'bg-[var(--color-x-surface)] shadow-sm text-blue-600' : 'text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'}`}><BarChartHorizontal className="w-3.5 h-3.5" /></button>
           </div>
           {/* Export to Excel (re-importable workbook reflecting all in-app edits) */}
           <button
@@ -602,14 +602,14 @@ export default function ProjectsPage() {
                       <div className="text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] transition-colors">
                         {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                       </div>
-                      <div className="w-3 h-3 rounded-full flex-shrink-0 bg-indigo-500" />
+                      <div className="w-3 h-3 rounded-full flex-shrink-0 bg-blue-500" />
                       <span className="text-[14px] font-bold text-[var(--color-x-text)]">
                         {departmentDisplayName(dept)}
                       </span>
                       <span className="text-[12px] font-medium text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{plural(deptProjects.length, 'project')}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); openNew(dept); }}
-                        className="ml-auto flex items-center gap-1.5 text-[12px] text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-md font-semibold transition-colors border border-transparent hover:border-indigo-100"
+                        className="ml-auto flex items-center gap-1.5 text-[12px] text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-md font-semibold transition-colors border border-transparent hover:border-blue-100"
                       >
                         <Plus className="w-3.5 h-3.5" /> Add Project
                       </button>
@@ -630,7 +630,7 @@ export default function ProjectsPage() {
                                   <span className="text-[11px] font-medium text-[var(--color-x-text-muted)] bg-white px-2 py-0.5 rounded-full border border-[var(--color-x-border)]">{plural(group.projects.length, 'project')}</span>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); openNew(dept, (group.name === 'General / Other' || !group.name) ? undefined : group.name); }}
-                                    className="text-[11px] text-indigo-600 hover:text-indigo-850 font-semibold flex items-center gap-0.5"
+                                    className="text-[11px] text-blue-600 hover:text-blue-850 font-semibold flex items-center gap-0.5"
                                   >
                                     <Plus className="w-3 h-3" /> Add
                                   </button>
@@ -657,11 +657,11 @@ export default function ProjectsPage() {
                                       <div className="flex items-center gap-2.5 min-w-0">
                                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(p.status)}`} />
                                         <div className="min-w-0 flex items-center gap-2">
-                                          <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-indigo-600 transition-colors truncate" title={p.name}>{p.name}</span>
+                                          <span className="font-semibold text-[13px] text-[var(--color-x-text)] group-hover:text-blue-600 transition-colors truncate" title={p.name}>{p.name}</span>
                                           {p.isDependencyMirror && (
                                             <span
                                               title={`Mirrored from ${departmentDisplayName(p.originalDepartment || '')} via a dependency. Archive/Delete must happen in the source department.`}
-                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-semibold text-indigo-600 whitespace-nowrap flex-shrink-0"
+                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[9px] font-semibold text-blue-600 whitespace-nowrap flex-shrink-0"
                                             >
                                               ↳ Mirror
                                             </span>
@@ -679,7 +679,7 @@ export default function ProjectsPage() {
                                     <td>
                                       <div className="flex items-center gap-2">
                                         <div className="flex-1 h-2 bg-[var(--color-x-bg)] rounded-full overflow-hidden border border-[var(--color-x-border)]">
-                                          <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${p.progress}%` }} />
+                                          <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${p.progress}%` }} />
                                         </div>
                                         <span className="text-[11px] font-semibold text-[var(--color-x-text-secondary)] w-8 text-right">{p.progress}%</span>
                                       </div>
@@ -687,7 +687,7 @@ export default function ProjectsPage() {
                                     <td className="pr-5 text-right">
                                       <div className={`flex items-center justify-end gap-1.5 transition-opacity ${openMenuId === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                         {(p.isDependencyMirror || canModifyDepartment(p.department)) && (
-                                          <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-indigo-50 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
+                                          <button onClick={e => { e.stopPropagation(); openRowEdit(p); }} className="p-2 rounded-md hover:bg-blue-50 text-[var(--color-x-text-muted)] hover:text-blue-600 transition-colors" title={p.isDependencyMirror ? 'Open dependency task' : 'Quick Edit'}><Edit2 className="w-4 h-4" /></button>
                                         )}
                                         {!p.isDependencyMirror && canModifyDepartment(p.department) && (isAdmin || isProjectOwner(p.owner, currentUserName, user?.email)) && (
                                           <div className="relative" onClick={e => e.stopPropagation()}>
@@ -731,18 +731,18 @@ export default function ProjectsPage() {
                     </div>
                     <div className="space-y-3 flex-1 overflow-y-auto px-1 pb-4">
                       {cols.map(p => (
-                        <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="x-card p-4 hover:border-indigo-400 cursor-pointer group">
+                        <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="x-card p-4 hover:border-blue-400 cursor-pointer group">
                           <div className="flex items-center justify-between mb-2">
                             <span className={`x-priority-${p.priority.toLowerCase()}`}>{p.priority}</span>
                             <span className="text-[10px] font-mono text-[var(--color-x-text-muted)]">{p.id}</span>
                           </div>
-                          <p className="text-[13px] font-bold text-[var(--color-x-text)] leading-snug mb-1 group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                          <p className="text-[13px] font-bold text-[var(--color-x-text)] leading-snug mb-1 group-hover:text-blue-600 transition-colors">{p.name}</p>
                           <div className="mb-2">
                             <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" className="text-[11px]" />
                           </div>
                           
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
                               {p.owner.split(' ').map(n => n[0]).join('').substring(0, 2)}
                             </div>
                             <p className="text-[11px] text-[var(--color-x-text-secondary)] truncate">{p.owner}</p>
@@ -750,7 +750,7 @@ export default function ProjectsPage() {
 
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-1.5 bg-[var(--color-x-bg)] rounded-full overflow-hidden border border-[var(--color-x-border)]">
-                              <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${p.progress}%` }} />
+                              <div className={`h-full rounded-full ${p.progress >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${p.progress}%` }} />
                             </div>
                             <span className="text-[10px] font-bold text-[var(--color-x-text-muted)]">{p.progress}%</span>
                           </div>
@@ -856,17 +856,17 @@ export default function ProjectsPage() {
                         <div 
                           key={col.id} 
                           onClick={() => toggleQuarter(col.quarter)} 
-                          className="flex-1 text-center py-1.5 px-1 rounded-md cursor-pointer hover:bg-indigo-50/50 transition-colors flex flex-col items-center justify-center border-l border-[var(--color-x-border)]/40 bg-[var(--color-x-bg)]"
+                          className="flex-1 text-center py-1.5 px-1 rounded-md cursor-pointer hover:bg-blue-50/50 transition-colors flex flex-col items-center justify-center border-l border-[var(--color-x-border)]/40 bg-[var(--color-x-bg)]"
                         >
                           {col.type === 'quarter' ? (
-                            <span className="flex items-center gap-1 text-[10px] text-indigo-600 font-extrabold uppercase tracking-wide">
-                              {col.label} <ChevronRight className="w-3.5 h-3.5 text-indigo-500" />
+                            <span className="flex items-center gap-1 text-[10px] text-blue-600 font-extrabold uppercase tracking-wide">
+                              {col.label} <ChevronRight className="w-3.5 h-3.5 text-blue-500" />
                             </span>
                           ) : (
                             <span className="text-[11px] font-bold text-[var(--color-x-text)] flex flex-col leading-tight">
                               <span className="text-[8px] text-[var(--color-x-text-muted)] font-normal uppercase tracking-wider">{col.quarter}</span>
                               <span className="flex items-center gap-0.5 justify-center">
-                                {col.label} <ChevronDown className="w-2.5 h-2.5 text-indigo-400" />
+                                {col.label} <ChevronDown className="w-2.5 h-2.5 text-blue-400" />
                               </span>
                             </span>
                           )}
@@ -883,11 +883,11 @@ export default function ProjectsPage() {
                       
                       const sp = Math.min(leftPct, rightPct);
                       const wp = Math.max(1, Math.abs(rightPct - leftPct));
-                      const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#6366f1';
+                      const barColor = p.status === 'Completed' ? '#10b981' : p.status === 'Delayed' ? '#ef4444' : '#2563eb';
                       return (
                         <div key={`${p.id}-${p.department}-${p.owner}`} onClick={() => openRow(p)} className="flex items-center group cursor-pointer hover:bg-[var(--color-x-bg)] rounded-lg p-2 transition-colors">
                           <div className="w-80 flex-shrink-0 pr-5 truncate">
-                            <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-indigo-600 transition-colors">{p.name}</p>
+                            <p className="text-[13px] font-semibold text-[var(--color-x-text)] truncate group-hover:text-blue-600 transition-colors">{p.name}</p>
                             <div className="text-[11px] text-[var(--color-x-text-muted)] flex items-center gap-1.5 flex-wrap mt-0.5">
                               <span>{p.owner}</span>
                               <span>·</span>

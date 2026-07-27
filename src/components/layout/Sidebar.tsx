@@ -16,7 +16,7 @@ import { useData } from '@/lib/data-context';
 const workspaces = [
   {
     items: [
-      { name: 'Dashboard', href: '/command-center', icon: LayoutDashboard, accent: '#6366f1' },
+      { name: 'Dashboard', href: '/command-center', icon: LayoutDashboard, accent: '#2563eb' },
       { name: 'My Work', href: '/my-work', icon: UserCircle2, accent: '#0ea5e9' },
     ]
   },
@@ -48,7 +48,7 @@ const workspaces = [
     items: [
       { name: 'Knowledge', href: '/knowledge', icon: BookOpen, accent: '#14b8a6' },
       { name: 'Automations', href: '/automations', icon: Zap, accent: '#eab308' },
-      { name: 'Integrations', href: '/integrations', icon: Puzzle, accent: '#6366f1' },
+      { name: 'Integrations', href: '/integrations', icon: Puzzle, accent: '#2563eb' },
     ]
   },
   {
@@ -186,7 +186,7 @@ export default function Sidebar() {
       {!collapsed && (
         <div className="px-3 pt-3 pb-1">
           <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-[var(--color-x-border)] hover:border-[var(--color-x-border-hover)] hover:bg-[var(--color-x-bg)] transition-all group">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[9px] font-bold text-white shadow-sm">{initials}</div>
+            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center text-[9px] font-bold text-white shadow-sm">{initials}</div>
             <div className="flex-1 text-left min-w-0">
               <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight truncate">{companyName}</p>
               <p className="text-[10px] text-[var(--color-x-text-muted)] leading-tight">{kpi.totalProjects} projects</p>
@@ -254,7 +254,7 @@ export default function Sidebar() {
           const displayInitials = profileName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
           return (
             <Link href="/settings" title={collapsed ? `${profileName} — Settings` : undefined} className={`flex items-center rounded-lg hover:bg-[var(--color-x-bg)] transition-all ${collapsed ? 'justify-center py-2' : 'gap-2.5 px-2.5 py-2'}`}>
-              <div className="w-7 h-7 rounded-full border border-indigo-100 flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-500 text-[10px] font-bold text-white flex-shrink-0">
+              <div className="w-7 h-7 rounded-full border border-blue-100 flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-600 to-sky-500 text-[10px] font-bold text-white flex-shrink-0">
                 {profileAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={profileAvatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -268,7 +268,7 @@ export default function Sidebar() {
                     <p className="text-[12px] font-semibold text-[var(--color-x-text)] leading-tight truncate">{profileName}</p>
                     <p className="text-[10px] text-[var(--color-x-text-muted)] capitalize truncate">{profileRole}</p>
                   </div>
-                  <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)] hover:text-indigo-600 transition-colors" />
+                  <Settings className="w-3.5 h-3.5 text-[var(--color-x-text-muted)] hover:text-blue-600 transition-colors" />
                 </>
               )}
             </Link>

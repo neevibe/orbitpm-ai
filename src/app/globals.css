@@ -1,36 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @import "tailwindcss";
 
 @theme {
-  --color-x-accent: #6366f1;
-  --color-x-accent-hover: #4f46e5;
-  --color-x-accent-light: #eef2ff;
-  --color-x-accent-muted: #c7d2fe;
+  /* "Trust & Authority" system (ui-ux-pro-max): professional blue primary,
+     slate neutrals — enterprise B2B, WCAG AA. Replaces the indigo/purple kit. */
+  --color-x-accent: #2563eb;
+  --color-x-accent-hover: #1d4ed8;
+  --color-x-accent-light: #eff6ff;
+  --color-x-accent-muted: #bfdbfe;
 
-  --color-x-success: #10b981;
+  --color-x-success: #059669;
   --color-x-success-light: #d1fae5;
   --color-x-warning: #f59e0b;
   --color-x-warning-light: #fef3c7;
-  --color-x-danger: #ef4444;
+  --color-x-danger: #dc2626;
   --color-x-danger-light: #fee2e2;
-  --color-x-info: #3b82f6;
+  --color-x-info: #2563eb;
   --color-x-info-light: #dbeafe;
 
-  --color-x-bg: #f9fafb;
+  --color-x-bg: #f8fafc;
   --color-x-surface: #ffffff;
   --color-x-surface-raised: #ffffff;
-  --color-x-border: #e5e7eb;
-  --color-x-border-hover: #d1d5db;
-  --color-x-text: #111827;
-  --color-x-text-secondary: #6b7280;
-  /* AA-compliant muted text (4.6:1 on the light bg). The old #9ca3af (~2.5:1)
-     is retained as --color-x-text-faint for non-text decoration only
+  --color-x-border: #e2e8f0;
+  --color-x-border-hover: #cbd5e1;
+  --color-x-text: #0f172a;
+  --color-x-text-secondary: #475569;
+  /* AA-compliant muted text (≥4.5:1 on the light bg). The lighter slate is
+     retained as --color-x-text-faint for non-text decoration only
      (icons, dividers, disabled glyphs). */
-  --color-x-text-muted: #6b7280;
-  --color-x-text-faint: #9ca3af;
+  --color-x-text-muted: #64748b;
+  --color-x-text-faint: #94a3b8;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* ── Semantic type scale (Tailwind v4 generates text-<name> utilities) ──
@@ -82,17 +84,20 @@
 }
 
 [data-theme="dark"] {
-  --color-x-bg: #0b0f1a;
-  --color-x-surface: #111827;
-  --color-x-surface-raised: #1f2937;
-  --color-x-border: #1f2937;
-  --color-x-border-hover: #374151;
-  --color-x-text: #f9fafb;
+  --color-x-bg: #0b1220;
+  --color-x-surface: #0f1a2e;
+  --color-x-surface-raised: #1e293b;
+  --color-x-border: #1e293b;
+  --color-x-border-hover: #334155;
+  --color-x-text: #f1f5f9;
   --color-x-text-secondary: #cbd5e1;
   /* On the dark bg, muted text must go LIGHTER for contrast (≈4.7:1). */
-  --color-x-text-muted: #9ca3af;
-  --color-x-text-faint: #6b7280;
-  --color-x-accent-light: rgba(99, 102, 241, 0.15);
+  --color-x-text-muted: #94a3b8;
+  --color-x-text-faint: #64748b;
+  /* accent desaturates ~15% in dark mode (per system spec) */
+  --color-x-accent: #3b82f6;
+  --color-x-accent-hover: #60a5fa;
+  --color-x-accent-light: rgba(59, 130, 246, 0.15);
 }
 
 * { box-sizing: border-box; }
@@ -142,7 +147,7 @@ body {
   overflow-x: hidden;
 }
 
-::selection { background: var(--color-x-accent-muted); color: #1e1b4b; }
+::selection { background: var(--color-x-accent-muted); color: #172554; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -262,7 +267,7 @@ body {
 .x-badge-amber { background: #fef3c7; color: #b45309; }
 .x-badge-gray { background: #f3f4f6; color: #6b7280; }
 .x-badge-purple { background: #ede9fe; color: #7c3aed; }
-.x-badge-indigo { background: #eef2ff; color: #4f46e5; }
+.x-badge-indigo { background: #eff6ff; color: #1d4ed8; }
 
 .x-priority-critical { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 4px; }
 .x-priority-high { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 4px; }

@@ -248,7 +248,7 @@ export default function ProjectDetailPage() {
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1.5">
-            <span className="text-[12px] font-mono font-semibold text-indigo-600 tracking-wider bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{project.id}</span>
+            <span className="text-[12px] font-mono font-semibold text-blue-600 tracking-wider bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{project.id}</span>
             <span className={`x-badge ${getStatusColor(project.status) === 'bg-emerald-500' ? 'x-badge-green' : getStatusColor(project.status) === 'bg-red-500' ? 'x-badge-red' : getStatusColor(project.status) === 'bg-amber-400' ? 'x-badge-amber' : getStatusColor(project.status) === 'bg-blue-500' ? 'x-badge-blue' : 'x-badge-gray'}`}>{project.status}</span>
             <span className={`x-priority-${project.priority.toLowerCase()}`}>{project.priority}</span>
           </div>
@@ -263,13 +263,13 @@ export default function ProjectDetailPage() {
 
       <div className="grid grid-cols-5 gap-4">
         {/* Owner */}
-        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
-          <div className="flex items-center gap-2 mb-2"><User className="w-4 h-4 text-indigo-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Owner</span></div>
+        <div className="x-card p-4 hover:border-blue-200 transition-colors">
+          <div className="flex items-center gap-2 mb-2"><User className="w-4 h-4 text-blue-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Owner</span></div>
           <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{project.owner || '—'}</p>
         </div>
 
         {/* Department + Subdivision */}
-        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+        <div className="x-card p-4 hover:border-blue-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Building2 className="w-4 h-4 text-purple-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Department</span></div>
           {(() => {
             const h = resolveHierarchy(project.department, project.subdivision);
@@ -282,19 +282,19 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Start Date */}
-        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+        <div className="x-card p-4 hover:border-blue-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Calendar className="w-4 h-4 text-emerald-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Start Date</span></div>
           <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.startDate) || '—'}</p>
         </div>
 
         {/* Target Date */}
-        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+        <div className="x-card p-4 hover:border-blue-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-amber-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Target Date</span></div>
           <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.targetDate) || '—'}</p>
         </div>
 
         {/* Open Risks (computed) */}
-        <div className="x-card p-4 hover:border-indigo-200 transition-colors">
+        <div className="x-card p-4 hover:border-blue-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-red-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Open Risks</span></div>
           <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{projectRisks.filter(r => r.status === 'Open').length}</p>
         </div>
@@ -303,9 +303,9 @@ export default function ProjectDetailPage() {
       {/* Financial management (₹) */}
       <div className="grid grid-cols-3 gap-4">
         {/* Total Budget */}
-        <div className="x-card p-4 border border-indigo-100 bg-indigo-50/40">
-          <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-indigo-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Total Budget</span></div>
-          <p className="text-[18px] font-bold text-indigo-600">{formatINR(project.totalBudget ?? null)}</p>
+        <div className="x-card p-4 border border-blue-100 bg-blue-50/40">
+          <div className="flex items-center gap-2 mb-1.5"><IndianRupee className="w-4 h-4 text-blue-600" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Total Budget</span></div>
+          <p className="text-[18px] font-bold text-blue-600">{formatINR(project.totalBudget ?? null)}</p>
         </div>
 
         {/* Utilized Budget */}
@@ -332,14 +332,14 @@ export default function ProjectDetailPage() {
           <span className="text-xl font-bold text-[var(--color-x-text)]">{project.progress}%</span>
         </div>
         <div className="w-full h-3 bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-full overflow-hidden shadow-inner">
-          <div className={`h-full rounded-full transition-all duration-500 ${project.progress >= 80 ? 'bg-emerald-500' : project.progress >= 50 ? 'bg-indigo-500' : project.progress > 0 ? 'bg-purple-500' : 'bg-[var(--color-x-border)]'}`}
+          <div className={`h-full rounded-full transition-all duration-500 ${project.progress >= 80 ? 'bg-emerald-500' : project.progress >= 50 ? 'bg-blue-500' : project.progress > 0 ? 'bg-purple-500' : 'bg-[var(--color-x-border)]'}`}
             style={{ width: `${Math.max(project.progress, 2)}%` }} />
         </div>
       </div>
 
       <div className="flex items-center gap-2 border-b border-[var(--color-x-border)] pb-px mt-8">
         {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-t-xl transition-all ${activeTab === tab.id ? 'text-indigo-700 bg-indigo-50 border-b-2 border-indigo-600' : 'text-[var(--color-x-text-secondary)] hover:text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)] border-b-2 border-transparent'}`}>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-t-xl transition-all ${activeTab === tab.id ? 'text-blue-700 bg-blue-50 border-b-2 border-blue-600' : 'text-[var(--color-x-text-secondary)] hover:text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)] border-b-2 border-transparent'}`}>
             <tab.icon className="w-4 h-4" />{tab.label}
             {tab.count !== undefined && tab.count > 0 && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-white border border-[var(--color-x-border)] shadow-sm rounded-md">{tab.count}</span>}</button>))}
       </div>
@@ -350,17 +350,17 @@ export default function ProjectDetailPage() {
             {project.allocations && project.allocations.length > 0 && (
               <div className="x-card p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Target className="w-4 h-4 text-indigo-500" /> Responsibility Allocation</h3>
+                  <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Target className="w-4 h-4 text-blue-500" /> Responsibility Allocation</h3>
                 </div>
                 <div className="flex w-full h-4 rounded-full overflow-hidden mb-3 border border-[var(--color-x-border)] shadow-inner">
                   {project.allocations.map((a, i) => (
-                    <div key={a.id} className={`${['bg-indigo-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-rose-500'][i % 6]} hover:brightness-110 transition-all`} style={{ width: `${a.percentage}%` }} title={`${a.target} (${a.percentage}%)`} />
+                    <div key={a.id} className={`${['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-rose-500'][i % 6]} hover:brightness-110 transition-all`} style={{ width: `${a.percentage}%` }} title={`${a.target} (${a.percentage}%)`} />
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-4">
                   {project.allocations.map((a, i) => (
                     <div key={a.id} className="flex items-center gap-2 text-[12px]">
-                      <div className={`w-2.5 h-2.5 rounded-full ${['bg-indigo-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-rose-500'][i % 6]}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full ${['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-blue-500', 'bg-rose-500'][i % 6]}`} />
                       <span className="font-bold text-[var(--color-x-text)]">{a.target || 'Unassigned'}</span>
                       <span className="text-[var(--color-x-text-muted)]">({a.percentage}%)</span>
                       <span className="text-[10px] uppercase font-bold text-[var(--color-x-text-muted)] bg-[var(--color-x-bg)] px-1.5 py-0.5 rounded">{a.type}</span>
@@ -382,9 +382,9 @@ export default function ProjectDetailPage() {
               <NotesLog value={project.notes || ''} onAdd={next => updateProject(project.id, { notes: next })} /></div>
           </div>
           <div className="col-span-1 space-y-4">
-            <div className="x-card p-5 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 border-indigo-100/50">
-              <div className="flex items-center gap-2 mb-2"><div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center"><Zap className="w-3.5 h-3.5 text-indigo-600" /></div><h3 className="text-[13px] font-bold text-indigo-800">AI Health Assessment</h3></div>
-              <p className="text-[12px] text-indigo-900/80 leading-relaxed font-medium">
+            <div className="x-card p-5 bg-gradient-to-br from-blue-50/80 to-sky-50/60 border-blue-100/50">
+              <div className="flex items-center gap-2 mb-2"><div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center"><Zap className="w-3.5 h-3.5 text-blue-600" /></div><h3 className="text-[13px] font-bold text-blue-800">AI Health Assessment</h3></div>
+              <p className="text-[12px] text-blue-900/80 leading-relaxed font-medium">
                 {project.progress === 0 && project.priority === 'Critical' ? `⚠️ Critical project with 0% progress. Immediate action needed.`
                   : project.status === 'Delayed' ? `🚨 This project is delayed. Review blockers and consider timeline adjustment.`
                   : project.progress > 50 ? `✅ Good progress at ${project.progress}%. On track for delivery.`
@@ -442,7 +442,7 @@ export default function ProjectDetailPage() {
       {activeTab === 'dependencies' && (
         <div className="x-card p-5 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Target className="w-4 h-4 text-indigo-500" /> Dependency Management Framework</h3>
+            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Target className="w-4 h-4 text-blue-500" /> Dependency Management Framework</h3>
           </div>
 
           <DependencyBuilder
@@ -456,13 +456,13 @@ export default function ProjectDetailPage() {
       {activeTab === 'tasks' && (
         <div className="x-card p-5 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><ListTodo className="w-4 h-4 text-indigo-500" /> Project Tasks & Steps</h3>
+            <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><ListTodo className="w-4 h-4 text-blue-500" /> Project Tasks & Steps</h3>
             <button onClick={() => setIsTaskModalOpen(true)} className="x-btn x-btn-primary flex items-center gap-2 py-1.5 px-3 text-[11px]"><Plus className="w-3.5 h-3.5" /> Add Task</button>
           </div>
           {projectTasks.length > 0 ? (
             <div className="space-y-2">
               {projectTasks.map(task => (
-                <div key={task.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[var(--color-x-border)] hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors group">
+                <div key={task.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[var(--color-x-border)] hover:border-blue-200 hover:bg-blue-50/20 transition-colors group">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
                       onClick={() => handleTaskStatusChange(task.id, (task.status as string) === 'Completed' ? 'To Do' : 'Completed')}
@@ -490,7 +490,7 @@ export default function ProjectDetailPage() {
                         (task.status as string) === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                         task.status === 'Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                        task.status === 'To Do' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        task.status === 'To Do' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                         'bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)]'
                       }`}
                     >
@@ -541,7 +541,7 @@ export default function ProjectDetailPage() {
             <table className="x-table">
               <thead><tr><th>Risk ID</th><th>Description</th><th>Category</th><th>Impact</th><th>Mitigation</th><th>Status</th></tr></thead>
               <tbody>{projectRisks.map(r => (<tr key={r.id}>
-                <td><span className="font-mono text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{r.id}</span></td>
+                <td><span className="font-mono text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{r.id}</span></td>
                 <td className="text-[12px] font-medium text-[var(--color-x-text)]">{r.description}</td>
                 <td><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-x-bg)] text-[var(--color-x-text-secondary)] border border-[var(--color-x-border)]">{r.category}</span></td>
                 <td><span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${r.impact === 'High' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{r.impact}</span></td>
@@ -583,14 +583,14 @@ export default function ProjectDetailPage() {
                   <button
                     type="button"
                     onClick={() => setNewTaskAssignType('internal')}
-                    className={`flex-1 py-1.5 text-[12px] font-semibold transition-colors ${newTaskAssignType === 'internal' ? 'bg-indigo-600 text-white' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] hover:bg-indigo-50'}`}
+                    className={`flex-1 py-1.5 text-[12px] font-semibold transition-colors ${newTaskAssignType === 'internal' ? 'bg-blue-600 text-white' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] hover:bg-blue-50'}`}
                   >
                     Organization
                   </button>
                   <button
                     type="button"
                     onClick={() => setNewTaskAssignType('external')}
-                    className={`flex-1 py-1.5 text-[12px] font-semibold transition-colors ${newTaskAssignType === 'external' ? 'bg-indigo-600 text-white' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] hover:bg-indigo-50'}`}
+                    className={`flex-1 py-1.5 text-[12px] font-semibold transition-colors ${newTaskAssignType === 'external' ? 'bg-blue-600 text-white' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] hover:bg-blue-50'}`}
                   >
                     External User
                   </button>
@@ -691,8 +691,8 @@ export default function ProjectDetailPage() {
             </div>
             <div className="p-5 space-y-5">
               
-              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
-                <label className="block text-[12px] font-bold text-indigo-800 mb-2">How many ways do you want to split this project?</label>
+              <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
+                <label className="block text-[12px] font-bold text-blue-800 mb-2">How many ways do you want to split this project?</label>
                 <div className="flex items-center gap-3">
                   <input 
                     type="number" 
@@ -701,7 +701,7 @@ export default function ProjectDetailPage() {
                     onChange={e => handleSplitCountChange(Number(e.target.value))}
                     className="x-input py-1.5 px-3 text-[14px] w-24 font-bold"
                   />
-                  <span className="text-[12px] text-indigo-600">This will physically clone the project into target departments.</span>
+                  <span className="text-[12px] text-blue-600">This will physically clone the project into target departments.</span>
                 </div>
               </div>
 
@@ -768,7 +768,7 @@ export default function ProjectDetailPage() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setIsSplitWizardOpen(false)} className="x-btn x-btn-secondary">Cancel</button>
-                  <button onClick={handleSaveSplit} className="x-btn x-btn-primary bg-indigo-600 hover:bg-indigo-700">Split & Clone Project</button>
+                  <button onClick={handleSaveSplit} className="x-btn x-btn-primary bg-blue-600 hover:bg-blue-700">Split & Clone Project</button>
                 </div>
               </div>
             </div>
