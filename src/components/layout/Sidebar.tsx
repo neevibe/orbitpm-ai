@@ -36,7 +36,7 @@ const workspaces = [
   {
     section: 'Intelligence',
     items: [
-      { name: 'AI Copilot', href: '/ai', icon: Sparkles, accent: '#a855f7' },
+      { name: 'Xyro AI', href: '/ai', icon: Sparkles, accent: '#a855f7' },
       { name: 'Analytics', href: '/analytics', icon: BarChart3, accent: '#f97316' },
       { name: 'Risk Register', href: '/risks', icon: AlertTriangle, accent: '#ef4444' },
     ]

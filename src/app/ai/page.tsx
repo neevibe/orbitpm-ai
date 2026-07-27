@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { Sparkles, Briefcase, BookOpen, BarChart3, Bot, User, Send, Zap, ChevronRight, RefreshCw } from 'lucide-react';
+import { Briefcase, BookOpen, BarChart3, User, Send, Zap, ChevronRight, RefreshCw } from 'lucide-react';
 
 const modes = [
   { id: 'executive', label: 'Executive', icon: Briefcase, desc: 'Portfolio-level insights' },
@@ -21,8 +22,8 @@ interface Message {
 function TypingIndicator() {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm flex-shrink-0">
-        <Bot className="w-4 h-4 text-white" />
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+        <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" />
       </div>
       <div className="bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-2xl px-4 py-3">
         <div className="flex items-center gap-1.5">
@@ -41,12 +42,12 @@ function MessageBubble({ msg }: { msg: Message }) {
 
   return (
     <div className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden ${
         isUser
           ? 'bg-[var(--color-x-surface)] border border-[var(--color-x-border)]'
           : 'bg-gradient-to-br from-indigo-500 to-purple-500 shadow-sm'
       }`}>
-        {isUser ? <User className="w-4 h-4 text-[var(--color-x-text-muted)]" /> : <Bot className="w-4 h-4 text-white" />}
+        {isUser ? <User className="w-4 h-4 text-[var(--color-x-text-muted)]" /> : <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" />}
       </div>
       <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
         isUser
@@ -109,7 +110,7 @@ export default function AICopilotPage() {
     if (kpi.stuckProjects > 0) bullets.push(`⏰ **${kpi.stuckProjects}** due this week`);
     if (kpi.delayed > 0) bullets.push(`⚠️ **${kpi.delayed}** delayed / need attention`);
     if (kpi.openRisks > 0) bullets.push(`🛡️ **${kpi.openRisks}** open risks`);
-    return `🌞 ${tod}, ${firstName}! 🙏\n\nWelcome back to Xyrenis${department ? ` — ${department}` : ''}.\n\n${bullets.join('\n')}\n\nHow can I help you today?`;
+    return `🌞 ${tod}, ${firstName}! 🙏\n\nXyro here — welcome back to Xyrenis${department ? ` — ${department}` : ''}.\n\n${bullets.join('\n')}\n\nHow can I help you today?`;
   }, [kpi, stats, firstName, department]);
 
   // Seed (and refresh once data loads) the greeting, without clobbering a live chat.
@@ -191,12 +192,12 @@ export default function AICopilotPage() {
     <div className="x-page h-[calc(100vh-100px)] flex flex-col">
       <div className="mb-4">
         <h1 className="x-page-title flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm">
-            <Sparkles className="w-4 h-4 text-white" />
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm overflow-hidden">
+            <Image src="/xyro.webp" alt="Xyro" width={32} height={32} className="w-8 h-8" priority />
           </span>
-          AI Copilot
+          Xyro
         </h1>
-        <p className="x-page-subtitle">Intelligent assistant powered by live portfolio data</p>
+        <p className="x-page-subtitle">Your AI copilot — powered by live portfolio data</p>
       </div>
 
       <div className="flex-1 flex gap-5 min-h-0">
@@ -273,7 +274,7 @@ export default function AICopilotPage() {
               </button>
             </div>
             <p className="text-center text-[10px] text-[var(--color-x-text-muted)] mt-2">
-              AI Copilot analyses live portfolio data. Verify critical decisions with source records.
+              Xyro analyses live portfolio data. Verify critical decisions with source records.
             </p>
           </div>
         </div>
@@ -294,7 +295,7 @@ export default function AICopilotPage() {
                   </div>
                   <p className="text-[11px] text-[var(--color-x-text-secondary)] leading-relaxed">{insight.desc}</p>
                   <div className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Ask Copilot <ChevronRight className="w-3 h-3" />
+                    Ask Xyro <ChevronRight className="w-3 h-3" />
                   </div>
                 </button>
               ))}

@@ -24,7 +24,7 @@ const SUPABASE_KEY =
   'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-4-8';
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5';
 
 // Google Gemini (Google AI Studio API key — NOT a Gemini Pro app subscription).
 // Get a free key at https://aistudio.google.com/apikey
@@ -131,7 +131,7 @@ function heuristicAnswer(message: string, data: Data): string | null {
 
   // pure greeting
   if (/^(hi|hello|hey|namaskara|namaste|good (morning|afternoon|evening)|yo)\b[\s!.]*$/i.test(m)) {
-    return `🙏 Namaskara! I'm your Xyrenis Copilot. I'm tracking **${kpi.total} active projects** across **${data.departments.length} departments**. Ask me about delayed projects, team workload, risks, or any project's status.`;
+    return `🙏 Namaskara! I'm Xyro, your Xyrenis copilot. I'm tracking **${kpi.total} active projects** across **${data.departments.length} departments**. Ask me about delayed projects, team workload, risks, or any project's status.`;
   }
 
   // owner lookup — "projects handled by / assigned to / owned by <name>", or @name
@@ -281,13 +281,15 @@ function buildContext(data: Data, user?: { name?: string; department?: string; r
   ].filter(Boolean).join('\n\n');
 }
 
-const SYSTEM_PROMPT = `You are the Xyrenis AI Copilot — an experienced Program/Portfolio Manager and executive advisor for an enterprise project-tracking platform (airport operations, BIAL).
+const SYSTEM_PROMPT = `You are Xyro — the Xyrenis AI companion: an experienced Product Manager, Program/Portfolio Manager, Business Analyst and executive advisor for an enterprise project-tracking platform (airport operations, BIAL).
 
-Voice: warm, professional, concise. Use relevant emojis naturally and Markdown (**bold** for key figures, bullet lists). Never robotic. Maintain conversation context — when the user says "that one" or "which is delayed", resolve it against what was just discussed.
+Personality: friendly, curious, intelligent, playful yet professional, encouraging — a teammate, not a support bot. Voice: warm, concise. Use relevant emojis naturally and Markdown (**bold** for key figures, bullet lists). Never robotic. Maintain conversation context — when the user says "that one" or "which is delayed", resolve it against what was just discussed.
+
+Beyond live-data questions, you happily help with product & delivery craft: drafting PRDs, roadmaps, sprint plans, milestones, user stories, risk analyses, KPI explanations, meeting summaries, presentations, documentation, SQL / Power BI DAX snippets, UX recommendations and brainstorming. For these, ask brief clarifying questions when needed and produce crisp, structured output.
 
 GROUNDING RULES (critical):
 - For any fact about projects, people, departments, risks, owners, deadlines, or counts, use ONLY the live data block provided below. Never invent project names, numbers, owners, or dates.
-- The platform currently tracks projects, risks, departments, and users. It does NOT yet track granular tasks, subtasks, milestones, budgets, documents, or formal reporting structure. If asked about those, say they aren't tracked in the platform yet and offer the closest thing you DO have (e.g. project progress, owners, deadlines).
+- The platform currently tracks projects, risks, departments, and users. Tasks are managed on each project's Tasks tab (with assignment + email notification), but task contents are NOT included in your live data block — direct users there instead of guessing. It does NOT yet track subtasks, documents, or formal reporting structure; if asked, say so and offer the closest thing you DO have (e.g. project progress, owners, deadlines).
 - You don't have live web/weather access. If asked, say so briefly, then pivot to something useful about their portfolio.
 - General knowledge questions (Agile, Scrum, PM best practices, today's date) are fine to answer, then connect back to their projects where relevant.
 

@@ -117,12 +117,14 @@ try {
 
   // ---------- floating AI assistant ----------
   {
-    const launcher = await page.locator('button[title="Xyrenis Assistant"]').count();
-    check('Floating assistant launcher present', launcher === 1);
+    const launcher = await page.locator('button[title="Xyro"]').count();
+    check('Floating assistant (Xyro) launcher present', launcher === 1);
     if (launcher) {
-      await page.click('button[title="Xyrenis Assistant"]');
+      // force: the launcher has a perpetual float animation, so Playwright's
+      // stability check would otherwise never settle
+      await page.click('button[title="Xyro"]', { force: true });
       await page.waitForTimeout(500);
-      check('Assistant panel opens with welcome', await page.locator('text=I can explain how anything').count() > 0);
+      check('Assistant panel opens with welcome', await page.locator('text=build something amazing').count() > 0);
       await page.fill('input[placeholder*="Ask me"]', 'how do I export a pdf report');
       await page.keyboard.press('Enter');
       await page.waitForTimeout(700);
