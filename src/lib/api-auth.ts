@@ -82,3 +82,31 @@ export async function requireAdmin(request: NextRequest | Request): Promise<Auth
   }
   return res;
 }
+
+/**
+ * Canonical department name — mirrors normalizeDeptName in data-context so a
+ * user whose claim says "Digital" scopes to projects filed under
+ * "Digital & Data" (claims come from the admin UI's short names, project rows
+ * from the workbook's long names).
+ */
+export function normalizeDept(d: string | null | undefined): string {
+  if (!d) return '';
+  const s = d.toLowerCase().trim();
+  if (s.startsWith('digital')) return 'digital & data';
+  if (s.startsWith('advertis')) return 'advertising & marketing';
+  if (s.startsWith('duty') || s === 'dutyfree') return 'duty free';
+  if (s.startsWith('commercial')) return 'commercial development';
+  if (s.startsWith('oper')) return 'operations';
+  if (s === 'basl' || s === 'cbb' || s === 'ccb' || s.startsWith('amen')) return 'basl';
+  return s;
+}
+
+type DepLike = { kind?: string; department?: string | null } | null;
+
+/** True when a project carries an internal dependency targeting `dept`. */
+export function dependsOnDepartment(classifiedDependencies: unknown, dept: string): boolean {
+  if (!dept || !Array.isArray(classifiedDependencies)) return false;
+  return (classifiedDependencies as DepLike[]).some(
+    d => d && d.kind === 'internal' && normalizeDept(d.department) === dept,
+  );
+}

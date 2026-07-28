@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
-import { requireUser } from '@/lib/api-auth';
+import { requireUser, serverPermission, serverDepartment, normalizeDept, dependsOnDepartment } from '@/lib/api-auth';
 
 /**
  * Xyro — the Xyrenis AI engine.
@@ -60,19 +60,27 @@ const daysUntil = (d: string | null) => {
   return Math.ceil((t - Date.now()) / 86400000);
 };
 
-async function loadData(): Promise<Data> {
+async function loadData(scope?: { admin: boolean; dept: string }): Promise<Data> {
   const db = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
   const [{ data: depts }, { data: rawProjects }, { data: rawRisks }] = await Promise.all([
     db.from('departments').select('id,name'),
-    db.from('projects').select('project_code,name,department_id,owner_name,status,priority,progress,target_date,archived'),
+    db.from('projects').select('id,project_code,name,department_id,owner_name,status,priority,progress,target_date,archived,classified_dependencies'),
     db.from('risks').select('description,severity,score,status,owner_name,project_id'),
   ]);
 
   const deptMap: Record<string, string> = {};
   (depts || []).forEach(d => { deptMap[d.id] = d.name; });
 
-  const projects: Proj[] = (rawProjects || [])
+  // Phase 1: Xyro's context obeys the same visibility rule as the UI — the
+  // LLM never sees rows the asking user couldn't open themselves.
+  const scoped = (rawProjects || []).filter(p => {
+    if (!scope || scope.admin) return true;
+    const dept = normalizeDept((p.department_id && deptMap[p.department_id]) || '');
+    return (scope.dept && dept === scope.dept) || dependsOnDepartment(p.classified_dependencies, scope.dept);
+  });
+
+  const projects: Proj[] = scoped
     .filter(p => !p.archived)
     .map(p => ({
       code: p.project_code || '',
@@ -85,7 +93,10 @@ async function loadData(): Promise<Data> {
       targetDate: p.target_date || null,
     }));
 
-  const risks: RiskRow[] = (rawRisks || []).map(r => ({
+  const scopedIds = new Set(scoped.map((p: { id?: string }) => p.id));
+  const risks: RiskRow[] = (rawRisks || [])
+    .filter(r => !scope || scope.admin || scopedIds.has(r.project_id))
+    .map(r => ({
     description: r.description || '',
     severity: r.severity || '',
     score: typeof r.score === 'number' ? r.score : 0,
@@ -394,7 +405,8 @@ export async function POST(request: Request) {
 
     let data: Data;
     try {
-      data = await loadData();
+      const perm = serverPermission(auth.user);
+      data = await loadData({ admin: perm === 'admin', dept: normalizeDept(serverDepartment(auth.user)) });
     } catch (e: any) {
       return NextResponse.json({ response: `I couldn't reach the project database just now (${e.message}). Please try again in a moment.`, source: 'error' });
     }

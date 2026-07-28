@@ -25,7 +25,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 }
 
 export default function CommandCenter() {
-  const { projects, risks, departments, updateProject, liveStatus } = useData();
+  const { projects, risks, departments, updateProject, liveStatus, scope } = useData();
   const [activeFilter, setActiveFilter] = useState<{
     type: 'status' | 'priority' | 'department' | 'health' | 'kpi' | 'ai';
     label: string;
@@ -295,6 +295,19 @@ export default function CommandCenter() {
           >
             <Download className="w-3.5 h-3.5" /> Export PDF
           </button>
+          {scope && liveStatus === 'live' && (
+            <span
+              title={scope.admin
+                ? 'Admin view — every department is visible'
+                : 'Departmental privacy is on: you see your department plus projects that depend on it'}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-x-bg)] border border-[var(--color-x-border)] text-[11px] font-semibold text-[var(--color-x-text-secondary)]"
+            >
+              <Eye className="w-3 h-3" />
+              {scope.admin
+                ? 'All departments'
+                : `Showing: ${scope.department || 'no department assigned'}${scope.shared ? ` + ${scope.shared} shared` : ''}`}
+            </span>
+          )}
           {liveStatus === 'live' ? (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-600">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
