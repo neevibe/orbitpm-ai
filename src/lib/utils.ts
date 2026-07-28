@@ -123,6 +123,41 @@ const AMBIGUOUS_FIRST_NAMES: Set<string> = (() => {
   return new Set([...counts].filter(([, n]) => n > 1).map(([f]) => f));
 })();
 
+/**
+ * Canonical identity for a free-text owner string, resolved against the
+ * employee roster (the "User list"). "Ilora" and "Ilora Ghosh Banerjee" are
+ * the same person: grouping surfaces (Workforce, Team, owner filters) key on
+ * this so variants merge, and the roster's full name is what gets displayed.
+ * Rules:
+ *   • exact roster name (any case)          → roster spelling
+ *   • lone first name, unique in the org    → that person's full name
+ *   • lone first name shared by 2+ people   → left as typed (ambiguous)
+ *   • partial name matching exactly one     → that person's full name
+ *   • compound strings ("A / B", "A & B")   → left as typed (several people)
+ */
+export function canonicalOwnerName(owner: string | null | undefined): string {
+  const raw = (owner ?? '').trim();
+  if (!raw) return '';
+  if (/[/,&+]|\band\b/i.test(raw)) return raw;
+  const lower = raw.toLowerCase();
+  const words = lower.split(/\s+/).filter(Boolean);
+
+  const exact = BIAL_EMPLOYEES.find(e => e.name.trim().toLowerCase() === lower);
+  if (exact) return exact.name;
+
+  if (words.length === 1) {
+    if (AMBIGUOUS_FIRST_NAMES.has(words[0])) return raw;
+    const hit = BIAL_EMPLOYEES.find(e => e.name.trim().toLowerCase().split(/\s+/)[0] === words[0]);
+    return hit ? hit.name : raw;
+  }
+
+  const matches = BIAL_EMPLOYEES.filter(e => {
+    const ew = e.name.toLowerCase().split(/\s+/);
+    return words.every(w => ew.includes(w));
+  });
+  return matches.length === 1 ? matches[0].name : raw;
+}
+
 export function isProjectOwner(
   owner: string | null | undefined,
   fullName: string | null | undefined,

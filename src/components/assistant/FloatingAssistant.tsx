@@ -119,10 +119,11 @@ export default function FloatingAssistant() {
     : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
 
   const [open, setOpen] = useState(false);
-  // Floating launcher can be "rocketed away"; it stays hidden (persisted)
-  // until the user summons Xyro again via the topbar button or Ctrl+J.
+  // Floating launcher can be "rocketed away", but only for the current session
+  // (sessionStorage) — every fresh login brings Xyro back on screen by default.
   const [minimized, setMinimized] = useState(true); // start hidden to avoid SSR flash; effect below reveals
   const [launching, setLaunching] = useState(false);
+  const [attract, setAttract] = useState(false); // periodic wave to draw the eye
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -139,13 +140,44 @@ export default function FloatingAssistant() {
     if (open && messages.length === 0) setMessages([makeWelcome(pathname)]);
   }, [open, messages.length, pathname]);
 
-  // reveal the launcher on mount unless the user rocketed it away earlier
+  // Reveal the launcher on mount unless it was rocketed away THIS session.
   useEffect(() => {
-    setMinimized(localStorage.getItem('xyro_minimized') === '1');
+    setMinimized(sessionStorage.getItem('xyro_minimized') === '1');
   }, []);
 
+  // Greet once per session: shortly after login Xyro opens with a personalized
+  // hello, then never auto-opens again until the next sign-in.
+  useEffect(() => {
+    if (isDemoMode || !user) return;
+    if (sessionStorage.getItem('xyro_greeted') === '1') return;
+    if (sessionStorage.getItem('xyro_minimized') === '1') return;
+    const t = setTimeout(() => {
+      sessionStorage.setItem('xyro_greeted', '1');
+      const first = currentUserName ? currentUserName.split(' ')[0] : '';
+      setMessages([{
+        role: 'bot',
+        text: '',
+        full: `${first ? `Hi ${first}` : 'Hi'} — I’m Xyro, your AI copilot. I’m always here in the corner. Ask me anything about your projects, risks or team, or tap a shortcut below to get going.`,
+        chips: BASE_CHIPS,
+      }]);
+      setOpen(true);
+    }, 1400);
+    return () => clearTimeout(t);
+  }, [isDemoMode, user, currentUserName]);
+
+  // Attention loop: while Xyro sits idle in the corner (panel closed, on
+  // screen), give a little wave every ~12s so users notice he's interactive.
+  useEffect(() => {
+    if (open || minimized || launching) return;
+    const iv = setInterval(() => {
+      setAttract(true);
+      setTimeout(() => setAttract(false), 1400);
+    }, 12000);
+    return () => clearInterval(iv);
+  }, [open, minimized, launching]);
+
   const summon = useCallback(() => {
-    localStorage.removeItem('xyro_minimized');
+    sessionStorage.removeItem('xyro_minimized');
     setMinimized(false);
     setOpen(o => !o);
   }, []);
@@ -154,7 +186,7 @@ export default function FloatingAssistant() {
     if (launching) return;
     setLaunching(true);
     setTimeout(() => {
-      localStorage.setItem('xyro_minimized', '1');
+      sessionStorage.setItem('xyro_minimized', '1');
       setMinimized(true);
       setLaunching(false);
     }, 1820); // matches the xyro-rocket spiral animation length
@@ -393,11 +425,19 @@ export default function FloatingAssistant() {
       {!open && (!minimized || launching) && (
         <div className={`fixed bottom-5 right-5 z-[54] group ${launching ? 'xyro-rocket-launch' : ''}`}>
           {launching && <span className="xyro-rocket-trail" />}
+          {/* idle "hint" bubble — nudges the user that Xyro is interactive */}
+          {!launching && (
+            <div className="absolute bottom-16 right-0 mb-1 px-3 py-1.5 rounded-xl rounded-br-sm bg-[var(--color-x-surface)] ring-1 ring-[var(--color-x-border)] shadow-md text-[12px] font-medium text-[var(--color-x-text)] whitespace-nowrap opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none">
+              Need a hand? Ask me anything 👋
+            </div>
+          )}
+          {/* attention ping ring */}
+          {attract && !launching && <span className="absolute inset-0 rounded-full ring-2 ring-[var(--color-x-accent)] xyro-ping pointer-events-none" />}
           <button
             onClick={() => { if (!launching) setOpen(true); }}
             title="Xyro"
             aria-label="Open Xyro AI assistant (Ctrl+J)"
-            className="xyro-launcher-float block w-14 h-14 rounded-full bg-[var(--color-x-surface)] ring-1 ring-[var(--color-x-border)] shadow-[0_6px_20px_-6px_rgb(15_23_42/0.25)] overflow-hidden hover:scale-105 hover:shadow-[0_8px_24px_-6px_rgb(30_64_175/0.35)] transition-all cursor-pointer"
+            className={`xyro-launcher-float xyro-launcher-glow block w-14 h-14 rounded-full bg-[var(--color-x-surface)] ring-1 ring-[var(--color-x-border)] shadow-[0_6px_20px_-6px_rgb(15_23_42/0.25)] overflow-hidden hover:scale-105 hover:shadow-[0_8px_24px_-6px_rgb(30_64_175/0.35)] transition-all cursor-pointer ${attract ? 'xyro-hi' : ''}`}
           >
             <Image src="/xyro.webp" alt="Xyro" width={56} height={56} className="w-14 h-14 object-cover" />
           </button>

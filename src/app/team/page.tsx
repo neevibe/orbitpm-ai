@@ -2,18 +2,23 @@
 
 import { Users, AlertTriangle, FolderKanban } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { canonicalOwnerName } from '@/lib/utils';
 
 export default function TeamPage() {
   const { projects } = useData();
   const ownerMap: Record<string, { name: string; department: string; active: number; total: number; critical: number; delayed: number; projects: string[] }> = {};
   projects.forEach(p => {
-    if (!ownerMap[p.owner]) ownerMap[p.owner] = { name: p.owner, department: p.department, active: 0, total: 0, critical: 0, delayed: 0, projects: [] };
-    ownerMap[p.owner].total++;
-    ownerMap[p.owner].projects.push(p.id);
-    if (p.status === 'In Progress') ownerMap[p.owner].active++;
-    if (p.priority === 'Critical') ownerMap[p.owner].critical++;
-    if (p.status === 'Delayed') ownerMap[p.owner].delayed++;
-    ownerMap[p.owner].department = p.department;
+    // Merge owner variants ("Ilora" + "Ilora Ghosh Banerjee") under the
+    // roster's full name so one person never appears as two rows.
+    const who = canonicalOwnerName(p.owner);
+    if (!who) return;
+    if (!ownerMap[who]) ownerMap[who] = { name: who, department: p.department, active: 0, total: 0, critical: 0, delayed: 0, projects: [] };
+    ownerMap[who].total++;
+    ownerMap[who].projects.push(p.id);
+    if (p.status === 'In Progress') ownerMap[who].active++;
+    if (p.priority === 'Critical') ownerMap[who].critical++;
+    if (p.status === 'Delayed') ownerMap[who].delayed++;
+    ownerMap[who].department = p.department;
   });
   const owners = Object.values(ownerMap).sort((a, b) => b.active - a.active);
   const overloaded = owners.filter(o => o.active >= 15);
