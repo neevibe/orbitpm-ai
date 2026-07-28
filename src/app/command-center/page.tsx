@@ -17,6 +17,7 @@ import DepartmentLabel from '@/components/DepartmentLabel';
 import QuickEditPanel from '@/components/project/QuickEditPanel';
 import { STATUS_COLORS, HEALTH_COLORS, PRIORITY_COLORS, TRACK, AXIS_TICK, TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, BAR } from '@/lib/chart-theme';
 import { usePresence, OwnerAvatar, ShareToTeamsButton, emailForName as ownerEmail } from '@/components/collab/TeamsCollab';
+import ActivityFeed from '@/components/collab/ActivityFeed';
 
 
 function daysUntil(dateStr: string | null | undefined): number | null {
@@ -830,6 +831,9 @@ export default function CommandCenter() {
           </div>
         </div>
       )}
+
+      {/* Recent Activity — real audit-trail events incl. delivered Teams alerts */}
+      <ActivityFeed />
 
       {/* Milestones / Quick Actions — 8/4 split so both cards fill their height */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">

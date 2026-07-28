@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { recordAudit, actorFromToken } from '@/lib/audit';
 import { requireUser, serverPermission, serverDepartment, normalizeDept, dependsOnDepartment } from '@/lib/api-auth';
+import { sendTeamsAlert } from '@/lib/teams-alerts';
+import { appOrigin } from '@/lib/ms-oauth';
 
 // Maps the mutation action to a persistent audit action + module.
 const AUDIT_MAP: Record<string, { action: string; module: string; entityType: string }> = {
@@ -450,6 +452,35 @@ export async function POST(request: NextRequest) {
         newValue,
         request,
       });
+
+      // ---- automated Teams channel alert for notable events (fire-and-forget) ----
+      const code = project?.id || originalId || '';
+      const entityName = audit?.entityName || project?.name || project?.description || code;
+      const actorName = actor?.name || actor?.email || 'Someone';
+      const link = action === 'create_risk'
+        ? (project?.projectId ? `${appOrigin(request)}/projects/${encodeURIComponent(project.projectId)}` : `${appOrigin(request)}/risks`)
+        : (code ? `${appOrigin(request)}/projects/${encodeURIComponent(code)}` : appOrigin(request));
+      const statusChange = changes?.status as { old: unknown; new: unknown } | undefined;
+      let alert: { title: string; text: string } | null = null;
+      if (action === 'create') {
+        alert = { title: 'New project created', text: `${actorName} created “${entityName}” (${code}).` };
+      } else if (action === 'update' && statusChange && statusChange.old !== statusChange.new) {
+        alert = {
+          title: statusChange.new === 'Delayed' ? 'Project delayed' : 'Project status changed',
+          text: `${actorName} moved “${entityName}” (${code}) from ${statusChange.old} to ${statusChange.new}.`,
+        };
+      } else if (action === 'archive') {
+        alert = { title: 'Project archived', text: `${actorName} archived “${entityName}” (${code}).` };
+      } else if (action === 'delete') {
+        alert = { title: 'Project deleted', text: `${actorName} deleted “${entityName}” (${code}).` };
+      } else if (action === 'create_risk') {
+        const sev = (project?.severity || project?.impact || '').toString();
+        alert = { title: 'New risk raised', text: `${actorName} raised a${/^[aeiou]/i.test(sev) ? 'n' : ''} ${sev ? `${sev} ` : ''}risk on ${project?.projectId || 'the register'}: “${project?.description || entityName}”.` };
+      }
+      if (alert) {
+        // not awaited: channel delivery must never slow the mutation down
+        void sendTeamsAlert({ ...alert, link, entityId: code || undefined, entityName, actorName });
+      }
     }
 
     return NextResponse.json({ success: true });
