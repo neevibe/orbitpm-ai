@@ -17,11 +17,14 @@ import { requireUser } from '@/lib/api-auth';
  * Both read the SAME real data. There are no hardcoded/fake numbers.
  */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+// Public fallbacks (URL + publishable key ship in the client bundle); the
+// endpoint itself is behind requireUser(), so this never serves anonymous
+// callers. See src/app/api/projects/route.ts for the full rationale.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rfvhvpeqvuwrjcszyhbb.supabase.co';
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  '';
+  'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5';
