@@ -25,7 +25,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 }
 
 export default function CommandCenter() {
-  const { projects, risks, departments, updateProject, liveStatus, scope } = useData();
+  const { projects, risks, departments, updateProject, liveStatus, scope, orgStats } = useData();
   const [activeFilter, setActiveFilter] = useState<{
     type: 'status' | 'priority' | 'department' | 'health' | 'kpi' | 'ai';
     label: string;
@@ -329,22 +329,33 @@ export default function CommandCenter() {
           semantic delta computed from live data (no fabricated trends) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {(() => {
+          // Scoped (non-admin) users see ORGANIZATION-WIDE figures on the KPI
+          // row (numbers only — detail pages stay department-scoped). Admins
+          // and demo keep locally computed figures that drive card filtering.
+          const useOrg = !!(scope && !scope.admin && orgStats);
           const thisMonth = new Date().toISOString().slice(0, 7);
-          const newThisMonth = activeProjects.filter(p => p.startDate?.startsWith(thisMonth)).length;
-          const dueSoon = activeProjects.filter(p => {
+          const newThisMonth = useOrg ? orgStats!.newThisMonth : activeProjects.filter(p => p.startDate?.startsWith(thisMonth)).length;
+          const dueSoon = useOrg ? orgStats!.dueSoon : activeProjects.filter(p => {
             if (p.status === 'Completed') return false;
             const d = daysUntil(p.targetDate);
             return d !== null && d >= 0 && d <= 7;
           }).length;
-          const stalled = activeProjects.filter(p => p.status === 'In Progress' && p.progress === 0).length;
-          const delayedPct = localKpi.totalProjects ? Math.round((localKpi.delayed / localKpi.totalProjects) * 100) : 0;
+          const stalled = useOrg ? orgStats!.stalled : activeProjects.filter(p => p.status === 'In Progress' && p.progress === 0).length;
+          const k = useOrg
+            ? { totalProjects: orgStats!.totalProjects, inProgress: orgStats!.inProgress, completed: orgStats!.completed, delayed: orgStats!.delayed }
+            : localKpi;
+          const kAvgProgress = useOrg ? orgStats!.avgProgress : avgProgress;
+          const kOpenRisks = useOrg ? orgStats!.openRisks : localKpi.openRisks;
+          const kHighRisks = useOrg ? orgStats!.highImpactRisks : highRisks.length;
+          const kPctComplete = useOrg && k.totalProjects ? Math.round((k.completed / k.totalProjects) * 100) : pctComplete;
+          const delayedPct = k.totalProjects ? Math.round((k.delayed / k.totalProjects) * 100) : 0;
           return [
-            { label: 'Total Projects', value: localKpi.totalProjects, icon: BarChart3, accent: '#2563eb', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
-            { label: 'Active', value: localKpi.inProgress, icon: Rocket, accent: '#3b82f6', trend: { tone: dueSoon > 0 ? 'warn' : 'flat', text: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
-            { label: 'Completed', value: localKpi.completed, icon: CheckCircle2, accent: '#10b981', trend: { tone: 'up', text: `${pctComplete}% of portfolio` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
-            { label: 'Delayed', value: localKpi.delayed, icon: XCircle, accent: '#ef4444', trend: { tone: localKpi.delayed > 0 ? 'down' : 'up', text: localKpi.delayed > 0 ? `${delayedPct}% of portfolio` : 'all on schedule' }, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
-            { label: 'Avg Progress', value: `${avgProgress}%`, icon: Target, accent: '#8b5cf6', trend: { tone: stalled > 0 ? 'warn' : 'flat', text: stalled > 0 ? `${stalled} stalled at 0%` : 'steady pace' }, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
-            { label: 'Open Risks', value: localKpi.openRisks, icon: Shield, accent: '#f59e0b', trend: { tone: highRisks.length > 0 ? 'down' : 'flat', text: highRisks.length > 0 ? `${highRisks.length} high impact` : 'low exposure' }, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
+            { label: 'Total Projects', value: k.totalProjects, icon: BarChart3, accent: '#2563eb', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
+            { label: 'Active', value: k.inProgress, icon: Rocket, accent: '#3b82f6', trend: { tone: dueSoon > 0 ? 'warn' : 'flat', text: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
+            { label: 'Completed', value: k.completed, icon: CheckCircle2, accent: '#10b981', trend: { tone: 'up', text: `${kPctComplete}% of portfolio` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
+            { label: 'Delayed', value: k.delayed, icon: XCircle, accent: '#ef4444', trend: { tone: k.delayed > 0 ? 'down' : 'up', text: k.delayed > 0 ? `${delayedPct}% of portfolio` : 'all on schedule' }, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
+            { label: 'Avg Progress', value: `${kAvgProgress}%`, icon: Target, accent: '#8b5cf6', trend: { tone: stalled > 0 ? 'warn' : 'flat', text: stalled > 0 ? `${stalled} stalled at 0%` : 'steady pace' }, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
+            { label: 'Open Risks', value: kOpenRisks, icon: Shield, accent: '#f59e0b', trend: { tone: kHighRisks > 0 ? 'down' : 'flat', text: kHighRisks > 0 ? `${kHighRisks} high impact` : 'low exposure' }, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
           ];
         })().map((m, i) => {
           const isSelected = activeFilter?.type === 'kpi' && activeFilter.label === m.label;

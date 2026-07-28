@@ -123,6 +123,33 @@ export async function GET(request: NextRequest) {
       targetDate: r.target_date || ''
     }));
 
+    // Org-wide aggregate stats (numbers only — no names, no rows). Computed
+    // BEFORE scoping so the dashboard KPI row can show the full organization's
+    // figures to every user, while detail pages stay department-scoped.
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const in7d = new Date(today.getTime() + 7 * 86400000);
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    const orgActive = mappedProjects.filter(p => !p.archived);
+    const orgOpenRisks = mappedRisks.filter(r => r.status === 'Open');
+    const orgStats = {
+      totalProjects: orgActive.length,
+      inProgress: orgActive.filter(p => p.status === 'In Progress').length,
+      completed: orgActive.filter(p => p.status === 'Completed').length,
+      delayed: orgActive.filter(p => p.status === 'Delayed').length,
+      notStarted: orgActive.filter(p => p.status === 'Not Started').length,
+      onHold: orgActive.filter(p => p.status === 'On Hold').length,
+      avgProgress: orgActive.length ? Math.round(orgActive.reduce((a, p) => a + (p.progress || 0), 0) / orgActive.length) : 0,
+      openRisks: orgOpenRisks.length,
+      highImpactRisks: orgOpenRisks.filter(r => r.impact === 'High').length,
+      newThisMonth: orgActive.filter(p => p.startDate?.startsWith(thisMonth)).length,
+      dueSoon: orgActive.filter(p => {
+        if (p.status === 'Completed' || !p.targetDate) return false;
+        const d = new Date(p.targetDate);
+        return !isNaN(d.getTime()) && d >= today && d <= in7d;
+      }).length,
+      stalled: orgActive.filter(p => p.status === 'In Progress' && (p.progress || 0) === 0).length,
+    };
+
     // ── Phase 1: departmental privacy ────────────────────────────────────
     // Non-admin users receive ONLY their department's projects, plus any
     // project from another department that carries an internal dependency
@@ -149,6 +176,7 @@ export async function GET(request: NextRequest) {
       success: true,
       projects: visibleProjects,
       risks: visibleRisks,
+      orgStats,
       scope: {
         admin: perm === 'admin',
         department: perm === 'admin' ? null : (serverDepartment(auth.user) || null),

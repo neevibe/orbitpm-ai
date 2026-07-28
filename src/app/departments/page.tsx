@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { Building2, ChevronRight, ArrowLeft, Edit3, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { plural } from '@/lib/utils';
+import { plural, deptKey } from '@/lib/utils';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
 
@@ -24,7 +24,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function DepartmentsPage() {
-  const { projects, departments } = useData();
+  const { projects, departments, scope } = useData();
+
+  // Departmental privacy: scoped users see only their own department here —
+  // other departments' names/cards/bars must not render at all.
+  const visibleDepartments = useMemo(() => {
+    if (!scope || scope.admin) return departments;
+    return departments.filter(d => deptKey(d.name) === deptKey(scope.department));
+  }, [departments, scope]);
   const { canModifyDepartment } = useAuth();
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
   const [editModalProject, setEditModalProject] = useState<Project | null>(null);
@@ -39,13 +46,13 @@ export default function DepartmentsPage() {
     setShowModal(true);
   };
 
-  const chartData = departments.filter(d => d.total > 0).map(d => ({
+  const chartData = visibleDepartments.filter(d => d.total > 0).map(d => ({
     name: d.name,
     'In Progress': d.inProgress, 'Completed': d.completed,
     'Not Started': d.notStarted, 'Delayed': d.delayed, color: d.color,
   }));
 
-  const selectedDeptData = useMemo(() => departments.find(d => d.name === selectedDept), [selectedDept, departments]);
+  const selectedDeptData = useMemo(() => visibleDepartments.find(d => d.name === selectedDept), [selectedDept, visibleDepartments]);
 
   const deptProjects = useMemo(() => {
     if (!selectedDept) return [];
@@ -206,7 +213,7 @@ export default function DepartmentsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {departments.filter(d => d.total > 0).map(dept => {
+        {visibleDepartments.filter(d => d.total > 0).map(dept => {
           const deptProjs = projects.filter(p => p.department === dept.name && !p.archived);
           const inProgress = deptProjs.filter(p => p.status === 'In Progress').length;
           const delayed = deptProjs.filter(p => p.status === 'Delayed').length;
