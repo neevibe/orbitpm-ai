@@ -28,7 +28,7 @@ function statusDot(status: string) {
 export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject } = useData();
+  const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject, scope } = useData();
   const { user, isDemoMode, canModifyDepartment, isAdmin } = useAuth();
   const currentUserName = isDemoMode
     ? 'Demo User'
@@ -224,12 +224,20 @@ export default function ProjectsPage() {
   // Canonical verticals from org-structure (CBB folded into BASL), plus any
   // legacy department names still present in the data that aren't covered.
   const deptList = useMemo(() => {
+    // Departmental privacy: scoped users must not even see other departments'
+    // NAMES — their rail lists only departments present in their visible rows
+    // (own dept + any shared-via-dependency parents).
+    if (scope && !scope.admin) {
+      return Array.from(new Set(
+        activeProjects.filter(p => !p.archived).map(p => resolveHierarchy(p.department).vertical),
+      ));
+    }
     const known = new Set(TOP_LEVEL_DEPARTMENTS);
     const extra = departments
       .map(d => resolveHierarchy(d.name).vertical)
       .filter(v => !known.has(v));
     return [...TOP_LEVEL_DEPARTMENTS, ...Array.from(new Set(extra))];
-  }, [departments]);
+  }, [departments, scope, activeProjects]);
 
   const toggleCollapse = (dept: string) => {
     setCollapsedDepts(prev => {

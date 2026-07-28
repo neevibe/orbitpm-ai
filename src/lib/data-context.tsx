@@ -77,6 +77,9 @@ interface DataContextType {
   /** Visibility scope applied by the server (Phase 1 departmental privacy).
    *  null until the first successful live load (and always null in demo). */
   scope: { admin: boolean; department: string | null; shared: number } | null;
+  /** Organization-wide aggregate counts (numbers only) — lets the dashboard
+   *  show full-company figures even when detail rows are department-scoped. */
+  orgStats: Record<string, number> | null;
   // Data
   projects: Project[];
   archivedProjects: Project[];
@@ -183,6 +186,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [liveStatus, setLiveStatus] = useState<'live' | 'cached' | 'error'>('cached');
   const [scope, setScope] = useState<{ admin: boolean; department: string | null; shared: number } | null>(null);
+  const [orgStats, setOrgStats] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
     // Demo mode: use local demo data only — never call the real API
@@ -197,6 +201,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
         if (data.scope) setScope(data.scope);
+        if (data.orgStats) setOrgStats(data.orgStats);
         setLiveStatus('live');
       } catch (err) {
         // The screen is still showing the BUNDLED fallback register — never
@@ -810,6 +815,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       liveStatus: isDemoMode ? 'live' : liveStatus,
       scope,
+      orgStats,
       projects: projectsWithDuplicates,
       archivedProjects: projects.filter(p => p.archived),
       departments,
