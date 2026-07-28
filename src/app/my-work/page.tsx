@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { isProjectOwner } from '@/lib/utils';
-import { UserCircle2, FolderKanban, Rocket, CalendarClock, ListTodo, ArrowUpRight, ArrowDownRight, CheckCircle2 } from 'lucide-react';
+import { UserCircle2, FolderKanban, Rocket, CalendarClock, ListTodo, ArrowUpRight, ArrowDownRight, CheckCircle2, LayoutGrid, Lock, Table2, BookOpen } from 'lucide-react';
+import { usePersonalWorkspace, PersonalProjects, CustomTables, WorkDiary, NotConfiguredNotice } from '@/components/personal/PersonalWorkspace';
 import type { Task } from '@/components/project/KanbanBoard';
 import type { Project } from '@/lib/mock-data';
 
@@ -25,9 +26,19 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 const fmtDate = (s?: string | null) =>
   s ? new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '—';
 
+type Tab = 'overview' | 'personal' | 'tables' | 'diary';
+const TABS: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutGrid },
+  { id: 'personal', label: 'Personal Projects', icon: Lock },
+  { id: 'tables', label: 'Custom Tables', icon: Table2 },
+  { id: 'diary', label: 'Work Diary', icon: BookOpen },
+];
+
 export default function MyWorkPage() {
   const { projects, updateProject } = useData();
   const { user, isDemoMode } = useAuth();
+  const [tab, setTab] = useState<Tab>('overview');
+  const workspace = usePersonalWorkspace(!isDemoMode && !!user);
 
   const fullName = isDemoMode
     ? 'Demo User'
@@ -89,6 +100,46 @@ export default function MyWorkPage() {
         <p className="x-page-subtitle">Everything owned by or assigned to {fullName || 'you'}, in one place</p>
       </div>
 
+      {/* Tabs — Overview (org work) vs the private personal workspace */}
+      <div className="flex items-center gap-1 border-b border-[var(--color-x-border)]">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+              tab === t.id
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)]'
+            }`}
+          >
+            <t.icon className="w-3.5 h-3.5" /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab !== 'overview' && (
+        isDemoMode ? (
+          <div className="x-card p-8 text-center">
+            <Lock className="w-8 h-8 mx-auto text-[var(--color-x-text-faint)] mb-3" />
+            <p className="text-[14px] font-bold text-[var(--color-x-text)]">Personal workspace needs a signed-in account</p>
+            <p className="text-[12.5px] text-[var(--color-x-text-muted)] mt-1">Demo mode has no private storage — sign in to keep personal projects, tables and a work diary.</p>
+          </div>
+        ) : workspace.loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {[0, 1, 2].map(i => <div key={i} className="x-skeleton h-32" />)}
+          </div>
+        ) : !workspace.configured ? (
+          <NotConfiguredNotice />
+        ) : tab === 'personal' ? (
+          <PersonalProjects projects={workspace.projects} reload={workspace.reload} />
+        ) : tab === 'tables' ? (
+          <CustomTables tables={workspace.tables} reload={workspace.reload} />
+        ) : (
+          <WorkDiary diary={workspace.diary} reload={workspace.reload} userName={fullName || 'Me'} />
+        )
+      )}
+
+      {tab === 'overview' && (<>
       {/* Personal KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {metrics.map(m => (
@@ -210,6 +261,7 @@ export default function MyWorkPage() {
           )}
         </div>
       </div>
+      </>)}
     </div>
   );
 }
