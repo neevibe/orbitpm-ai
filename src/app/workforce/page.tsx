@@ -68,9 +68,9 @@ export default function WorkforcePage() {
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Total Team', value: team.length, icon: UserSquare2, accent: '#2563eb' },
-          { label: 'Overloaded (13+)', value: overloaded, icon: AlertCircle, accent: '#ef4444' },
-          { label: 'Moderate (8–12)', value: atCapacity, icon: Clock, accent: '#f59e0b' },
-          { label: 'Healthy (0–7)', value: available, icon: CheckCircle2, accent: '#10b981' },
+          { label: 'Overloaded (13+)', value: overloaded, icon: AlertCircle, accent: '#d1615d' },
+          { label: 'Moderate (8–12)', value: atCapacity, icon: Clock, accent: '#e8a838' },
+          { label: 'Healthy (0–7)', value: available, icon: CheckCircle2, accent: '#59a14f' },
         ].map((m, i) => (
           <div key={m.label} className={`x-metric animate-slide-up stagger-${i + 1}`} style={{ '--metric-accent': m.accent } as React.CSSProperties}>
             <m.icon className="w-4 h-4 mb-2" style={{ color: m.accent }} />
@@ -89,7 +89,7 @@ export default function WorkforcePage() {
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
               <Tooltip contentStyle={tooltipStyle} cursor={false} />
-              <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active Projects" radius={[0, 0, 4, 4]} barSize={32} />
+              <Bar dataKey="active" stackId="a" fill="#4e79a7" name="Active Projects" radius={[0, 0, 4, 4]} barSize={32} />
               <Bar dataKey="done" stackId="a" fill="#e5e7eb" name="Other Projects" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

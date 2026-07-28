@@ -140,13 +140,18 @@ export default function Topbar() {
           </div>
         </button>
 
-        {/* AI */}
-        <button 
-          onClick={() => router.push('/ai')}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/10 to-sky-500/10 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer"
+        {/* AI — toggles the docked Xyro panel (Ctrl/⌘+J) */}
+        <button
+          onClick={() => window.dispatchEvent(new Event('xyrenis:xyro-toggle'))}
+          title="Ask Xyro (Ctrl+J)"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[var(--color-x-border)] hover:border-[var(--color-x-accent-muted)] hover:bg-[var(--color-x-accent-light)] transition-all cursor-pointer"
         >
           <Image src="/xyro.webp" alt="Xyro" width={20} height={20} className="w-5 h-5" />
-          <span className="text-[11px] font-semibold text-blue-600">Ask Xyro</span>
+          <span className="text-[11px] font-semibold text-[var(--color-x-accent)]">Ask Xyro</span>
+          <div className="hidden md:flex items-center gap-0.5 px-1 py-0.5 rounded bg-[var(--color-x-surface)] border border-[var(--color-x-border)]">
+            <Command className="w-2.5 h-2.5 text-[var(--color-x-text-muted)]" />
+            <span className="text-[9px] text-[var(--color-x-text-muted)] font-medium">J</span>
+          </div>
         </button>
 
         {/* Global Search Dialog */}

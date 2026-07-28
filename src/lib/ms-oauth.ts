@@ -11,9 +11,10 @@ const SERVICE_KEY =
 export const MS_CLIENT_ID = process.env.MS_TEAMS_CLIENT_ID || '';
 export const MS_CLIENT_SECRET = process.env.MS_TEAMS_CLIENT_SECRET || '';
 export const MS_TENANT = process.env.MS_TEAMS_TENANT_ID || 'organizations';
-// One consent covers Teams (Chat.Read), Outlook Calendar (Calendars.ReadWrite)
-// and task emails (Mail.Send) — all delegated, no admin-only scopes.
-export const MS_SCOPES = 'offline_access User.Read Chat.Read Calendars.ReadWrite Mail.Send';
+// One consent covers Teams (Chat.Read), Outlook Calendar (Calendars.ReadWrite),
+// task emails (Mail.Send) and presence dots (User.ReadBasic.All +
+// Presence.Read.All) — all delegated, none require admin consent.
+export const MS_SCOPES = 'offline_access User.Read User.ReadBasic.All Chat.Read Calendars.ReadWrite Mail.Send Presence.Read.All';
 
 export function appOrigin(request: NextRequest): string {
   const proto = request.headers.get('x-forwarded-proto') || 'https';

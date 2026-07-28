@@ -36,10 +36,10 @@ export default function AnalyticsPage() {
   })();
 
   const statusData = [
-    { name: 'Active', value: kpi.inProgress, color: '#3b82f6' },
-    { name: 'Completed', value: kpi.completed, color: '#10b981' },
-    { name: 'Delayed', value: kpi.delayed, color: '#ef4444' },
-    { name: 'On Hold', value: kpi.onHold, color: '#f59e0b' },
+    { name: 'Active', value: kpi.inProgress, color: '#4e79a7' },
+    { name: 'Completed', value: kpi.completed, color: '#59a14f' },
+    { name: 'Delayed', value: kpi.delayed, color: '#d1615d' },
+    { name: 'On Hold', value: kpi.onHold, color: '#e8a838' },
   ].filter(d => d.value > 0);
 
   const deptData = departments.slice(0, 6).map(d => ({
@@ -103,14 +103,14 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart data={trendData}>
                   <defs>
-                    <linearGradient id="colorTarget" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/></linearGradient>
-                    <linearGradient id="colorDone" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="colorTarget" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#4e79a7" stopOpacity={0.1}/><stop offset="95%" stopColor="#4e79a7" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="colorDone" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#59a14f" stopOpacity={0.1}/><stop offset="95%" stopColor="#59a14f" stopOpacity={0}/></linearGradient>
                   </defs>
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
                   <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                  <Area type="monotone" dataKey="due" stroke="#8b5cf6" fill="url(#colorTarget)" name="Deliverables Due" strokeDasharray="5 5" />
-                  <Area type="monotone" dataKey="started" stroke="#10b981" fill="url(#colorDone)" name="Projects Started" />
+                  <Area type="monotone" dataKey="due" stroke="#4e79a7" fill="url(#colorTarget)" name="Deliverables Due" strokeDasharray="5 5" />
+                  <Area type="monotone" dataKey="started" stroke="#59a14f" fill="url(#colorDone)" name="Projects Started" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -146,8 +146,8 @@ export default function AnalyticsPage() {
                   <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 10 }} width={150} interval={0} />
                   <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                  <Bar dataKey="active" stackId="a" fill="#3b82f6" name="Active" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="done" stackId="a" fill="#10b981" name="Completed" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="active" stackId="a" fill="#4e79a7" name="Active" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="done" stackId="a" fill="#59a14f" name="Completed" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

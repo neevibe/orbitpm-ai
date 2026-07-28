@@ -85,10 +85,10 @@ try {
   }
 
   // ---------- command center ----------
-  await visit('/command-center', 'button.x-metric');
+  await visit('/command-center', 'button.x-kpi-cell');
   check('Command Center loads without JS crashes', pageErrors.length === 0, pageErrors[0] || '');
-  const kpis = await page.locator('button.x-metric').count();
-  check('Command Center shows 6 KPI cards', kpis === 6, `found ${kpis}`);
+  const kpis = await page.locator('button.x-kpi-cell').count();
+  check('Command Center shows 6 KPI cells', kpis === 6, `found ${kpis}`);
   const charts = await page.locator('svg.recharts-surface').count();
   check('Command Center charts render', charts >= 2, `found ${charts} chart SVGs`);
   const truncated = await page.locator('svg .recharts-yAxis text', { hasText: '…' }).count();
@@ -108,29 +108,26 @@ try {
   await page.emulateMedia({ media: 'print' });
   await page.waitForTimeout(500);
   const printState = await page.evaluate(() => ({
-    kpiVisible: [...document.querySelectorAll('button.x-metric')].filter(b => getComputedStyle(b).display !== 'none').length,
+    kpiVisible: [...document.querySelectorAll('button.x-kpi-cell, button.x-metric')].filter(b => getComputedStyle(b).display !== 'none').length,
     chartBoxes: [...document.querySelectorAll('svg.recharts-surface')].filter(s => { const r = s.getBoundingClientRect(); return r.width > 10 && r.height > 10; }).length,
   }));
   check('PDF export keeps KPI cards visible', printState.kpiVisible === 6, `${printState.kpiVisible}/6 visible in print media`);
   check('PDF export keeps charts sized', printState.chartBoxes >= 2, `${printState.chartBoxes} charts with real size`);
   await page.emulateMedia({ media: 'screen' });
 
-  // ---------- floating AI assistant ----------
+  // ---------- Xyro AI assistant (docked panel, opened from the topbar) ----------
   {
-    const launcher = await page.locator('button[title="Xyro"]').count();
-    check('Floating assistant (Xyro) launcher present', launcher === 1);
+    const launcher = await page.locator('button[title^="Ask Xyro"]').count();
+    check('Xyro launcher present in topbar', launcher === 1);
     if (launcher) {
-      // force: the launcher has a perpetual float animation, so Playwright's
-      // stability check would otherwise never settle
-      await page.click('button[title="Xyro"]', { force: true });
+      await page.click('button[title^="Ask Xyro"]');
       await page.waitForTimeout(500);
-      check('Assistant panel opens with welcome', await page.locator('text=build something amazing').count() > 0);
+      check('Assistant panel opens with welcome', await page.locator('text=your AI assistant').count() > 0);
       await page.fill('input[placeholder*="Ask me"]', 'how do I export a pdf report');
       await page.keyboard.press('Enter');
       await page.waitForTimeout(700);
       check('Assistant answers how-to questions', await page.locator('text=Export PDF').count() > 0);
       await page.keyboard.press('Escape');
-      await page.locator('.fixed.bottom-5 button:has(svg)').first().click().catch(() => {});
     }
   }
 

@@ -411,10 +411,10 @@ export default function GanttChart({ tasks, onUpdateTasks, projectStartDate, pro
           <svg className="absolute inset-0 pointer-events-none w-full h-full z-0">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#818cf8" />
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
               </marker>
               <marker id="arrow-critical" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#ef4444" />
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#d1615d" />
               </marker>
             </defs>
             {svgLines.map((line, idx) => (
@@ -422,7 +422,7 @@ export default function GanttChart({ tasks, onUpdateTasks, projectStartDate, pro
                 key={idx}
                 d={line.path}
                 fill="none"
-                stroke={line.isCritical ? '#ef4444' : '#818cf8'}
+                stroke={line.isCritical ? '#d1615d' : '#64748b'}
                 strokeWidth={line.isCritical ? 2 : 1.5}
                 strokeDasharray={line.isCritical ? 'none' : '3, 3'}
                 markerEnd={line.isCritical ? 'url(#arrow-critical)' : 'url(#arrow)'}

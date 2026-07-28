@@ -7,6 +7,7 @@ import { DataProvider } from '@/lib/data-context';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import FloatingAssistant from '@/components/assistant/FloatingAssistant';
+import SystemBanner from './SystemBanner';
 import Toaster from '@/components/ui/Toaster';
 
 const FULL_BLEED_PAGES = ['/projects'];
@@ -130,8 +131,11 @@ function Shell({ children }: { children: React.ReactNode }) {
     <DataProvider>
       <Sidebar />
       <Topbar />
+      <div className="ml-[var(--sidebar-w)] mt-[52px] transition-[margin-left] duration-200 ease-in-out sticky top-[52px] z-40 no-print">
+        <SystemBanner />
+      </div>
       <main
-        className="ml-[var(--sidebar-w)] mt-[52px] transition-[margin-left] duration-200 ease-in-out"
+        className="ml-[var(--sidebar-w)] transition-[margin-left] duration-200 ease-in-out"
         style={{ background: 'var(--color-x-bg)', padding: isFullBleed ? 0 : '24px', minHeight: 'calc(100vh - 52px)' }}
       >
         {children}

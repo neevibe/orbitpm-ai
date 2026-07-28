@@ -119,10 +119,10 @@ export default function DashboardPage() {
   }).filter(d => !activeFilter || activeFilter === 'all' || d.matchedCount > 0);
 
   const pieData = [
-    { name: 'In Progress', value: kpi.inProgress, color: '#3b82f6' },
+    { name: 'In Progress', value: kpi.inProgress, color: '#4e79a7' },
     { name: 'Not Started', value: kpi.notStarted, color: '#94a3b8' },
-    { name: 'Completed', value: kpi.completed, color: '#10b981' },
-    { name: 'Delayed', value: kpi.delayed, color: '#ef4444' },
+    { name: 'Completed', value: kpi.completed, color: '#59a14f' },
+    { name: 'Delayed', value: kpi.delayed, color: '#d1615d' },
   ].filter(d => d.value > 0);
 
   const criticalProjects = projects.filter(p => p.priority === 'Critical' && p.status === 'In Progress');
@@ -300,14 +300,14 @@ export default function DashboardPage() {
             <AreaChart data={dynamicTrend}>
               <defs>
                 <linearGradient id="colorDue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2d65ff" stopOpacity={0.15} /><stop offset="95%" stopColor="#2d65ff" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#4e79a7" stopOpacity={0.15} /><stop offset="95%" stopColor="#4e79a7" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Area type="monotone" dataKey="projectsDue" name="Projects Due" stroke="#2d65ff" fill="url(#colorDue)" strokeWidth={2} />
-              <Area type="monotone" dataKey="delayed" name="Delayed Projects" stroke="#ef4444" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
+              <Area type="monotone" dataKey="projectsDue" name="Projects Due" stroke="#4e79a7" fill="url(#colorDue)" strokeWidth={2} />
+              <Area type="monotone" dataKey="delayed" name="Delayed Projects" stroke="#d1615d" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
