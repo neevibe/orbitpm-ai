@@ -1,6 +1,6 @@
 'use client';
 
-import { Puzzle, MessageSquare, Database, Mail, GitPullRequest, Cloud, Search, Shield, CheckCircle2, Copy, ChevronDown, ChevronUp, Loader2, CalendarPlus } from 'lucide-react';
+import { Puzzle, MessageSquare, Database, Mail, GitPullRequest, Cloud, Search, Shield, CheckCircle2, Copy, ChevronDown, ChevronUp, Loader2, CalendarPlus, BellRing } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { authedFetch } from '@/lib/supabase';
@@ -177,6 +177,121 @@ function OutlookTile(props: MsProps) {
   );
 }
 
+function ChannelAlertsTile() {
+  const [state, setState] = useState<{ configured: boolean; tableReady: boolean; masked: string } | null>(null);
+  const [url, setUrl] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [showHow, setShowHow] = useState(false);
+
+  const reload = useCallback(async () => {
+    try {
+      const res = await authedFetch('/api/integrations/teams-alerts');
+      if (res.ok) setState(await res.json());
+    } catch (e) {
+      console.error('[teams-alerts]', e);
+    }
+  }, []);
+  useEffect(() => { reload(); }, [reload]);
+
+  const call = async (payload: Record<string, string>, okText: string) => {
+    setBusy(true);
+    try {
+      const res = await authedFetch('/api/integrations/teams-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+      toast({ kind: 'success', text: okText });
+      setEditing(false); setUrl('');
+      reload();
+    } catch (e) {
+      toast({ kind: 'error', text: e instanceof Error ? e.message : 'Something went wrong.' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const active = !!state?.configured;
+
+  return (
+    <div className="x-card p-5 flex flex-col h-full border-blue-200 hover:border-blue-300 transition-all">
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+          <BellRing className="w-6 h-6 text-blue-600" />
+        </div>
+        {!state ? <span className="x-badge x-badge-gray text-[10px]">Checking…</span>
+          : active ? <span className="x-badge x-badge-green text-[10px]">Active</span>
+          : <span className="x-badge x-badge-gray text-[10px]">Off</span>}
+      </div>
+
+      <h3 className="text-[14px] font-bold text-[var(--color-x-text)]">Teams Channel Alerts</h3>
+      <div className="text-[12px] text-[var(--color-x-text-secondary)] mt-1 flex-1">
+        {active ? (
+          <>Automated alerts (new projects, status changes, new risks) post to your Teams channel via <code className="font-mono text-[11px]">{state?.masked}</code>. Delivered alerts appear in the dashboard activity feed.</>
+        ) : (
+          <>Post automated project alerts into a Teams channel — no Azure setup needed, just a channel webhook.</>
+        )}
+        {state && !state.tableReady && (
+          <p className="mt-2 text-[11.5px] text-amber-700">
+            First run <code className="font-mono">supabase/migrations/0009_org_settings.sql</code> in the Supabase SQL Editor.
+          </p>
+        )}
+        {(!active || editing) && (
+          <div className="mt-3 space-y-2">
+            <button onClick={() => setShowHow(s => !s)} className="text-[12px] font-medium text-blue-700 flex items-center gap-1">
+              {showHow ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              How to get a webhook URL
+            </button>
+            {showHow && (
+              <ol className="space-y-1 text-[11.5px] list-decimal pl-4">
+                <li>In Teams, open the channel → <b>⋯ → Workflows</b> (or Connectors on older tenants).</li>
+                <li>Pick <b>“Post to a channel when a webhook request is received”</b> and create it.</li>
+                <li>Copy the generated URL and paste it here.</li>
+              </ol>
+            )}
+            <input
+              className="x-input font-mono text-[11px]"
+              placeholder="https://….webhook.office.com/… or https://….logic.azure.com/…"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between pt-4 mt-4 border-t border-[var(--color-x-border)] gap-2 flex-wrap">
+        <span className="text-[11px] text-[var(--color-x-text-muted)]">Communication</span>
+        <div className="flex items-center gap-2">
+          {active && !editing ? (
+            <>
+              <button onClick={() => call({ action: 'test' }, 'Test alert sent — check the channel.')} disabled={busy}
+                className="x-btn text-[12px] px-3 py-1.5 disabled:opacity-50">Send test</button>
+              <button onClick={() => setEditing(true)} className="text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:text-[var(--color-x-text)]">Replace</button>
+              <button
+                onClick={() => { if (confirm('Turn off channel alerts?')) call({ action: 'clear' }, 'Channel alerts disabled.'); }}
+                disabled={busy}
+                className="text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:text-red-600 disabled:opacity-50"
+              >Disable</button>
+            </>
+          ) : (
+            <>
+              {editing && <button onClick={() => { setEditing(false); setUrl(''); }} className="x-btn text-[12px] px-3 py-1.5">Cancel</button>}
+              <button
+                onClick={() => call({ action: 'save', url }, 'Webhook saved — send a test to confirm.')}
+                disabled={busy || !url.trim() || !state?.tableReady}
+                className="x-btn x-btn-primary text-[12px] px-3 py-1.5 disabled:opacity-50"
+              >{busy ? 'Saving…' : 'Save webhook'}</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function IntegrationsPage() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const [search, setSearch] = useState('');
@@ -259,6 +374,7 @@ export default function IntegrationsPage() {
   const filtered = roadmapIntegrations.filter(i => i.name.toLowerCase().includes(q));
   const showTeams = 'microsoft teams'.includes(q);
   const showOutlook = 'outlook calendar & mail'.includes(q);
+  const showAlerts = 'teams channel alerts'.includes(q);
 
   return (
     <div className="x-page space-y-5">
@@ -276,6 +392,7 @@ export default function IntegrationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
         {showTeams && <TeamsTile {...msProps} />}
         {showOutlook && <OutlookTile {...msProps} />}
+        {showAlerts && <ChannelAlertsTile />}
         {filtered.map(app => (
           <div key={app.id} className="x-card p-5 flex flex-col h-full transition-all opacity-80">
             <div className="flex items-start justify-between mb-4">
@@ -295,7 +412,7 @@ export default function IntegrationsPage() {
           </div>
         ))}
       </div>
-      {!showTeams && !showOutlook && filtered.length === 0 && (
+      {!showTeams && !showOutlook && !showAlerts && filtered.length === 0 && (
         <div className="text-center p-12 text-[var(--color-x-text-muted)]">No integrations found matching &quot;{search}&quot;</div>
       )}
     </div>

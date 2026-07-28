@@ -180,6 +180,8 @@ try {
       ['POST /api/notify-task', 'POST', '/api/notify-task', '{"to":"a@b.co","taskName":"x"}'],
       ['POST /api/export', 'POST', '/api/export', '{"projects":[],"risks":[],"departments":[]}'],
       ['POST /api/admin/update-user-role', 'POST', '/api/admin/update-user-role', '{"userId":"x","permission":"admin"}'],
+      ['GET /api/activity', 'GET', '/api/activity', null],
+      ['POST /api/integrations/teams-alerts', 'POST', '/api/integrations/teams-alerts', '{"action":"save","url":"https://x.webhook.office.com/y"}'],
     ]) {
       try {
         const dataArg = body ? `-X ${method} -H 'Content-Type: application/json' -d '${body}'` : '';
