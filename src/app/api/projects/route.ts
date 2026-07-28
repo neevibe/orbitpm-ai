@@ -16,11 +16,19 @@ const AUDIT_MAP: Record<string, { action: string; module: string; entityType: st
   delete_risk: { action: 'risk.delete',     module: 'risks',    entityType: 'risk' },
 };
 
-// No hardcoded fallbacks (Phase 0): the service key must come from the
-// environment. getSupabase() is only called inside handlers (never at module
-// scope), so a missing env fails the request with 503, not the build.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+// The URL and publishable (anon) key are public values — they ship in the
+// client bundle by design, so they are safe fallbacks and keep production
+// working when the Vercel env is incomplete (which it currently is: the
+// runtime exposed neither NEXT_PUBLIC_SUPABASE_URL nor the service key,
+// which broke every read with a 503 after the fallbacks were removed).
+// The SERVICE key itself has no fallback: without it the anon key is used,
+// which is exactly the pre-Phase-0 data path — but now strictly behind
+// requireUser(), so unauthenticated access stays impossible.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rfvhvpeqvuwrjcszyhbb.supabase.co';
+const serviceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
 
 // Create a fresh client per invocation — avoids module-level state leakage across
 // concurrent Vercel serverless function invocations.
