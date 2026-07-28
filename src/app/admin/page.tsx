@@ -466,6 +466,18 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+
+          {/* Data Sanity — live-DB audit: dept coverage, owner variants, contradictions */}
+          <div className="x-card p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+              <Database className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[14px] font-bold text-[var(--color-x-text)]">Data Sanity</h2>
+              <p className="text-[12px] text-[var(--color-x-text-muted)]">Audit the live register: departments without projects, duplicate owner spellings (mergeable in one click), sub-department usage, status/date contradictions.</p>
+            </div>
+            <Link href="/admin/data-sanity" className="x-btn x-btn-primary text-[12px] px-3 py-1.5 flex-shrink-0">Run audit</Link>
+          </div>
         </div>
       )}
 

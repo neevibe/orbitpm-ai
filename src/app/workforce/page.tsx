@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useData } from '@/lib/data-context';
+import { canonicalOwnerName } from '@/lib/utils';
 import { Users2, AlertCircle, CheckCircle2, Clock, UserSquare2, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -21,20 +22,24 @@ export default function WorkforcePage() {
 
   projects.forEach(p => {
     if (!p.owner) return;
+    // Merge owner variants ("Ilora" + "Ilora Ghosh Banerjee") into one person,
+    // displayed under the roster's full name.
+    const who = canonicalOwnerName(p.owner);
+    if (!who) return;
     const isActive = countsAsWorkload(p);
-    if (!teamMap.has(p.owner)) {
-      const parts = p.owner.split(' ');
+    if (!teamMap.has(who)) {
+      const parts = who.split(' ');
       const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0].substring(0, 2);
-      teamMap.set(p.owner, {
-        name: p.owner,
+      teamMap.set(who, {
+        name: who,
         dept: p.department || 'General',
         active: isActive ? 1 : 0,
         total: 1,
         initials: initials.toUpperCase(),
-        avatarColor: colors[p.owner.length % colors.length]
+        avatarColor: colors[who.length % colors.length]
       });
     } else {
-      const m = teamMap.get(p.owner)!;
+      const m = teamMap.get(who)!;
       m.total += 1;
       if (isActive) m.active += 1;
     }
@@ -158,7 +163,7 @@ export default function WorkforcePage() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {projects.filter(p => p.owner === selectedMember).map(p => (
+              {projects.filter(p => canonicalOwnerName(p.owner) === selectedMember).map(p => (
                 <a key={p.id} href={`/projects/${p.id}`} className="flex items-center gap-4 p-3 rounded-xl hover:bg-[var(--color-x-bg)] transition-all border border-transparent hover:border-[var(--color-x-border)] group">
                   <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-500' : 'bg-blue-500'}`} />
                   <div className="flex-1 min-w-0">
@@ -174,7 +179,7 @@ export default function WorkforcePage() {
                   </div>
                 </a>
               ))}
-              {projects.filter(p => p.owner === selectedMember).length === 0 && (
+              {projects.filter(p => canonicalOwnerName(p.owner) === selectedMember).length === 0 && (
                 <div className="text-center py-12 text-[var(--color-x-text-muted)]">
                   <p>No projects assigned.</p>
                 </div>

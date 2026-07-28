@@ -6,6 +6,7 @@ import { Building2, ChevronRight, ArrowLeft, Edit3, Plus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { plural, deptKey } from '@/lib/utils';
+import { resolveHierarchy, getSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import type { Project } from '@/lib/mock-data';
 
@@ -34,6 +35,7 @@ export default function DepartmentsPage() {
   }, [departments, scope]);
   const { canModifyDepartment } = useAuth();
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [editModalProject, setEditModalProject] = useState<Project | null>(null);
   const [deptSearch, setDeptSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -54,13 +56,29 @@ export default function DepartmentsPage() {
 
   const selectedDeptData = useMemo(() => visibleDepartments.find(d => d.name === selectedDept), [selectedDept, visibleDepartments]);
 
+  // Resolved vertical so folded departments (CBB → BASL) land in the right
+  // drill-down instead of disappearing.
   const deptProjects = useMemo(() => {
     if (!selectedDept) return [];
-    return projects.filter(p => p.department === selectedDept && !p.archived);
+    return projects.filter(p => !p.archived && resolveHierarchy(p.department, p.subdivision).vertical === selectedDept);
   }, [selectedDept, projects]);
+
+  // Sub-departments: configured list ∪ values actually present in the data,
+  // so verticals without a config entry still show their toggles.
+  const subOptions = useMemo(() => {
+    if (!selectedDept) return [];
+    const fromData = new Set<string>();
+    deptProjects.forEach(p => {
+      const sub = resolveHierarchy(p.department, p.subdivision).subdivision;
+      if (sub) fromData.add(sub);
+    });
+    const configured = getSubdivisions(selectedDept);
+    return [...configured, ...[...fromData].filter(sub => !configured.includes(sub)).sort()];
+  }, [selectedDept, deptProjects]);
 
   const filteredProjects = useMemo(() => {
     let pool = deptProjects;
+    if (selectedSub) pool = pool.filter(p => resolveHierarchy(p.department, p.subdivision).subdivision === selectedSub);
     if (statusFilter !== 'All') pool = pool.filter(p => p.status === statusFilter);
     if (deptSearch) {
       const q = deptSearch.toLowerCase();
@@ -70,7 +88,7 @@ export default function DepartmentsPage() {
       if (sortBy === 'owner') return (a.owner || '').localeCompare(b.owner || '');
       return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [deptProjects, statusFilter, deptSearch, sortBy]);
+  }, [deptProjects, selectedSub, statusFilter, deptSearch, sortBy]);
 
   // ══════════════════════════════════════════════
   // DEPARTMENT DRILL-DOWN VIEW
@@ -84,7 +102,7 @@ export default function DepartmentsPage() {
       <div className="space-y-4 animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={() => { setSelectedDept(null); setEditModalProject(null); }}
+          <button onClick={() => { setSelectedDept(null); setSelectedSub(null); setEditModalProject(null); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[12px] font-medium text-[var(--color-x-text-secondary)] hover:border-blue-200 hover:text-blue-600 transition-all">
             <ArrowLeft className="w-3.5 h-3.5" /> All Departments
           </button>
@@ -131,6 +149,31 @@ export default function DepartmentsPage() {
             <option value="owner">Sort: Owner</option>
           </select>
         </div>
+
+        {/* Sub-department toggle */}
+        {subOptions.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => setSelectedSub(null)}
+              className={`px-3 py-1.5 rounded-full text-[11.5px] font-semibold border transition-all ${!selectedSub ? 'bg-blue-600 text-white border-blue-600' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-blue-300'}`}
+            >
+              All {selectedDept}
+            </button>
+            {subOptions.map(sub => {
+              const count = deptProjects.filter(p => resolveHierarchy(p.department, p.subdivision).subdivision === sub).length;
+              const active = selectedSub === sub;
+              return (
+                <button
+                  key={sub}
+                  onClick={() => setSelectedSub(active ? null : sub)}
+                  className={`px-3 py-1.5 rounded-full text-[11.5px] font-semibold border transition-all ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-[var(--color-x-surface)] text-[var(--color-x-text-secondary)] border-[var(--color-x-border)] hover:border-blue-300'}`}
+                >
+                  {sub} <span className={active ? 'opacity-80' : 'text-[var(--color-x-text-muted)]'}>({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Project list */}
         <div className="space-y-2">
@@ -219,7 +262,7 @@ export default function DepartmentsPage() {
           const delayed = deptProjs.filter(p => p.status === 'Delayed').length;
           const critical = deptProjs.filter(p => p.priority === 'Critical').length;
           return (
-            <div key={dept.name} onClick={() => setSelectedDept(dept.name)}
+            <div key={dept.name} onClick={() => { setSelectedDept(dept.name); setSelectedSub(null); }}
               className="x-card p-5 cursor-pointer hover:border-blue-200 hover:shadow-md transition-all group">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">

@@ -190,7 +190,7 @@ try {
   // REJECT unauthenticated callers. If any of these starts returning data
   // again, the register is exposed to the public internet.
   if (LIVE_API) {
-    for (const [name, method, path, body] of [
+    for (const [name, method, path, body, allowed] of [
       ['GET /api/projects', 'GET', '/api/projects', null],
       ['POST /api/projects', 'POST', '/api/projects', '{"action":"update","project":{"id":"x"}}'],
       ['POST /api/ai-chat', 'POST', '/api/ai-chat', '{"messages":[{"role":"user","content":"hi"}]}'],
@@ -199,11 +199,16 @@ try {
       ['POST /api/admin/update-user-role', 'POST', '/api/admin/update-user-role', '{"userId":"x","permission":"admin"}'],
       ['GET /api/activity', 'GET', '/api/activity', null],
       ['POST /api/integrations/teams-alerts', 'POST', '/api/integrations/teams-alerts', '{"action":"save","url":"https://x.webhook.office.com/y"}'],
+      ['GET /api/admin/data-sanity', 'GET', '/api/admin/data-sanity', null],
+      ['POST /api/admin/data-sanity', 'POST', '/api/admin/data-sanity', '{"action":"fix_owners"}'],
+      // qa-report: 503 pre-config, 401 once QA_REPORT_SECRET exists — never 2xx without the secret
+      ['POST /api/qa-report (no secret)', 'POST', '/api/qa-report', '{"report":"x"}', ['401', '403', '503']],
     ]) {
       try {
         const dataArg = body ? `-X ${method} -H 'Content-Type: application/json' -d '${body}'` : '';
         const code = execSync(`curl -sS -o /dev/null -w "%{http_code}" --max-time 30 --cacert /root/.ccr/ca-bundle.crt ${dataArg} "${LIVE_API}${path}"`, { encoding: 'utf8' }).trim();
-        check(`Unauthenticated ${name} is rejected`, code === '401' || code === '403', `HTTP ${code}`);
+        const okCodes = allowed || ['401', '403'];
+        check(`Unauthenticated ${name} is rejected`, okCodes.includes(code), `HTTP ${code}`);
       } catch (e) {
         check(`Unauthenticated ${name} is rejected`, false, e.message.slice(0, 120));
       }

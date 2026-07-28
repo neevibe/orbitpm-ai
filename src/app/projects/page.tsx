@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, BarChartHorizontal, ChevronDown, ChevronRight, MoreVertical, Edit2, FolderOpen, Download, Filter } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { getStatusColor, getPriorityColor, formatDate, isProjectOwner, plural } from '@/lib/utils';
+import { getStatusColor, getPriorityColor, formatDate, isProjectOwner, plural, canonicalOwnerName } from '@/lib/utils';
 import { authedFetch } from '@/lib/supabase';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
@@ -141,12 +141,13 @@ export default function ProjectsPage() {
   // only shows names relevant to what is currently visible.
   const allOwners = useMemo(() => {
     const pool = activeProjects.filter(p => {
-      const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
-      const matchDept = selectedDept === 'All' || vertical === selectedDept;
-      const matchSub = !selectedSub || p.subdivision === selectedSub;
+      const h = resolveHierarchy(p.department, p.subdivision);
+      const matchDept = selectedDept === 'All' || h.vertical === selectedDept;
+      const matchSub = !selectedSub || h.subdivision === selectedSub;
       return matchDept && matchSub;
     });
-    const names = new Set(pool.map(p => p.owner).filter(Boolean));
+    // Canonical roster names so "Ilora" and "Ilora Ghosh Banerjee" are one entry
+    const names = new Set(pool.map(p => canonicalOwnerName(p.owner)).filter(Boolean));
     return Array.from(names).sort();
   }, [activeProjects, selectedDept, selectedSub]);
 
@@ -165,7 +166,8 @@ export default function ProjectsPage() {
     activeProjects.forEach(ap => {
       const countsAsWorkload = !ap.archived && ap.status !== 'Completed' && (ap.status as string) !== 'Cancelled';
       if (countsAsWorkload && ap.owner) {
-        ownerCounts[ap.owner] = (ownerCounts[ap.owner] || 0) + 1;
+        const who = canonicalOwnerName(ap.owner);
+        ownerCounts[who] = (ownerCounts[who] || 0) + 1;
       }
     });
 
@@ -173,10 +175,12 @@ export default function ProjectsPage() {
       const q = search.toLowerCase();
       const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q) || (p.subdivision || '').toLowerCase().includes(q);
       const matchStatus = statusFilter === 'All' || p.status === statusFilter;
-      // Fold CBB→BASL etc. so filtering matches the displayed vertical.
-      const vertical = resolveHierarchy(p.department, p.subdivision).vertical;
-      const matchDept = selectedDept === 'All' || vertical === selectedDept;
-      const matchSub = !selectedSub || p.subdivision === selectedSub;
+      // Fold CBB→BASL etc. so filtering matches the displayed vertical, and
+      // compare the RESOLVED subdivision — the sidebar counts resolve it, so a
+      // raw comparison here made folded rows count but never show (dead toggle).
+      const h = resolveHierarchy(p.department, p.subdivision);
+      const matchDept = selectedDept === 'All' || h.vertical === selectedDept;
+      const matchSub = !selectedSub || h.subdivision === selectedSub;
       const matchPriority = priorityFilter === 'All' || p.priority === priorityFilter;
 
       // Query param overrides
@@ -197,11 +201,11 @@ export default function ProjectsPage() {
         if (!needsEscalation) return false;
       }
       if (bottlenecksFilter) {
-        const hasBottleneck = p.owner ? (ownerCounts[p.owner] || 0) >= 3 : false;
+        const hasBottleneck = p.owner ? (ownerCounts[canonicalOwnerName(p.owner)] || 0) >= 3 : false;
         if (!hasBottleneck) return false;
       }
 
-      const matchOwner = ownerFilter === 'All' || p.owner === ownerFilter;
+      const matchOwner = ownerFilter === 'All' || canonicalOwnerName(p.owner) === ownerFilter;
       const matchMyProjects = !myProjectsOnly || isProjectOwner(p.owner, currentUserName, user?.email);
       return matchSearch && matchStatus && matchDept && matchSub && matchPriority && matchOwner && matchMyProjects;
     })
@@ -321,7 +325,15 @@ export default function ProjectsPage() {
           {deptList.map(dept => {
             const count = activeProjects.filter(p => resolveHierarchy(p.department, p.subdivision).vertical === dept).length;
             const isSelected = selectedDept === dept;
-            const subdivisions = getSubdivisions(dept);
+            // Config subdivisions ∪ subdivisions actually present in the data, so
+            // departments without a config entry (e.g. Commercial Development)
+            // still get their toggles when their rows carry subdivision values.
+            const dataSubs = new Set<string>();
+            activeProjects.forEach(p => {
+              const h = resolveHierarchy(p.department, p.subdivision);
+              if (h.vertical === dept && h.subdivision) dataSubs.add(h.subdivision);
+            });
+            const subdivisions = [...getSubdivisions(dept), ...[...dataSubs].filter(sub => !getSubdivisions(dept).includes(sub)).sort()];
             return (
               <div key={dept} className="space-y-0.5">
                 <button
