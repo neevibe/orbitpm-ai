@@ -4,9 +4,11 @@ import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit3, Calendar, User, Building2, AlertTriangle, Target, FileText, MessageSquare, Activity, CheckCircle2, Zap, X, Trash2, IndianRupee, ListTodo, Plus, LayoutGrid, BarChartHorizontal } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import NotesLog from '@/components/NotesLog';
 import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
+import TeamsPanel from '@/components/project/TeamsPanel';
 import { formatDate, getStatusColor, formatINR } from '@/lib/utils';
 import { authedFetch } from '@/lib/supabase';
 import { resolveHierarchy } from '@/lib/org-structure';
@@ -28,6 +30,7 @@ export default function ProjectDetailPage() {
   const params = useParams(); const router = useRouter();
   const projectId = params.id as string;
   const { projects, risks, updateProject, deleteProject, addProject, splitProject, departments } = useData();
+  const { canModifyDepartment } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
   const project = projects.find(p => p.id === projectId);
@@ -236,6 +239,7 @@ export default function ProjectDetailPage() {
     ...(hasDependencies ? [{ id: 'dependencies', label: 'Dependencies', icon: Target, count: dependencyCount }] : []),
     { id: 'risks', label: 'Risks', icon: AlertTriangle, count: projectRisks.length },
     { id: 'updates', label: 'Updates', icon: MessageSquare },
+    { id: 'teams', label: 'Teams', icon: MessageSquare },
     { id: 'documents', label: 'Documents', icon: FileText },
   ];
 
@@ -548,6 +552,10 @@ export default function ProjectDetailPage() {
                 <td><span className={`x-badge ${r.status === 'Open' ? 'x-badge-blue' : 'x-badge-green'}`}>{r.status}</span></td></tr>))}</tbody></table>
           ) : <div className="p-16 text-center"><CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" /><p className="text-[13px] font-medium text-[var(--color-x-text-muted)]">No risks registered</p></div>}
         </div>
+      )}
+
+      {activeTab === 'teams' && (
+        <TeamsPanel projectCode={project.id} canEdit={canModifyDepartment(project.department)} />
       )}
 
       {activeTab === 'updates' && <div className="x-card p-16 text-center"><MessageSquare className="w-10 h-10 text-[var(--color-x-border)] mx-auto mb-3" /><p className="text-[13px] font-medium text-[var(--color-x-text-muted)]">No updates yet</p></div>}
