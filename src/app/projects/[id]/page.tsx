@@ -9,6 +9,7 @@ import NotesLog from '@/components/NotesLog';
 import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import TeamsPanel from '@/components/project/TeamsPanel';
+import TaskOutlookActions from '@/components/project/TaskOutlookActions';
 import { formatDate, getStatusColor, formatINR } from '@/lib/utils';
 import { authedFetch } from '@/lib/supabase';
 import { resolveHierarchy } from '@/lib/org-structure';
@@ -499,6 +500,7 @@ export default function ProjectDetailPage() {
                     >
                       {['Backlog', 'To Do', 'In Progress', 'Review', 'Completed'].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+                    <TaskOutlookActions task={task} projectName={project.name} projectCode={project.id} />
                     <button
                       onClick={() => handleDeleteTask(task)}
                       title="Delete task"
