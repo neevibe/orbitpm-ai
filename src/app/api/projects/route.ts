@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { recordAudit, actorFromToken } from '@/lib/audit';
-import { requireUser } from '@/lib/api-auth';
+import { requireUser, serverPermission, serverDepartment, normalizeDept, dependsOnDepartment } from '@/lib/api-auth';
 
 // Maps the mutation action to a persistent audit action + module.
 const AUDIT_MAP: Record<string, { action: string; module: string; entityType: string }> = {
@@ -123,10 +123,37 @@ export async function GET(request: NextRequest) {
       targetDate: r.target_date || ''
     }));
 
+    // ── Phase 1: departmental privacy ────────────────────────────────────
+    // Non-admin users receive ONLY their department's projects, plus any
+    // project from another department that carries an internal dependency
+    // targeting theirs (marked sharedViaDependency, read-only in the UI).
+    const perm = serverPermission(auth.user);
+    const userDept = normalizeDept(serverDepartment(auth.user));
+    let visibleProjects = mappedProjects;
+    let sharedCount = 0;
+    if (perm !== 'admin') {
+      visibleProjects = mappedProjects.filter(p => {
+        if (userDept && normalizeDept(p.department) === userDept) return true;
+        if (dependsOnDepartment(p.classifiedDependencies, userDept)) {
+          (p as Record<string, unknown>).sharedViaDependency = true;
+          sharedCount++;
+          return true;
+        }
+        return false;
+      });
+    }
+    const visibleCodes = new Set(visibleProjects.map(p => p.id));
+    const visibleRisks = perm === 'admin' ? mappedRisks : mappedRisks.filter(r => visibleCodes.has(r.projectId));
+
     return NextResponse.json({
       success: true,
-      projects: mappedProjects,
-      risks: mappedRisks
+      projects: visibleProjects,
+      risks: visibleRisks,
+      scope: {
+        admin: perm === 'admin',
+        department: perm === 'admin' ? null : (serverDepartment(auth.user) || null),
+        shared: sharedCount,
+      },
     });
   } catch (error: any) {
     console.error('Error fetching database data:', error);
@@ -154,9 +181,47 @@ export async function POST(request: NextRequest) {
     // Fetch department list for mapping department name to ID
     const { data: depts } = await db.from('departments').select('id, name');
     const deptNameToId: Record<string, string> = {};
+    const deptIdToName: Record<string, string> = {};
     depts?.forEach(d => {
       deptNameToId[d.name] = d.id;
+      deptIdToName[d.id] = d.name;
     });
+
+    // ── Phase 1: non-admins may only mutate their own department ─────────
+    // Exception: a dependent team may update ONLY the dependency tasks
+    // (classifiedDependencies) on a parent project that targets their dept —
+    // that mirrors the existing updateDependencyTask permission model.
+    const perm = serverPermission(auth.user);
+    const userDept = normalizeDept(serverDepartment(auth.user));
+    if (perm !== 'admin') {
+      const forbid = () => NextResponse.json({ error: 'You can only modify projects in your own department.' }, { status: 403 });
+      const rowInfo = async (code: string | undefined | null) => {
+        if (!code) return null;
+        const { data } = await db.from('projects').select('department_id, classified_dependencies').eq('project_code', code).maybeSingle();
+        if (!data) return null;
+        return { dept: normalizeDept(deptIdToName[data.department_id] || ''), cdeps: data.classified_dependencies };
+      };
+      if (action === 'create') {
+        if (!userDept || normalizeDept(project?.department) !== userDept) return forbid();
+      } else if (action === 'update' || action === 'archive' || action === 'restore' || action === 'delete') {
+        const row = await rowInfo(project?.id);
+        if (row && (!userDept || row.dept !== userDept)) {
+          const keys = Object.keys(updates || {});
+          const depTaskEdit = action === 'update' && keys.length > 0 &&
+            keys.every(k => k === 'classifiedDependencies') &&
+            dependsOnDepartment(row.cdeps, userDept);
+          if (!depTaskEdit) return forbid();
+        }
+      } else if (action === 'split') {
+        const row = await rowInfo(originalId);
+        if (row && (!userDept || row.dept !== userDept)) return forbid();
+      } else if (action === 'create_risk') {
+        const row = await rowInfo(project?.projectId);
+        if (row && (!userDept || row.dept !== userDept) && !dependsOnDepartment(row.cdeps, userDept)) return forbid();
+      }
+      // update_risk / delete_risk are keyed by risk id; they stay client-gated
+      // for now and get airtight enforcement with the RLS pass.
+    }
 
     if (action === 'create') {
       const deptId = deptNameToId[project.department] || null;
