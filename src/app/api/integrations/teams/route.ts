@@ -26,7 +26,9 @@ const SERVICE_KEY =
   'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
 
 const db = () => createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-const missingTable = (msg?: string) => !!msg && msg.toLowerCase().includes('does not exist');
+// Supabase surfaces a missing table as either Postgres' `relation ... does not
+// exist` or PostgREST's `Could not find the table ... in the schema cache`.
+const missingTable = (msg?: string) => !!msg && /does not exist|could not find the table|schema cache/i.test(msg);
 
 export async function GET(request: NextRequest) {
   const auth = await requireUser(request);

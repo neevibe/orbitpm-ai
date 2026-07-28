@@ -21,7 +21,7 @@ const db = () => createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSessio
 
 const TEAMS_URL_RE = /^https:\/\/(teams\.microsoft\.com|teams\.live\.com)\//i;
 
-const missingTable = (msg?: string) => !!msg && msg.toLowerCase().includes('does not exist');
+const missingTable = (msg?: string) => !!msg && /does not exist|could not find the table|schema cache/i.test(msg);
 
 /** Can this user see the given project under the departmental rules? */
 async function projectAccess(client: ReturnType<typeof db>, code: string, userDept: string, admin: boolean) {
