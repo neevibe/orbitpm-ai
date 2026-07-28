@@ -137,7 +137,7 @@ try {
     if (await page.locator('button[title="Xyro"]').count()) {
       await page.hover('button[title="Xyro"]', { force: true });
       await page.click('button[title="Minimize Xyro"]', { force: true });
-      await page.waitForTimeout(1100);
+      await page.waitForTimeout(2300); // spiral rocket animation runs ~1.8s
       check('Minimize rockets Xyro away', await page.locator('button[title="Xyro"]').count() === 0);
       // …and "Ask Xyro" summons him back (opens panel + restores mascot)
       await page.click('button[title^="Ask Xyro"]');
