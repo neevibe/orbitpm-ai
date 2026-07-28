@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import { requireUser } from '@/lib/api-auth';
 
 export async function POST(request: Request) {
+  const auth = await requireUser(request);
+  if (auth.error) return auth.error;
   try {
     const data = await request.json();
     const { projects, risks, departments } = data;

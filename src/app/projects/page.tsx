@@ -6,6 +6,7 @@ import { Plus, Search, LayoutGrid, Table2, History, RotateCcw, Trash2, Archive, 
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { getStatusColor, getPriorityColor, formatDate, isProjectOwner, plural } from '@/lib/utils';
+import { authedFetch } from '@/lib/supabase';
 import { TOP_LEVEL_DEPARTMENTS, departmentDisplayName, resolveHierarchy, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyTaskModal from '@/components/modals/DependencyTaskModal';
@@ -275,7 +276,7 @@ export default function ProjectsPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects: activeProjects, risks, departments }) });
+      const res = await authedFetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects: activeProjects, risks, departments }) });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { getAccessToken, signOutAndRelogin } from '@/lib/supabase';
+import { getAccessToken, signOutAndRelogin, authedFetch } from '@/lib/supabase';
 import { BIAL_EMPLOYEES, DEPARTMENTS } from '@/lib/employee-data';
 
 interface PersistentAuditRow {
@@ -130,7 +130,7 @@ export default function AdminPage() {
     setUpdatingUserId(userId);
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, permission: newPerm } : u));
     try {
-      await fetch('/api/admin/update-user-role', {
+      await authedFetch('/api/admin/update-user-role', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, permission: newPerm }),
@@ -162,7 +162,7 @@ export default function AdminPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
+      const response = await authedFetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -178,7 +178,7 @@ export default function AdminPage() {
     setIsImporting(true); setImportStatus(null);
     try {
       const formData = new FormData(); formData.append('file', file);
-      const response = await fetch('/api/import', { method: 'POST', body: formData });
+      const response = await authedFetch('/api/import', { method: 'POST', body: formData });
       const result = await response.json();
       if (result.success && result.projects.length > 0) {
         importProjects(result.projects);

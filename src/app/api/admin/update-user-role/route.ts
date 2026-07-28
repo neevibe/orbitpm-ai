@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
+  // Phase 0: privilege changes were previously open to ANY caller.
+  const auth = await requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const { userId, permission, department } = await request.json();
 
@@ -25,6 +29,12 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        // app_metadata is the authoritative claim store (not user-editable);
+        // user_metadata is kept in sync for older UI reads.
+        app_metadata: {
+          permission,
+          ...(department ? { department } : {}),
+        },
         user_metadata: {
           permission,
           ...(department ? { department } : {}),

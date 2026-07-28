@@ -8,10 +8,10 @@ import NotesLog from '@/components/NotesLog';
 import ProjectModal from '@/components/modals/ProjectModal';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
 import { formatDate, getStatusColor, formatINR } from '@/lib/utils';
+import { authedFetch } from '@/lib/supabase';
 import { resolveHierarchy } from '@/lib/org-structure';
 import { useToast, useConfirm } from '@/components/ui';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
-import { getAccessToken } from '@/lib/supabase';
 import type { Allocation, ClassifiedDependency } from '@/lib/mock-data';
 
 // Unique departments from the employee master, for the task-assignment picker.
@@ -199,10 +199,9 @@ export default function ProjectDetailPage() {
   // alike). Best-effort — the task is already saved either way.
   const notifyAssignee = async (args: { to: string; assigneeName: string | null; taskName: string; dueDate: string }) => {
     try {
-      const token = await getAccessToken();
-      const res = await fetch('/api/notify-task', {
+      const res = await authedFetch('/api/notify-task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: args.to,
           assigneeName: args.assigneeName,
