@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
+import { authedFetch } from '@/lib/supabase';
 import { Briefcase, BookOpen, BarChart3, User, Send, Zap, ChevronRight, RefreshCw } from 'lucide-react';
 
 const modes = [
@@ -135,7 +136,7 @@ export default function AICopilotPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/ai-chat', {
+      const res = await authedFetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

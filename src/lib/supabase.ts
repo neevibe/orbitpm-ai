@@ -48,3 +48,15 @@ export async function signOutAndRelogin(): Promise<void> {
   try { await supabase.auth.signOut(); } catch { /* ignore */ }
   if (typeof window !== 'undefined') window.location.href = '/login';
 }
+
+/**
+ * fetch() with the caller's Supabase access token attached (Phase 0: all
+ * data-bearing API routes now require it). Merges any headers passed in.
+ */
+export async function authedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const token = await getAccessToken();
+  return fetch(input, {
+    ...init,
+    headers: { ...(init.headers || {}), Authorization: `Bearer ${token ?? ''}` },
+  });
+}

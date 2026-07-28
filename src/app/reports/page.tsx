@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FileText, Download, FileSpreadsheet, Loader2, BarChart3, AlertTriangle, Calendar, Check } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { authedFetch } from '@/lib/supabase';
 
 export default function ReportsPage() {
   const { projects, risks, departments } = useData();
@@ -12,7 +13,7 @@ export default function ReportsPage() {
   const handleExport = async (reportType: string) => {
     setExporting(reportType); setSuccess(null);
     try {
-      const response = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
+      const response = await authedFetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
       if (!response.ok) throw new Error('failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

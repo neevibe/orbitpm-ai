@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Download, Upload, FileSpreadsheet, Building2, Shield, Bell, Palette, CreditCard, Check, AlertCircle, Loader2, RefreshCw, Database, User, Key, Eye, EyeOff } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { authedFetch } from '@/lib/supabase';
 
 interface ProfileDetails {
   name: string;
@@ -161,7 +162,7 @@ export default function SettingsPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
+      const response = await authedFetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects, risks, departments }) });
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -177,7 +178,7 @@ export default function SettingsPage() {
     setIsImporting(true); setImportStatus(null);
     try {
       const formData = new FormData(); formData.append('file', file);
-      const response = await fetch('/api/import', { method: 'POST', body: formData });
+      const response = await authedFetch('/api/import', { method: 'POST', body: formData });
       const result = await response.json();
       if (result.success && result.projects.length > 0) {
         importProjects(result.projects);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordAudit, actorFromToken } from '@/lib/audit';
+import { requireUser } from '@/lib/api-auth';
 
 /**
  * Emails an externally-assigned task to its recipient.
@@ -20,6 +21,9 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 export async function POST(request: NextRequest) {
+  // Phase 0: only signed-in users may send task emails (was an open relay).
+  const auth = await requireUser(request);
+  if (auth.error) return auth.error;
   let body: {
     to?: string;
     assigneeName?: string | null;

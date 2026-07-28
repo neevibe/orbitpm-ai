@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
-import { supabase, isSupabaseConfigured, getAccessToken } from './supabase';
+import { supabase, isSupabaseConfigured, getAccessToken, authedFetch } from './supabase';
 import { useAuth } from './auth-context';
 import { generateProjectId, daysUntil, normalizeProjectStatus } from './utils';
 import { toast } from '@/components/ui/Toaster';
@@ -182,7 +182,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     async function fetchData() {
       try {
-        const res = await fetch('/api/projects');
+        const res = await authedFetch('/api/projects');
         if (!res.ok) throw new Error('API request failed');
         const data = await res.json();
         if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
@@ -396,7 +396,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
 
     // Sync to local Excel files
-    fetch('/api/sync-local-excel', {
+    authedFetch('/api/sync-local-excel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'create', project: newProject }),
@@ -441,7 +441,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
 
     if (updatedProj) {
-      fetch('/api/sync-local-excel', {
+      authedFetch('/api/sync-local-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update', project: updatedProj }),
@@ -576,7 +576,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
 
       // Sync local Excel
-      fetch('/api/sync-local-excel', {
+      authedFetch('/api/sync-local-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', project }),
@@ -604,7 +604,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       notify('Project Restored', `${project.name} has been restored from history.`, 'success');
 
       // Sync local Excel
-      fetch('/api/sync-local-excel', {
+      authedFetch('/api/sync-local-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update', project: { ...project, archived: false } }),
@@ -640,7 +640,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
 
       // Sync local Excel
-      fetch('/api/sync-local-excel', {
+      authedFetch('/api/sync-local-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', project }),

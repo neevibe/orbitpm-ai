@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import { requireAdmin } from '@/lib/api-auth';
 
 export async function POST(request: Request) {
+  // Imports can overwrite the register — admin only.
+  const auth = await requireAdmin(request);
+  if (auth.error) return auth.error;
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;

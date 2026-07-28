@@ -83,19 +83,30 @@ function isInvalidSessionError(err: unknown): boolean {
   return msg.includes('refresh token') || msg.includes('invalid') || msg.includes('expired') || msg.includes('not found');
 }
 
+// Authorization claims come from app_metadata FIRST (only admins can write
+// it), falling back to user_metadata for accounts that predate the metadata
+// migration (scripts/migrate-authz-metadata.mjs).
+function authClaim(user: User | null, key: string): string | undefined {
+  const a = (user?.app_metadata as Record<string, unknown> | undefined)?.[key];
+  if (typeof a === 'string' && a.trim()) return a;
+  const m = (user?.user_metadata as Record<string, unknown> | undefined)?.[key];
+  if (typeof m === 'string' && m.trim()) return m;
+  return undefined;
+}
+
 function derivePermission(user: User | null): Permission {
   // 1. An explicit permission set by an admin always wins.
-  const p = user?.user_metadata?.permission as Permission | undefined;
+  const p = authClaim(user, 'permission') as Permission | undefined;
   if (p && p in PERM_RANK) return p;
   // 2. Admin / CCO roles are unconditionally admin.
-  const role = (user?.user_metadata?.role as string) ?? 'user';
+  const role = authClaim(user, 'role') ?? 'user';
   if (ADMIN_ROLES.includes(role)) return 'admin';
   if (user?.email?.toLowerCase() === 'neeraj.p@bialairport.com') return 'admin';
   // 3. A user mapped to a department gets working authority over that department
   //    by default (add / edit / archive in own dept) — assigning a department is
   //    meant to grant access, not leave the user stuck in view-only. Admins can
   //    still raise to 'admin' or lower to 'edit' / 'view' explicitly.
-  const dept = (user?.user_metadata?.department as string | undefined)?.trim();
+  const dept = authClaim(user, 'department')?.trim();
   if (dept) return 'modify';
   // 4. No department, no explicit grant → View-Only (internal default & external).
   return 'view';
@@ -305,8 +316,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Derived values
-  const role: string = user?.user_metadata?.role ?? 'user';
-  const department: string | null = user?.user_metadata?.department ?? null;
+  const role: string = authClaim(user, 'role') ?? 'user';
+  const department: string | null = authClaim(user, 'department') ?? null;
   const permission = derivePermission(user);
   const userType = deriveUserType(user);
   const isAdmin = permission === 'admin';

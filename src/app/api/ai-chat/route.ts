@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { requireUser } from '@/lib/api-auth';
 
 /**
  * Xyro — the Xyrenis AI engine.
@@ -16,11 +17,11 @@ import Anthropic from '@anthropic-ai/sdk';
  * Both read the SAME real data. There are no hardcoded/fake numbers.
  */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rfvhvpeqvuwrjcszyhbb.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
+  '';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5';
@@ -365,13 +366,23 @@ async function callClaude(convo: Turn[], context: string): Promise<Response> {
 
 export async function POST(request: Request) {
   try {
+    // Phase 0: the whole portfolio goes into the LLM context, so the endpoint
+    // requires a verified session — and identity comes from the token, never
+    // from the (spoofable) request body.
+    const auth = await requireUser(request);
+    if (auth.error) return auth.error;
+    const meta = { ...(auth.user.user_metadata || {}), ...(auth.user.app_metadata || {}) } as Record<string, string>;
+    const user = {
+      name: meta.full_name || auth.user.email?.split('@')[0] || 'user',
+      department: meta.department,
+      role: meta.role || 'user',
+    };
+
     const body = await request.json().catch(() => ({}));
     // Accept either { messages:[{role,content}] } or legacy { message, history }
     const messages: { role: string; content: string }[] = Array.isArray(body.messages)
       ? body.messages
       : [...(body.history || []), ...(body.message ? [{ role: 'user', content: body.message }] : [])];
-    // user arrives as a plain name string (floating panel) or an object (/ai page)
-    const user = typeof body.user === 'string' ? { name: body.user } : body.user;
 
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     if (!lastUser?.content) {

@@ -7,7 +7,7 @@ import { useData } from '@/lib/data-context';
 import { useToast } from '@/components/ui';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
 import { daysUntil, formatDate } from '@/lib/utils';
-import { getAccessToken } from '@/lib/supabase';
+import { authedFetch } from '@/lib/supabase';
 import DepartmentLabel from '@/components/DepartmentLabel';
 import type { Project } from '@/lib/mock-data';
 import type { Task } from '@/components/project/KanbanBoard';
@@ -57,10 +57,9 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
 
   const notifyAssignee = async (to: string, assigneeName: string | null, name: string, due: string) => {
     try {
-      const token = await getAccessToken();
-      const res = await fetch('/api/notify-task', {
+      const res = await authedFetch('/api/notify-task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, assigneeName, taskName: name, projectId: live.id, projectName: live.name, dueDate: due }),
       });
       const j = await res.json().catch(() => ({} as { sent?: boolean; reason?: string }));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { recordAudit, actorFromToken } from '@/lib/audit';
+import { requireUser } from '@/lib/api-auth';
 
 // Maps the mutation action to a persistent audit action + module.
 const AUDIT_MAP: Record<string, { action: string; module: string; entityType: string }> = {
@@ -15,17 +16,19 @@ const AUDIT_MAP: Record<string, { action: string; module: string; entityType: st
   delete_risk: { action: 'risk.delete',     module: 'risks',    entityType: 'risk' },
 };
 
-// Fallbacks mirror src/lib/supabase.ts so the client never gets an empty URL at
-// build time (createClient('') throws "supabaseUrl is required" while Next.js
-// collects page data). The service-role key keeps the anon key as its only fallback.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rfvhvpeqvuwrjcszyhbb.supabase.co';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_47y8Mn5-JzSks6SDSKxlqA_N4rBDTj3';
+// No hardcoded fallbacks (Phase 0): the service key must come from the
+// environment. getSupabase() is only called inside handlers (never at module
+// scope), so a missing env fails the request with 503, not the build.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Create a fresh client per invocation — avoids module-level state leakage across
 // concurrent Vercel serverless function invocations.
 function getSupabase() {
+  if (!supabaseUrl || !serviceRoleKey) return null;
   return createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 }
+const notConfigured = () => NextResponse.json({ error: 'Database is not configured on the server.' }, { status: 503 });
 
 // The v2 columns (subdivision, financials, classified_dependencies) only exist
 // after migration 0003 runs. Until then, writing them makes Postgres reject the
@@ -39,8 +42,13 @@ function isMissingV2Column(error: { message?: string } | null): boolean {
   return V2_COLUMNS.some(c => m.includes(c)) && (m.includes('does not exist') || m.includes('column') || m.includes('schema cache'));
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Phase 0: the register is only served to authenticated users. (Phase 1
+  // will additionally scope the rows by department via RLS.)
+  const auth = await requireUser(request);
+  if (auth.error) return auth.error;
   const db = getSupabase();
+  if (!db) return notConfigured();
   try {
     // Fetch departments
     const { data: dbDepts, error: deptsErr } = await db.from('departments').select('*');
@@ -119,7 +127,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Phase 0: mutations require a verified session (the token was previously
+  // used only for audit attribution and never checked).
+  const auth = await requireUser(request);
+  if (auth.error) return auth.error;
   const db = getSupabase();
+  if (!db) return notConfigured();
   try {
     const body = await request.json();
     const { action, project, updates, originalId, splits, audit } = body;

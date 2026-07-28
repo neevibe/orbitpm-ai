@@ -172,19 +172,25 @@ try {
   }
 
   // ---------- live API smoke (optional) ----------
+  // Phase 0 security regression tests: every data-bearing endpoint must
+  // REJECT unauthenticated callers. If any of these starts returning data
+  // again, the register is exposed to the public internet.
   if (LIVE_API) {
-    try {
-      const out = execSync(`curl -sS --max-time 30 --cacert /root/.ccr/ca-bundle.crt "${LIVE_API}/api/projects" | head -c 200000`, { encoding: 'utf8' });
-      const j = JSON.parse(out);
-      check('Live API /api/projects returns projects', Array.isArray(j.projects) && j.projects.length > 0, `${j.projects?.length ?? 0} projects`);
-    } catch (e) {
-      check('Live API /api/projects returns projects', false, e.message.slice(0, 120));
-    }
-    try {
-      const code = execSync(`curl -sS -o /dev/null -w "%{http_code}" --max-time 30 --cacert /root/.ccr/ca-bundle.crt -X POST -H 'Content-Type: application/json' -d '{"to":"not-an-email","taskName":"x"}' "${LIVE_API}/api/notify-task"`, { encoding: 'utf8' }).trim();
-      check('Live API /api/notify-task validates email', code === '400', `HTTP ${code}`);
-    } catch (e) {
-      check('Live API /api/notify-task validates email', false, e.message.slice(0, 120));
+    for (const [name, method, path, body] of [
+      ['GET /api/projects', 'GET', '/api/projects', null],
+      ['POST /api/projects', 'POST', '/api/projects', '{"action":"update","project":{"id":"x"}}'],
+      ['POST /api/ai-chat', 'POST', '/api/ai-chat', '{"messages":[{"role":"user","content":"hi"}]}'],
+      ['POST /api/notify-task', 'POST', '/api/notify-task', '{"to":"a@b.co","taskName":"x"}'],
+      ['POST /api/export', 'POST', '/api/export', '{"projects":[],"risks":[],"departments":[]}'],
+      ['POST /api/admin/update-user-role', 'POST', '/api/admin/update-user-role', '{"userId":"x","permission":"admin"}'],
+    ]) {
+      try {
+        const dataArg = body ? `-X ${method} -H 'Content-Type: application/json' -d '${body}'` : '';
+        const code = execSync(`curl -sS -o /dev/null -w "%{http_code}" --max-time 30 --cacert /root/.ccr/ca-bundle.crt ${dataArg} "${LIVE_API}${path}"`, { encoding: 'utf8' }).trim();
+        check(`Unauthenticated ${name} is rejected`, code === '401' || code === '403', `HTTP ${code}`);
+      } catch (e) {
+        check(`Unauthenticated ${name} is rejected`, false, e.message.slice(0, 120));
+      }
     }
   }
 } finally {

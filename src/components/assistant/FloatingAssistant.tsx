@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Send, X } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
+import { authedFetch } from '@/lib/supabase';
 import { TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 
 /**
@@ -345,11 +346,15 @@ export default function FloatingAssistant() {
     const hit = GUIDE.find(g => g.answer && g.match.test(text));
     if (hit && /how|where|what|can i|guide|help|\?/i.test(text)) { botStream(hit.answer); return; }
 
-    // everything else → live-data AI endpoint
+    // everything else → live-data AI endpoint (requires a signed-in session)
+    if (isDemoMode) {
+      bot('Demo mode can answer how-to questions instantly (try the chips above!), but live portfolio questions need a signed-in account. Sign in and ask me again! 🔐');
+      return;
+    }
     setBusy(true);
     try {
       const history = messages.slice(-8).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.full ?? m.text }));
-      const res = await fetch('/api/ai-chat', {
+      const res = await authedFetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [...history, { role: 'user', content: text }], user: currentUserName }),
