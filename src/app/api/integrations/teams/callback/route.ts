@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
     if (error) {
-      const reason = error.message.toLowerCase().includes('does not exist')
+      const reason = /does not exist|could not find the table|schema cache/i.test(error.message)
         ? 'Run migration 0008_ms_connections.sql first'
         : error.message.slice(0, 140);
       return back(`teams=error&reason=${encodeURIComponent(reason)}`);

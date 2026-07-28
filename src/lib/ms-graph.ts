@@ -16,7 +16,7 @@ export async function getGraphToken(db: SupabaseClient, userId: string): Promise
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (error && error.message.toLowerCase().includes('does not exist')) {
+  if (error && /does not exist|could not find the table|schema cache/i.test(error.message)) {
     return { error: 'Microsoft integration is not set up yet (missing ms_connections table).', status: 503 };
   }
   if (!conn) {
