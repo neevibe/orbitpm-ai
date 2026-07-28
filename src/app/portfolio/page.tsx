@@ -57,9 +57,9 @@ export default function PortfolioPage() {
 
   const getRiskColor = (impact: number, likelihood: number) => {
     const score = impact * likelihood;
-    if (score >= 15) return '#ef4444'; // Red (High)
-    if (score >= 8) return '#f59e0b'; // Amber (Medium)
-    return '#10b981'; // Green (Low)
+    if (score >= 15) return '#d1615d'; // Red (High)
+    if (score >= 8) return '#e8a838'; // Amber (Medium)
+    return '#59a14f'; // Green (Low)
   };
 
   const tooltipStyle = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: '8px 12px' };
@@ -81,9 +81,9 @@ export default function PortfolioPage() {
       {/* Strategic Metrics Row */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total Investment', value: formatINRCompact(totalInvestment), icon: PieChart, accent: '#8b5cf6', sub: 'Allocated budget' },
-          { label: 'Programs', value: departments.length, icon: Target, accent: '#3b82f6', sub: 'Business units' },
-          { label: 'Active Execution', value: kpi.inProgress, icon: Activity, accent: '#10b981', sub: 'In progress' },
+          { label: 'Total Investment', value: formatINRCompact(totalInvestment), icon: PieChart, accent: '#4e79a7', sub: 'Allocated budget' },
+          { label: 'Programs', value: departments.length, icon: Target, accent: '#4e79a7', sub: 'Business units' },
+          { label: 'Active Execution', value: kpi.inProgress, icon: Activity, accent: '#59a14f', sub: 'In progress' },
           { label: 'Portfolio Health', value: kpi.totalProjects > 0 ? `${Math.round((kpi.completed / kpi.totalProjects) * 100)}%` : '0%', icon: TrendingUp, accent: '#2563eb', sub: 'Overall completion' },
         ].map((m, i) => (
           <div key={m.label} className={`x-metric animate-slide-up stagger-${i + 1}`} style={{ '--metric-accent': m.accent } as React.CSSProperties}>
@@ -108,7 +108,7 @@ export default function PortfolioPage() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
                 <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                <Bar dataKey="spent" stackId="a" fill="#8b5cf6" name="Spent" radius={[0, 0, 4, 4]} />
+                <Bar dataKey="spent" stackId="a" fill="#4e79a7" name="Spent" radius={[0, 0, 4, 4]} />
                 <Bar dataKey="remaining" stackId="a" fill="#e5e7eb" name="Remaining" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

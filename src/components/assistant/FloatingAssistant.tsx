@@ -10,11 +10,12 @@ import { authedFetch } from '@/lib/supabase';
 import { TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions } from '@/lib/org-structure';
 
 /**
- * Xyro — the living AI companion, floating on every page:
- *   • animated mascot launcher (floats, waves, sparkles, greets first-time visitors)
+ * Xyro — the AI assistant, docked as a right-side panel (enterprise pattern:
+ * integrated tool, not a consumer chat bubble):
+ *   • opened from the topbar "Ask Xyro" button or Ctrl/⌘+J, closed with Esc
  *   • answers "how do I…" questions from a built-in guide (instant, offline)
- *   • falls back to /api/ai-chat (live-data heuristics + LLM) for anything else,
- *     with animated thinking states and word-by-word streamed replies
+ *   • falls back to /api/ai-chat (live-data + LLM) for anything else,
+ *     with thinking states and word-by-word streamed replies
  *   • creates projects on the user's behalf via a guided question flow that
  *     goes through the normal addProject() path — permissions, persistence
  *     and audit all apply exactly as if they used the form.
@@ -42,45 +43,45 @@ const GUIDE: { match: RegExp; answer: string }[] = [
 
 // instant emotional reactions (checked before everything else)
 const REACTIONS: { match: RegExp; answer: string }[] = [
-  { match: /^(thanks|thank you|thankyou|thx|ty)\b/i, answer: '😊 Anytime! Ready for your next big idea?' },
-  { match: /^(awesome|amazing|great|love it|perfect|nice|wow)\b[\s!.]*$/i, answer: '🎉 Yay! Glad you like it. What shall we build next?' },
-  { match: /^(bye|goodbye|see you|good night)\b/i, answer: '👋 See you soon! I’ll be right here whenever you need me.' },
+  { match: /^(thanks|thank you|thankyou|thx|ty)\b/i, answer: 'Anytime! What else can I help with?' },
+  { match: /^(awesome|amazing|great|love it|perfect|nice|wow)\b[\s!.]*$/i, answer: 'Glad that worked. What shall we tackle next?' },
+  { match: /^(bye|goodbye|see you|good night)\b/i, answer: 'See you soon — press Ctrl+J whenever you need me.' },
 ];
 
-const THINKING_LABELS = ['Thinking…', 'Connecting ideas…', 'Checking best practices…', 'Almost finished…', 'Creating something awesome…'];
+const THINKING_LABELS = ['Thinking…', 'Reading your portfolio…', 'Checking the numbers…', 'Almost there…'];
 
 const BASE_CHIPS: Chip[] = [
-  { label: '➕ Add a project', value: 'add a project' },
-  { label: '📅 Generate a roadmap', value: 'generate a roadmap for my department’s projects' },
-  { label: '📊 Analyze my portfolio', value: 'give me an executive summary of my portfolio health' },
-  { label: '📝 Draft a PRD', value: 'help me draft a PRD — ask me what you need to know' },
-  { label: '❓ How do I assign a task?', value: 'how do I assign a task' },
+  { label: 'Add a project', value: 'add a project' },
+  { label: 'Generate a roadmap', value: 'generate a roadmap for my department’s projects' },
+  { label: 'Portfolio summary', value: 'give me an executive summary of my portfolio health' },
+  { label: 'Draft a PRD', value: 'help me draft a PRD — ask me what you need to know' },
+  { label: 'How do I assign a task?', value: 'how do I assign a task' },
 ];
 
 // context-aware extras, keyed by where the user is in the app
 function contextFor(pathname: string): { note: string; chips: Chip[] } | null {
   if (/^\/(analytics|command-center|dashboard|reports)/.test(pathname)) {
     return {
-      note: '📊 I see you’re looking at analytics — want help with your KPIs?',
-      chips: [{ label: '📈 Explain my KPIs', value: 'explain my key KPIs and what they mean' }, { label: '⚠️ What needs attention?', value: 'which projects need my attention right now?' }],
+      note: 'You’re looking at analytics — I can explain any number on this screen.',
+      chips: [{ label: 'Explain my KPIs', value: 'explain my key KPIs and what they mean' }, { label: 'What needs attention?', value: 'which projects need my attention right now?' }],
     };
   }
   if (/^\/projects/.test(pathname)) {
     return {
-      note: '📁 You’re in Projects — want me to generate milestones or user stories?',
-      chips: [{ label: '🗓 Generate milestones', value: 'help me generate milestones for a project' }, { label: '📝 Write user stories', value: 'help me write user stories for a project' }],
+      note: 'You’re in Projects — I can generate milestones or user stories.',
+      chips: [{ label: 'Generate milestones', value: 'help me generate milestones for a project' }, { label: 'Write user stories', value: 'help me write user stories for a project' }],
     };
   }
   if (/^\/risks/.test(pathname)) {
     return {
-      note: '🛡 Looking at risks — I can help you analyze or mitigate them.',
-      chips: [{ label: '🔍 Analyze top risks', value: 'analyze my top risks and suggest mitigations' }],
+      note: 'Looking at risks — I can help you analyze or mitigate them.',
+      chips: [{ label: 'Analyze top risks', value: 'analyze my top risks and suggest mitigations' }],
     };
   }
   if (/^\/(workforce|departments|team)/.test(pathname)) {
     return {
-      note: '👥 Reviewing the team — want a workload check?',
-      chips: [{ label: '⚖️ Who is overloaded?', value: 'who is overloaded this week and how should we redistribute?' }],
+      note: 'Reviewing the team — want a workload check?',
+      chips: [{ label: 'Who is overloaded?', value: 'who is overloaded this week and how should we redistribute?' }],
     };
   }
   return null;
@@ -90,7 +91,7 @@ function makeWelcome(pathname: string): Msg {
   const ctx = contextFor(pathname);
   return {
     role: 'bot',
-    text: `Hi, I’m Xyro! 👋 Let’s build something amazing together.\n\nI can help you:\n• Plan projects, roadmaps & milestones\n• Create and assign tasks\n• Analyze your portfolio, KPIs & risks\n• Draft PRDs, user stories & reports\n• Answer anything about this app${ctx ? `\n\n${ctx.note}` : ''}`,
+    text: `Hi, I’m Xyro — your AI assistant. I work with your live portfolio data.\n\nI can help you:\n• Plan projects, roadmaps & milestones\n• Create and assign tasks\n• Analyze your portfolio, KPIs & risks\n• Draft PRDs, user stories & reports\n• Answer anything about this app${ctx ? `\n\n${ctx.note}` : ''}`,
     chips: [...(ctx?.chips ?? []), ...BASE_CHIPS],
   };
 }
@@ -123,11 +124,9 @@ export default function FloatingAssistant() {
   const [busy, setBusy] = useState(false);
   const [thinkingLabel, setThinkingLabel] = useState(THINKING_LABELS[0]);
   const [wizard, setWizard] = useState<{ step: WizardStep; draft: Draft } | null>(null);
-  const [waving, setWaving] = useState(false);
-  const [showGreeting, setShowGreeting] = useState(false);
   const [confetti, setConfetti] = useState<{ id: number; cx: string; cy: string; color: string; left: string }[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
-  const openedRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, open, busy]);
 
@@ -136,22 +135,25 @@ export default function FloatingAssistant() {
     if (open && messages.length === 0) setMessages([makeWelcome(pathname)]);
   }, [open, messages.length, pathname]);
 
-  // first-visit greeting bubble (once per session, only if never opened)
+  // Open/close triggers: topbar "Ask Xyro" button (custom event), Ctrl/⌘+J, Esc.
   useEffect(() => {
-    if (sessionStorage.getItem('xyro_greeted')) return;
-    const t = setTimeout(() => {
-      if (!openedRef.current) { setShowGreeting(true); setWaving(true); setTimeout(() => setWaving(false), 2800); }
-    }, 6000);
-    return () => clearTimeout(t);
+    const onToggle = () => setOpen(o => !o);
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); setOpen(o => !o); }
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('xyrenis:xyro-toggle', onToggle);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('xyrenis:xyro-toggle', onToggle);
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
-  // wave every couple of minutes while idle
+  // focus the composer when the panel opens
   useEffect(() => {
-    const iv = setInterval(() => {
-      if (!openedRef.current) { setWaving(true); setTimeout(() => setWaving(false), 2800); }
-    }, 120000);
-    return () => clearInterval(iv);
-  }, []);
+    if (open) setTimeout(() => inputRef.current?.focus(), 120);
+  }, [open]);
 
   // rotate thinking labels while busy
   useEffect(() => {
@@ -181,22 +183,11 @@ export default function FloatingAssistant() {
     return () => clearTimeout(t);
   }, [messages]);
 
-  const dismissGreeting = useCallback(() => {
-    setShowGreeting(false);
-    sessionStorage.setItem('xyro_greeted', '1');
-  }, []);
-
-  const openPanel = useCallback(() => {
-    openedRef.current = true;
-    dismissGreeting();
-    setOpen(true);
-  }, [dismissGreeting]);
-
   const bot = (text: string, chips?: Chip[]) => setMessages(m => [...m, { role: 'bot', text, chips }]);
   const botStream = (text: string, chips?: Chip[]) => setMessages(m => [...m, { role: 'bot', text: '', full: text, chips }]);
 
   const celebrate = () => {
-    const colors = ['#818cf8', '#c084fc', '#f472b6', '#34d399', '#fbbf24', '#60a5fa'];
+    const colors = ['#4e79a7', '#59a14f', '#e8a838', '#76b7b2', '#8b5cf6', '#64748b'];
     setConfetti(Array.from({ length: 16 }, (_, i) => ({
       id: Date.now() + i,
       cx: `${(Math.random() * 2 - 1) * 130}px`,
@@ -289,7 +280,7 @@ export default function FloatingAssistant() {
       setWizard({ step: 'confirm', draft: d });
       bot(
         `Here’s what I’ll create:\n\n• Name: ${d.name}\n• Department: ${d.department}${d.subdivision ? ` ↳ ${d.subdivision}` : ''}\n• Owner: ${d.owner}\n• Priority: ${d.priority}\n• Target date: ${d.targetDate || '—'}\n\nShall I create it?`,
-        [{ label: '✅ Create project', value: 'confirm' }, { label: 'Cancel', value: 'cancel' }],
+        [{ label: 'Create project', value: 'confirm' }, { label: 'Cancel', value: 'cancel' }],
       );
       return;
     }
@@ -315,11 +306,11 @@ export default function FloatingAssistant() {
         celebrate();
         setMessages(m => [...m, {
           role: 'bot',
-          text: `🎉 Done! I’ve created "${draft.name}" (${created}) in ${draft.department}. It’s saved to the register and visible to your team.\n\nReady for your next big idea?`,
-          chips: [{ label: 'Open the project →', value: `__open__${created}` }, { label: '➕ Add another', value: 'add a project' }],
+          text: `Done — I’ve created "${draft.name}" (${created}) in ${draft.department}. It’s saved to the register and visible to your team.`,
+          chips: [{ label: 'Open the project', value: `__open__${created}` }, { label: 'Add another', value: 'add a project' }],
         }]);
       } else {
-        bot('😅 I couldn’t create the project — you may not have edit rights in that department. Ask an admin for access, or try your own department.');
+        bot('I couldn’t create the project — you may not have edit rights in that department. Ask an admin for access, or try your own department.');
       }
       return;
     }
@@ -348,7 +339,7 @@ export default function FloatingAssistant() {
 
     // everything else → live-data AI endpoint (requires a signed-in session)
     if (isDemoMode) {
-      bot('Demo mode can answer how-to questions instantly (try the chips above!), but live portfolio questions need a signed-in account. Sign in and ask me again! 🔐');
+      bot('Demo mode can answer how-to questions instantly (try the chips above!), but live portfolio questions need a signed-in account. Sign in and ask me again.');
       return;
     }
     setBusy(true);
@@ -360,9 +351,9 @@ export default function FloatingAssistant() {
         body: JSON.stringify({ messages: [...history, { role: 'user', content: text }], user: currentUserName }),
       });
       const j = await res.json().catch(() => ({} as { response?: string }));
-      botStream(j.response || '😅 Sorry — I couldn’t get an answer just now. Please try again.');
+      botStream(j.response || 'Sorry — I couldn’t get an answer just now. Please try again.');
     } catch {
-      bot('😅 Sorry — I couldn’t reach the assistant service. Please try again.');
+      bot('Sorry — I couldn’t reach the assistant service. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -370,67 +361,14 @@ export default function FloatingAssistant() {
 
   return (
     <div className="no-print">
-      {/* Floating launcher */}
-      {!open && (
-        <div className="fixed bottom-5 right-5 z-[60] xyro-launcher-float">
-          {/* first-visit greeting bubble */}
-          {showGreeting && (
-            <div className="xyro-bubble absolute bottom-full right-0 mb-3 w-[290px] rounded-2xl border border-[var(--color-x-border)] bg-[var(--color-x-surface)] shadow-2xl p-4">
-              <button onClick={dismissGreeting} className="absolute top-2 right-2 p-1 rounded-md hover:bg-black/5 text-[var(--color-x-text-muted)]" aria-label="Dismiss"><X className="w-3.5 h-3.5" /></button>
-              <p className="text-[13px] font-bold text-[var(--color-x-text)]">👋 Welcome to Xyrenis!</p>
-              <p className="text-[12px] text-[var(--color-x-text-secondary)] mt-1 leading-relaxed">I’m Xyro, your AI companion. Ask me anything, or let’s build something incredible together.</p>
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
-                {[
-                  { label: '✨ Build a project', value: 'add a project' },
-                  { label: '📊 Analytics', value: 'give me an executive summary of my portfolio health' },
-                  { label: '📅 Planning', value: 'help me generate milestones for a project' },
-                ].map(c => (
-                  <button
-                    key={c.value}
-                    onClick={() => { openPanel(); setTimeout(() => handleSend(c.value), 350); }}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="xyro-launcher-tilt">
-            <button
-              onClick={openPanel}
-              title="Xyro"
-              aria-label="Open Xyro, your AI companion"
-              className="group relative block rounded-full cursor-pointer xyro-launcher-glow xyro-hover-bounce transition-transform hover:scale-110"
-            >
-              {/* ambient sparkles */}
-              <span aria-hidden className="xyro-sparkle-dot pointer-events-none absolute -top-1 -left-2 text-[11px] text-purple-400" style={{ animation: 'xyro-sparkle 3.2s ease-in-out infinite' }}>✦</span>
-              <span aria-hidden className="xyro-sparkle-dot pointer-events-none absolute -top-2 right-1 text-[9px] text-indigo-300" style={{ animation: 'xyro-sparkle 4.1s ease-in-out 1.2s infinite' }}>✦</span>
-              <span aria-hidden className="xyro-sparkle-dot pointer-events-none absolute bottom-0 -left-3 text-[8px] text-fuchsia-300" style={{ animation: 'xyro-sparkle 3.7s ease-in-out 2.1s infinite' }}>✦</span>
-              {/* hover sparkle burst */}
-              <span aria-hidden className="pointer-events-none absolute -top-2 -right-2 text-[13px] text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">✨</span>
-              <span className={waving ? 'block xyro-waving' : 'block'}>
-                <Image src="/xyro.webp" alt="Xyro — your AI companion" width={72} height={72} className="w-[72px] h-[72px] max-sm:w-[60px] max-sm:h-[60px]" priority />
-              </span>
-              {/* hover tooltip */}
-              <span className="pointer-events-none absolute bottom-full right-0 mb-2 px-3 py-1.5 rounded-xl bg-[var(--color-x-text)] text-[var(--color-x-surface)] text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                👋 Hi! I’m Xyro. Need help building something?
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Chat panel */}
+      {/* Docked assistant panel — integrated tool, not a floating widget */}
       {open && (
         <div
           role="dialog"
-          aria-label="Xyro AI companion"
-          className="xyro-panel-pop fixed bottom-5 right-5 z-[60] w-[380px] max-w-[calc(100vw-40px)] h-[560px] max-h-[calc(100vh-100px)] flex flex-col rounded-[28px] shadow-2xl border border-[var(--color-x-border)] overflow-hidden backdrop-blur-xl"
-          style={{ background: 'color-mix(in srgb, var(--color-x-surface) 88%, transparent)' }}
+          aria-label="Xyro AI assistant"
+          className="xyro-dock fixed right-0 top-[52px] bottom-0 z-[55] w-[400px] max-w-[calc(100vw-var(--sidebar-w))] flex flex-col bg-[var(--color-x-surface)] border-l border-[var(--color-x-border)] shadow-[-8px_0_24px_-12px_rgb(15_23_42/0.12)]"
         >
-          {/* confetti burst */}
+          {/* confetti burst (project-created celebration) */}
           {confetti.length > 0 && (
             <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
               {confetti.map(c => (
@@ -443,18 +381,21 @@ export default function FloatingAssistant() {
             </div>
           )}
 
-          {/* Header */}
-          <div className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center overflow-hidden xyro-avatar-bob">
-                <Image src="/xyro.webp" alt="Xyro" width={36} height={36} className="w-9 h-9" />
+          {/* Header — surface-colored, mascot kept small (brand, not cartoon) */}
+          <div className="px-4 py-2.5 border-b border-[var(--color-x-border)] flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full overflow-hidden ring-1 ring-[var(--color-x-border)]">
+                <Image src="/xyro.webp" alt="Xyro" width={28} height={28} className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-[13px] font-bold leading-tight">Xyro</p>
-                <p className="text-[10px] text-white/75 leading-tight">Let’s build something amazing together</p>
+                <p className="text-[13px] font-semibold leading-tight text-[var(--color-x-text)]">Xyro</p>
+                <p className="text-[10.5px] text-[var(--color-x-text-muted)] leading-tight">your AI assistant · live portfolio data</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Close Xyro" className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"><X className="w-4 h-4" /></button>
+            <div className="flex items-center gap-1">
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded border border-[var(--color-x-border)] bg-[var(--color-x-bg)] text-[10px] font-mono text-[var(--color-x-text-muted)]">Ctrl+J</kbd>
+              <button onClick={() => setOpen(false)} aria-label="Close Xyro" className="p-1.5 rounded-md hover:bg-[var(--color-x-bg)] text-[var(--color-x-text-muted)] transition-colors"><X className="w-4 h-4" /></button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -466,20 +407,20 @@ export default function FloatingAssistant() {
                     <Image src="/xyro.webp" alt="" width={24} height={24} className="w-6 h-6" />
                   </div>
                 )}
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[12.5px] leading-relaxed ${
+                <div className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-[12.5px] leading-relaxed ${
                   m.role === 'user'
-                    ? 'bg-indigo-600 text-white rounded-br-md'
-                    : 'bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[var(--color-x-text)] rounded-bl-md shadow-sm'
+                    ? 'bg-[var(--color-x-accent)] text-white'
+                    : 'bg-[var(--color-x-bg)] border border-[var(--color-x-border)] text-[var(--color-x-text)]'
                 }`}>
                   {m.role === 'bot' ? renderRich(m.text) : <span className="whitespace-pre-wrap">{m.text}</span>}
-                  {m.full && <span className="inline-block w-[2px] h-[13px] ml-0.5 align-middle bg-indigo-400 animate-pulse" />}
+                  {m.full && <span className="inline-block w-[2px] h-[13px] ml-0.5 align-middle bg-[var(--color-x-accent)] animate-pulse" />}
                   {m.chips && !m.full && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {m.chips.map(c => (
                         <button
                           key={c.value}
                           onClick={() => handleSend(c.value)}
-                          className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[var(--color-x-surface)] text-[var(--color-x-accent)] border border-[var(--color-x-accent-muted)] hover:bg-[var(--color-x-accent-light)] transition-colors cursor-pointer"
                         >
                           {c.label}
                         </button>
@@ -494,10 +435,10 @@ export default function FloatingAssistant() {
                 <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 mb-0.5 xyro-avatar-bob">
                   <Image src="/xyro.webp" alt="" width={24} height={24} className="w-6 h-6" />
                 </div>
-                <div className="bg-[var(--color-x-surface)] border border-[var(--color-x-border)] rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[12px] text-[var(--color-x-text-muted)] shadow-sm flex items-center gap-2">
+                <div className="bg-[var(--color-x-bg)] border border-[var(--color-x-border)] rounded-lg px-3.5 py-2.5 text-[12px] text-[var(--color-x-text-muted)] flex items-center gap-2">
                   <span className="flex items-center gap-1">
                     {[0, 1, 2].map(d => (
-                      <span key={d} className="w-1.5 h-1.5 rounded-full bg-indigo-400" style={{ animation: `xyro-think-dot 1.1s ease-in-out ${d * 0.18}s infinite` }} />
+                      <span key={d} className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-accent)]" style={{ animation: `xyro-think-dot 1.1s ease-in-out ${d * 0.18}s infinite` }} />
                     ))}
                   </span>
                   {thinkingLabel}
@@ -510,6 +451,7 @@ export default function FloatingAssistant() {
           {/* Input */}
           <div className="p-3 border-t border-[var(--color-x-border)] flex items-center gap-2 flex-shrink-0">
             <input
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
@@ -521,7 +463,7 @@ export default function FloatingAssistant() {
               onClick={() => handleSend()}
               disabled={!input.trim() || busy}
               aria-label="Send"
-              className="p-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors cursor-pointer"
+              className="p-2.5 rounded-md bg-[var(--color-x-accent)] text-white hover:bg-[var(--color-x-accent-hover)] disabled:opacity-40 transition-colors cursor-pointer"
             >
               <Send className="w-4 h-4" />
             </button>

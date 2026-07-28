@@ -15,6 +15,8 @@ import React, { useState } from 'react';
 import { Project } from '@/lib/mock-data';
 import DepartmentLabel from '@/components/DepartmentLabel';
 import QuickEditPanel from '@/components/project/QuickEditPanel';
+import { STATUS_COLORS, HEALTH_COLORS, PRIORITY_COLORS, TRACK, AXIS_TICK, TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, BAR } from '@/lib/chart-theme';
+import { usePresence, OwnerAvatar, ShareToTeamsButton, emailForName as ownerEmail } from '@/components/collab/TeamsCollab';
 
 
 function daysUntil(dateStr: string | null | undefined): number | null {
@@ -141,9 +143,9 @@ export default function CommandCenter() {
     });
 
     return [
-      { name: 'On Track', value: onTrack, color: '#10b981' },
-      { name: 'At Risk', value: atRisk, color: '#f59e0b' },
-      { name: 'Delayed', value: delayed, color: '#ef4444' },
+      { name: 'On Track', value: onTrack, color: HEALTH_COLORS.onTrack },
+      { name: 'At Risk', value: atRisk, color: HEALTH_COLORS.atRisk },
+      { name: 'Delayed', value: delayed, color: HEALTH_COLORS.delayed },
     ].filter(d => d.value > 0);
   }, [activeProjects, filteredProjects, risks, activeFilter]);
 
@@ -168,11 +170,11 @@ export default function CommandCenter() {
   const statusDistributionData = React.useMemo(() => {
     const sourceProjects = activeFilter?.type === 'status' ? activeProjects : filteredProjects;
     return [
-      { name: 'Not Started', count: sourceProjects.filter(p => p.status === 'Not Started').length, color: '#9ca3af' },
-      { name: 'In Progress', count: sourceProjects.filter(p => p.status === 'In Progress').length, color: '#3b82f6' },
-      { name: 'On Hold', count: sourceProjects.filter(p => p.status === 'On Hold').length, color: '#f59e0b' },
-      { name: 'Delayed', count: sourceProjects.filter(p => p.status === 'Delayed').length, color: '#ef4444' },
-      { name: 'Completed', count: sourceProjects.filter(p => p.status === 'Completed').length, color: '#10b981' },
+      { name: 'Not Started', count: sourceProjects.filter(p => p.status === 'Not Started').length, color: STATUS_COLORS['Not Started'] },
+      { name: 'In Progress', count: sourceProjects.filter(p => p.status === 'In Progress').length, color: STATUS_COLORS['In Progress'] },
+      { name: 'On Hold', count: sourceProjects.filter(p => p.status === 'On Hold').length, color: STATUS_COLORS['On Hold'] },
+      { name: 'Delayed', count: sourceProjects.filter(p => p.status === 'Delayed').length, color: STATUS_COLORS['Delayed'] },
+      { name: 'Completed', count: sourceProjects.filter(p => p.status === 'Completed').length, color: STATUS_COLORS['Completed'] },
     ];
   }, [activeProjects, filteredProjects, activeFilter]);
 
@@ -185,10 +187,10 @@ export default function CommandCenter() {
     const low = sourceProjects.filter(p => p.priority === 'Low').length;
 
     return [
-      { name: 'Critical', value: critical, fill: '#ef4444' },
-      { name: 'High', value: high, fill: '#f97316' },
-      { name: 'Medium', value: medium, fill: '#eab308' },
-      { name: 'Low', value: low, fill: '#22c55e' },
+      { name: 'Critical', value: critical, fill: PRIORITY_COLORS.Critical },
+      { name: 'High', value: high, fill: PRIORITY_COLORS.High },
+      { name: 'Medium', value: medium, fill: PRIORITY_COLORS.Medium },
+      { name: 'Low', value: low, fill: PRIORITY_COLORS.Low },
     ].filter(d => d.value > 0);
   }, [activeProjects, filteredProjects, activeFilter]);
 
@@ -206,6 +208,10 @@ export default function CommandCenter() {
       return da - db;
     }).slice(0, 5);
   }, [filteredProjects]);
+
+  // Live Teams presence for stuck-project owners (renders only when the
+  // viewer has connected Microsoft in Integrations — no fabricated dots).
+  const { presence } = usePresence(stuckProjects.map(p => p.owner));
 
   // AI insights
   const aiInsights = React.useMemo(() => {
@@ -278,20 +284,21 @@ export default function CommandCenter() {
     return items;
   }, [localKpi, overloaded, highRisks, pctComplete, risks]);
 
-  const tooltipStyle = { background: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: '8px 12px' };
+  const tooltipStyle = TOOLTIP_STYLE;
+  const tooltipCommon = { contentStyle: TOOLTIP_STYLE, labelStyle: TOOLTIP_LABEL_STYLE, itemStyle: TOOLTIP_ITEM_STYLE };
 
   return (
     <div className="x-page space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="x-page-title flex items-center gap-2"><Activity className="w-5 h-5 text-blue-500" /> Dashboard</h1>
+          <h1 className="x-page-title flex items-center gap-2"><Activity className="w-5 h-5 text-[var(--color-x-accent)]" /> Dashboard</h1>
           <p className="x-page-subtitle">Commercial Portfolio · Real-time executive intelligence</p>
         </div>
-        <div className="flex items-center gap-2 no-print">
+        <div className="flex items-center gap-3 no-print">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[12px] font-semibold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+            className="x-btn x-btn-secondary text-[12px] px-3 py-1.5 flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" /> Export PDF
           </button>
@@ -308,26 +315,29 @@ export default function CommandCenter() {
                 : `Showing: ${scope.department || 'no department assigned'}${scope.shared ? ` + ${scope.shared} shared` : ''}`}
             </span>
           )}
+          {/* Non-intrusive data-freshness indicator: a dot and a word.
+              The loud full-width warning lives in the global SystemBanner. */}
           {liveStatus === 'live' ? (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-x-text-muted)]" title="Data is live from the server">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-success)]" /> Live
             </span>
           ) : liveStatus === 'error' ? (
-            <span title="The server refresh failed — these numbers are an offline copy. Sign out and back in." className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-[11px] font-semibold text-red-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Offline copy — sign in again
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-x-danger)]" title="The server refresh failed — these numbers are an offline copy.">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-danger)]" /> Offline copy
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Loading…
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-x-text-muted)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-warning)] animate-pulse" /> Loading…
             </span>
           )}
           <span className="text-[11px] text-[var(--color-x-text-muted)]">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
         </div>
       </div>
 
-      {/* Hero KPI Row — every card carries Title/Icon, Primary Value and a
-          semantic delta computed from live data (no fabricated trends) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Compact KPI strip — 6 stats in one bordered container. Trends stay
+          computed from live data (no fabricated deltas); each cell still
+          click-filters the grid below. */}
+      <div className="x-kpi-strip grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 animate-fade-in">
         {(() => {
           // Scoped (non-admin) users see ORGANIZATION-WIDE figures on the KPI
           // row (numbers only — detail pages stay department-scoped). Admins
@@ -350,24 +360,22 @@ export default function CommandCenter() {
           const kPctComplete = useOrg && k.totalProjects ? Math.round((k.completed / k.totalProjects) * 100) : pctComplete;
           const delayedPct = k.totalProjects ? Math.round((k.delayed / k.totalProjects) * 100) : 0;
           return [
-            { label: 'Total Projects', value: k.totalProjects, icon: BarChart3, accent: '#2563eb', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
-            { label: 'Active', value: k.inProgress, icon: Rocket, accent: '#3b82f6', trend: { tone: dueSoon > 0 ? 'warn' : 'flat', text: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
-            { label: 'Completed', value: k.completed, icon: CheckCircle2, accent: '#10b981', trend: { tone: 'up', text: `${kPctComplete}% of portfolio` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
-            { label: 'Delayed', value: k.delayed, icon: XCircle, accent: '#ef4444', trend: { tone: k.delayed > 0 ? 'down' : 'up', text: k.delayed > 0 ? `${delayedPct}% of portfolio` : 'all on schedule' }, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
-            { label: 'Avg Progress', value: `${kAvgProgress}%`, icon: Target, accent: '#8b5cf6', trend: { tone: stalled > 0 ? 'warn' : 'flat', text: stalled > 0 ? `${stalled} stalled at 0%` : 'steady pace' }, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
-            { label: 'Open Risks', value: kOpenRisks, icon: Shield, accent: '#f59e0b', trend: { tone: kHighRisks > 0 ? 'down' : 'flat', text: kHighRisks > 0 ? `${kHighRisks} high impact` : 'low exposure' }, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
+            { label: 'Total Projects', value: k.totalProjects, icon: BarChart3, accent: '#1e40af', trend: { tone: newThisMonth > 0 ? 'up' : 'flat', text: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month' }, filterType: 'all', filterFn: () => true },
+            { label: 'Active', value: k.inProgress, icon: Rocket, accent: '#4e79a7', trend: { tone: dueSoon > 0 ? 'warn' : 'flat', text: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d' }, filterType: 'status', filterFn: (p: Project) => p.status === 'In Progress' },
+            { label: 'Completed', value: k.completed, icon: CheckCircle2, accent: '#59a14f', trend: { tone: 'up', text: `${kPctComplete}% of portfolio` }, filterType: 'status', filterFn: (p: Project) => p.status === 'Completed' },
+            { label: 'Delayed', value: k.delayed, icon: XCircle, accent: '#d1615d', trend: { tone: k.delayed > 0 ? 'down' : 'up', text: k.delayed > 0 ? `${delayedPct}% of portfolio` : 'all on schedule' }, filterType: 'status', filterFn: (p: Project) => p.status === 'Delayed' },
+            { label: 'Avg Progress', value: `${kAvgProgress}%`, icon: Target, accent: '#64748b', trend: { tone: stalled > 0 ? 'warn' : 'flat', text: stalled > 0 ? `${stalled} stalled at 0%` : 'steady pace' }, filterType: 'progress', filterFn: (p: Project) => p.progress > 0 && p.progress < 100 },
+            { label: 'Open Risks', value: kOpenRisks, icon: Shield, accent: '#e8a838', trend: { tone: kHighRisks > 0 ? 'down' : 'flat', text: kHighRisks > 0 ? `${kHighRisks} high impact` : 'low exposure' }, filterType: 'risk', filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
           ];
-        })().map((m, i) => {
+        })().map((m) => {
           const isSelected = activeFilter?.type === 'kpi' && activeFilter.label === m.label;
           const isDimmed = activeFilter && !isSelected && !(activeFilter.type === 'kpi' && m.filterType === 'all');
-          
+
           return (
-            <button 
-              key={m.label} 
+            <button
+              key={m.label}
               onClick={() => {
-                if (m.filterType === 'all') {
-                  setActiveFilter(null);
-                } else if (isSelected) {
+                if (m.filterType === 'all' || isSelected) {
                   setActiveFilter(null);
                 } else {
                   setActiveFilter({
@@ -377,17 +385,20 @@ export default function CommandCenter() {
                   });
                 }
               }}
-              className={`x-metric animate-slide-up stagger-${i + 1} text-left transition-all cursor-pointer ${
-                isSelected ? 'ring-2 ring-blue-500 scale-[1.03] shadow-md bg-[var(--color-x-surface)] border-blue-200' : 'hover:scale-[1.02] hover:shadow-md'
-              } ${isDimmed ? 'opacity-40' : 'opacity-100'}`} 
+              className={`x-kpi-cell ${isSelected ? 'active' : ''} ${isDimmed ? 'opacity-50' : ''}`}
               style={{ '--metric-accent': m.accent } as React.CSSProperties}
             >
-              <div className="flex items-center justify-between mb-2">
-                <m.icon className="w-4 h-4" style={{ color: m.accent }} />
+              <div className="flex items-center gap-1.5">
+                <m.icon className="w-3.5 h-3.5" style={{ color: m.accent }} />
+                <span className="x-kpi-label">{m.label}</span>
               </div>
-              <p className="x-metric-value">{m.value}</p>
-              <p className="x-metric-label">{m.label}</p>
-              <span className={`x-metric-trend ${m.trend.tone}`}>
+              <p className="x-kpi-value mt-1">{m.value}</p>
+              <span className={`text-[11px] font-medium inline-flex items-center gap-0.5 mt-0.5 ${
+                m.trend.tone === 'up' ? 'text-[var(--color-x-success)]' :
+                m.trend.tone === 'down' ? 'text-[var(--color-x-danger)]' :
+                m.trend.tone === 'warn' ? 'text-[var(--color-x-warning)]' :
+                'text-[var(--color-x-text-muted)]'
+              }`}>
                 {m.trend.tone === 'up' && <ArrowUpRight className="w-3 h-3" />}
                 {m.trend.tone === 'down' && <ArrowDownRight className="w-3 h-3" />}
                 {m.trend.text}
@@ -405,16 +416,16 @@ export default function CommandCenter() {
           {/* Project Status Distribution */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-blue-500" /> Project Status Distribution</h3>
-              <span className="text-[10px] text-[var(--color-x-text-muted)]">Active Portfolio</span>
+              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-[var(--color-x-text-muted)]" /> Project Status Distribution</h3>
+              <span className="text-[11px] text-[var(--color-x-text-muted)]">Active portfolio</span>
             </div>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={statusDistributionData}>
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+                  <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} allowDecimals={false} />
+                  <Tooltip {...tooltipCommon} cursor={false} />
+                  <Bar dataKey="count" radius={BAR.radius} barSize={BAR.size}>
                     {statusDistributionData.map((entry, index) => {
                       const isSelected = activeFilter?.type === 'status' && activeFilter.label === entry.name;
                       const isDimmed = activeFilter?.type === 'status' && activeFilter.label !== entry.name;
@@ -447,8 +458,16 @@ export default function CommandCenter() {
         <div className="col-span-12 lg:col-span-4">
           {/* Department Breakdown */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-blue-500" /> Department Breakdown</h3>
+            <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-[var(--color-x-text-muted)]" /> Department Breakdown</h3>
+              {/* Legend: stacked series were previously tooltip-only */}
+              <div className="flex items-center gap-2.5">
+                {[['Active', STATUS_COLORS['In Progress']], ['Done', STATUS_COLORS['Completed']], ['Delayed', STATUS_COLORS['Delayed']], ['Pending', TRACK]].map(([label, color]) => (
+                  <span key={label} className="flex items-center gap-1 text-[10.5px] text-[var(--color-x-text-muted)]">
+                    <span className="w-2 h-2 rounded-[2px]" style={{ background: color }} /> {label}
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -475,25 +494,25 @@ export default function CommandCenter() {
                   }}
                   style={{ cursor: 'pointer' }}
                 >
-                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 10 }} width={150} interval={0} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
-                  <Bar dataKey="active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={14} name="Active">
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} width={150} interval={0} />
+                  <Tooltip {...tooltipCommon} cursor={false} />
+                  <Bar dataKey="active" stackId="a" fill={STATUS_COLORS['In Progress']} radius={[0, 0, 0, 0]} barSize={BAR.sizeSlim} name="Active">
                     {deptChartData.map((entry, index) => (
                       <Cell key={`cell-act-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
                     ))}
                   </Bar>
-                  <Bar dataKey="done" stackId="a" fill="#10b981" name="Done">
+                  <Bar dataKey="done" stackId="a" fill={STATUS_COLORS['Completed']} name="Done">
                     {deptChartData.map((entry, index) => (
                       <Cell key={`cell-done-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
                     ))}
                   </Bar>
-                  <Bar dataKey="delayed" stackId="a" fill="#ef4444" name="Delayed">
+                  <Bar dataKey="delayed" stackId="a" fill={STATUS_COLORS['Delayed']} name="Delayed">
                     {deptChartData.map((entry, index) => (
                       <Cell key={`cell-del-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
                     ))}
                   </Bar>
-                  <Bar dataKey="pending" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} name="Pending">
+                  <Bar dataKey="pending" stackId="a" fill={TRACK} radius={BAR.radiusFlat} name="Pending">
                     {deptChartData.map((entry, index) => (
                       <Cell key={`cell-pend-${index}`} opacity={activeFilter?.type === 'department' && activeFilter.label !== entry.fullName ? 0.35 : 1} />
                     ))}
@@ -507,12 +526,19 @@ export default function CommandCenter() {
           {/* Portfolio Health */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><Eye className="w-4 h-4 text-purple-500" /> Portfolio Health</h3>
+              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-1.5"><Eye className="w-4 h-4 text-[var(--color-x-text-muted)]" /> Portfolio Health</h3>
             </div>
-            <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="flex-1 min-h-0 flex items-center justify-center relative">
+              {/* Center KPI: total tracked, so the donut reads at a glance */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[20px] font-bold text-[var(--color-x-text)] leading-none" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {healthData.reduce((a, h) => a + h.value, 0)}
+                </span>
+                <span className="text-[10px] uppercase tracking-wide text-[var(--color-x-text-muted)] mt-0.5">tracked</span>
+              </div>
               <ResponsiveContainer width="100%" height={150}>
                 <PieChart>
-                  <Pie data={healthData} cx="50%" cy="50%" innerRadius={38} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                  <Pie data={healthData} cx="50%" cy="50%" innerRadius={44} outerRadius={58} paddingAngle={2} dataKey="value" strokeWidth={0}>
                     {healthData.map((entry, i) => {
                       const isSelected = activeFilter?.type === 'health' && activeFilter.label === entry.name;
                       const isDimmed = activeFilter?.type === 'health' && activeFilter.label !== entry.name;
@@ -537,7 +563,7 @@ export default function CommandCenter() {
                       );
                     })}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} cursor={false} />
+                  <Tooltip {...tooltipCommon} cursor={false} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -577,10 +603,10 @@ export default function CommandCenter() {
         <div className="col-span-12 lg:col-span-4">
           <div className="x-card p-5 h-[310px] flex flex-col">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-md bg-[var(--color-x-accent)] flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">AI Recommendations</h3>
+              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)]">AI Recommendations</h3>
             </div>
             <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
               {aiInsights.map((insight, i) => {
@@ -632,11 +658,11 @@ export default function CommandCenter() {
           {stuckProjects.length === 0 && (
             <div className="x-card p-5 h-[310px] flex flex-col">
               <div className="flex items-center gap-2 mb-3">
-                <Flame className="w-4 h-4 text-emerald-500" />
-                <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Stuck Projects</h3>
+                <Flame className="w-4 h-4 text-[var(--color-x-success)]" />
+                <h3 className="text-[13px] font-semibold text-[var(--color-x-text)]">Stuck Projects</h3>
               </div>
               <div className="flex-1 flex flex-col items-center justify-center text-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400 mb-2" />
+                <CheckCircle2 className="w-8 h-8 text-[var(--color-x-success)] mb-2 opacity-70" />
                 <p className="text-[13px] font-semibold text-[var(--color-x-text)]">Nothing is stuck</p>
                 <p className="text-[11px] text-[var(--color-x-text-muted)] mt-1">No delayed or overdue projects right now.</p>
               </div>
@@ -645,49 +671,60 @@ export default function CommandCenter() {
           {stuckProjects.length > 0 && (
             <div className="x-card p-5 h-[310px] flex flex-col">
               <div className="flex items-center gap-2 mb-3">
-                <Flame className="w-4 h-4 text-red-500" />
-                <h3 className="text-[13px] font-bold text-[var(--color-x-text)]">Stuck Projects</h3>
+                <Flame className="w-4 h-4 text-[var(--color-x-danger)]" />
+                <h3 className="text-[13px] font-semibold text-[var(--color-x-text)]">Stuck Projects</h3>
                 <span className="x-badge x-badge-red text-[9px]">{stuckProjects.length}</span>
+                <span className="ml-auto text-[10.5px] text-[var(--color-x-text-muted)]">act on blockers without leaving</span>
               </div>
-              <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
-                {stuckProjects.map(p => (
-                  <div
-                    key={p.id}
-                    onClick={() => openPanel(p)}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[var(--color-x-bg)] transition-all cursor-pointer group"
-                  >
-                    <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${p.priority === 'Critical' ? 'bg-red-500' : p.priority === 'High' ? 'bg-orange-400' : 'bg-blue-400'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-blue-600">{p.name}</p>
-                      <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-x-text-muted)] flex-wrap">
-                        <span className="font-mono">{p.id}</span>
-                        <span>·</span>
-                        <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
-                        <span>·</span>
-                        <span>{p.owner}</span>
+              <div className="space-y-1 flex-1 overflow-y-auto min-h-0 -mx-1">
+                {stuckProjects.map(p => {
+                  const overdue = daysUntil(p.targetDate);
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => openPanel(p)}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[var(--color-x-bg)] transition-colors cursor-pointer group"
+                    >
+                      <OwnerAvatar name={p.owner} presence={presence[ownerEmail(p.owner)]} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-[var(--color-x-text)] truncate group-hover:text-[var(--color-x-accent)]">{p.name}</p>
+                        <div className="flex items-center gap-1.5 text-[10.5px] text-[var(--color-x-text-muted)] flex-wrap">
+                          <span>{p.owner}</span>
+                          <span>·</span>
+                          <DepartmentLabel department={p.department} subdivision={p.subdivision} variant="inline" />
+                          {overdue !== null && overdue < 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="font-medium text-[var(--color-x-danger)]">{Math.abs(overdue)}d overdue</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <span className={`x-priority-${p.priority.toLowerCase()} text-[9px]`}>{p.priority}</span>
+                        <ShareToTeamsButton
+                          compact
+                          url={`${typeof window !== 'undefined' ? window.location.origin : ''}/projects/${p.id}`}
+                          text={`Blocker: "${p.name}" (${p.id}) is ${p.status === 'Delayed' ? 'delayed' : 'overdue'} — owner ${p.owner}. Can we unblock this?`}
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openPanel(p); }}
+                          title="Quick edit"
+                          className="p-1.5 rounded-md text-[var(--color-x-text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--color-x-accent)] hover:bg-[var(--color-x-accent-light)] transition-all"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateProject(p.id, { dismissedFromStuck: true }); }}
+                          title="Remove from Stuck list"
+                          className="p-1.5 rounded-md text-[var(--color-x-text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--color-x-danger)] hover:bg-[var(--color-x-danger-light)] transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateProject(p.id, { dismissedFromStuck: true });
-                        }}
-                        title="Remove from Stuck list"
-                        className="flex items-center justify-center p-1 text-[var(--color-x-text-muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                      <span className={`x-priority-${p.priority.toLowerCase()} text-[9px]`}>{p.priority}</span>
-                      <div
-                        onClick={() => openPanel(p)}
-                        className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 text-blue-600 text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      >
-                        <Edit3 className="w-2.5 h-2.5" /> Edit
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -696,7 +733,7 @@ export default function CommandCenter() {
           {/* Priority Breakdown */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[13px] font-bold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Priority Mix</h3>
+              <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-[var(--color-x-text-muted)]" /> Priority Mix</h3>
             </div>
             <div className="flex-1 flex flex-col justify-between py-1.5">
               {priorityRadial.map(p => {

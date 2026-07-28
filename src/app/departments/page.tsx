@@ -272,10 +272,10 @@ export default function DepartmentsPage() {
             <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} width={150} interval={0} />
             <Tooltip content={<CustomTooltip />} cursor={false} />
-            <Bar dataKey="In Progress" stackId="a" fill="#3b82f6" />
-            <Bar dataKey="Completed" stackId="a" fill="#10b981" />
+            <Bar dataKey="In Progress" stackId="a" fill="#4e79a7" />
+            <Bar dataKey="Completed" stackId="a" fill="#59a14f" />
             <Bar dataKey="Not Started" stackId="a" fill="#e2e8f0" />
-            <Bar dataKey="Delayed" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="Delayed" stackId="a" fill="#d1615d" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
