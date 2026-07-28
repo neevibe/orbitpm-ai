@@ -25,7 +25,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 }
 
 export default function CommandCenter() {
-  const { projects, risks, departments, updateProject } = useData();
+  const { projects, risks, departments, updateProject, liveStatus } = useData();
   const [activeFilter, setActiveFilter] = useState<{
     type: 'status' | 'priority' | 'department' | 'health' | 'kpi' | 'ai';
     label: string;
@@ -295,9 +295,19 @@ export default function CommandCenter() {
           >
             <Download className="w-3.5 h-3.5" /> Export PDF
           </button>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-          </span>
+          {liveStatus === 'live' ? (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+            </span>
+          ) : liveStatus === 'error' ? (
+            <span title="The server refresh failed — these numbers are an offline copy. Sign out and back in." className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-[11px] font-semibold text-red-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Offline copy — sign in again
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Loading…
+            </span>
+          )}
           <span className="text-[11px] text-[var(--color-x-text-muted)]">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
         </div>
       </div>

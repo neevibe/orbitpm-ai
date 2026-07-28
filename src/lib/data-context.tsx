@@ -70,6 +70,10 @@ export interface Notification {
 }
 
 interface DataContextType {
+  /** 'live' = register loaded from the server · 'cached' = still on bundled
+   *  fallback (loading or demo) · 'error' = server refresh FAILED — what's on
+   *  screen is not live data and the UI must say so. */
+  liveStatus: 'live' | 'cached' | 'error';
   // Data
   projects: Project[];
   archivedProjects: Project[];
@@ -174,6 +178,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [risks, setRisks] = useState<Risk[]>(isDemoMode ? DEMO_RISKS : initialRisks);
   const [notifications, setNotifications] = useState<Notification[]>(isDemoMode ? [] : initialNotifications);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+  const [liveStatus, setLiveStatus] = useState<'live' | 'cached' | 'error'>('cached');
 
   useEffect(() => {
     // Demo mode: use local demo data only — never call the real API
@@ -183,12 +188,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     async function fetchData() {
       try {
         const res = await authedFetch('/api/projects');
-        if (!res.ok) throw new Error('API request failed');
+        if (!res.ok) throw new Error(res.status === 401 ? 'Session expired (401)' : `API request failed (${res.status})`);
         const data = await res.json();
         if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
+        setLiveStatus('live');
       } catch (err) {
+        // The screen is still showing the BUNDLED fallback register — never
+        // let that pass silently as live data (reported: '163 projects?').
         console.error('[DataContext] Error fetching live data:', err);
+        setLiveStatus('error');
+        toast({
+          kind: 'error',
+          key: 'live-data',
+          text: 'Couldn\u2019t load live data \u2014 you\u2019re seeing an offline copy. Please sign out and back in.',
+        });
       }
     }
     fetchData();
@@ -789,6 +803,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
+      liveStatus: isDemoMode ? 'live' : liveStatus,
       projects: projectsWithDuplicates,
       archivedProjects: projects.filter(p => p.archived),
       departments,
