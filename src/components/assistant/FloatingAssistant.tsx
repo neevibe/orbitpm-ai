@@ -157,7 +157,7 @@ export default function FloatingAssistant() {
       localStorage.setItem('xyro_minimized', '1');
       setMinimized(true);
       setLaunching(false);
-    }, 780); // matches the xyro-rocket animation length
+    }, 1820); // matches the xyro-rocket spiral animation length
   };
 
   // Open/close triggers: topbar "Ask Xyro" button (custom event), Ctrl/⌘+J, Esc.
