@@ -6,6 +6,7 @@ import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { authedFetch } from '@/lib/supabase';
 import { Briefcase, BookOpen, BarChart3, User, Send, Zap, ChevronRight, RefreshCw } from 'lucide-react';
+import { Component as BackgroundSnippet } from '@/components/ui/background-snippets';
 
 const modes = [
   { id: 'executive', label: 'Executive', icon: Briefcase, desc: 'Portfolio-level insights' },
@@ -122,7 +123,9 @@ export default function AICopilotPage() {
   }, [greeting, kpi.totalProjects]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // block:'nearest' keeps the scroll inside the messages pane — the default
+    // also scrolled the page container, hiding the page title under the topbar
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, isLoading]);
 
   const sendMessage = useCallback(async (text: string) => {
@@ -190,7 +193,11 @@ export default function AICopilotPage() {
   ];
 
   return (
-    <div className="x-page h-[calc(100vh-100px)] flex flex-col">
+    <div className="x-page h-[calc(100vh-100px)] flex flex-col relative isolate">
+      {/* Decorative grid + lavender glow (Xyro's color) — light theme only */}
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden pointer-events-none [[data-theme='dark']_&]:hidden">
+        <BackgroundSnippet />
+      </div>
       <div className="mb-4">
         <h1 className="x-page-title flex items-center gap-2">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-sm overflow-hidden">
