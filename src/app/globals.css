@@ -746,6 +746,35 @@ body {
   50% { opacity: 1; transform: translateY(-3px); }
 }
 
+/* Minimize: Xyro blasts off like a rocket — quick crouch, then up and away
+   with a slight arc, gone in ~0.8s. Reappears via the topbar "Ask Xyro". */
+@keyframes xyro-rocket {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  18%  { transform: translate(0, 10px) rotate(0deg) scale(0.94, 1.06); opacity: 1; }
+  45%  { transform: translate(10px, -22vh) rotate(-10deg) scale(1.02); opacity: 1; }
+  100% { transform: translate(38px, -120vh) rotate(-16deg) scale(0.65); opacity: 0; }
+}
+.xyro-rocket-launch { animation: xyro-rocket 0.8s cubic-bezier(0.5, -0.3, 0.85, 0.4) forwards !important; }
+@keyframes xyro-rocket-trail {
+  0%   { opacity: 0; transform: scaleY(0.2); }
+  30%  { opacity: 0.9; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.6) translateY(30px); }
+}
+.xyro-rocket-trail {
+  position: absolute;
+  left: 50%;
+  top: 92%;
+  width: 10px;
+  height: 46px;
+  margin-left: -5px;
+  border-radius: 9999px;
+  background: linear-gradient(to bottom, #f59e0b, #ef4444 45%, transparent);
+  filter: blur(3px);
+  transform-origin: top center;
+  animation: xyro-rocket-trail 0.8s ease-out forwards;
+  pointer-events: none;
+}
+
 .xyro-launcher-float { animation: xyro-float 4s ease-in-out infinite; }
 .xyro-launcher-tilt { animation: xyro-tilt 7s ease-in-out infinite; }
 .xyro-launcher-glow { animation: xyro-glow 3.5s ease-in-out infinite; }
@@ -764,4 +793,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .xyro-launcher-float, .xyro-launcher-tilt, .xyro-launcher-glow,
   .xyro-waving, .xyro-avatar-bob, .xyro-sparkle-dot { animation: none !important; }
+  /* reduced motion: skip the rocket theatrics, just disappear */
+  .xyro-rocket-launch, .xyro-rocket-trail { animation-duration: 0.01ms !important; }
 }

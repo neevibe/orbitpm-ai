@@ -115,19 +115,36 @@ try {
   check('PDF export keeps charts sized', printState.chartBoxes >= 2, `${printState.chartBoxes} charts with real size`);
   await page.emulateMedia({ media: 'screen' });
 
-  // ---------- Xyro AI assistant (docked panel, opened from the topbar) ----------
+  // ---------- Xyro AI assistant (floating mascot + docked panel) ----------
   {
     const launcher = await page.locator('button[title^="Ask Xyro"]').count();
     check('Xyro launcher present in topbar', launcher === 1);
+    const floating = await page.locator('button[title="Xyro"]').count();
+    check('Floating Xyro mascot present', floating === 1);
     if (launcher) {
       await page.click('button[title^="Ask Xyro"]');
       await page.waitForTimeout(500);
       check('Assistant panel opens with welcome', await page.locator('text=your AI assistant').count() > 0);
+      check('Floating mascot hides while panel is open', await page.locator('button[title="Xyro"]').count() === 0);
       await page.fill('input[placeholder*="Ask me"]', 'how do I export a pdf report');
       await page.keyboard.press('Enter');
       await page.waitForTimeout(700);
       check('Assistant answers how-to questions', await page.locator('text=Export PDF').count() > 0);
       await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+    }
+    // rocket-minimize: hover the mascot, click the minimize chip, mascot vanishes…
+    if (await page.locator('button[title="Xyro"]').count()) {
+      await page.hover('button[title="Xyro"]', { force: true });
+      await page.click('button[title="Minimize Xyro"]', { force: true });
+      await page.waitForTimeout(1100);
+      check('Minimize rockets Xyro away', await page.locator('button[title="Xyro"]').count() === 0);
+      // …and "Ask Xyro" summons him back (opens panel + restores mascot)
+      await page.click('button[title^="Ask Xyro"]');
+      await page.waitForTimeout(400);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      check('Ask Xyro summons the mascot back', await page.locator('button[title="Xyro"]').count() === 1);
     }
   }
 

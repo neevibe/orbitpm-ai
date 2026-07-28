@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Send, X } from 'lucide-react';
+import { Send, X, Minus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { authedFetch } from '@/lib/supabase';
@@ -119,6 +119,10 @@ export default function FloatingAssistant() {
     : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
 
   const [open, setOpen] = useState(false);
+  // Floating launcher can be "rocketed away"; it stays hidden (persisted)
+  // until the user summons Xyro again via the topbar button or Ctrl+J.
+  const [minimized, setMinimized] = useState(true); // start hidden to avoid SSR flash; effect below reveals
+  const [launching, setLaunching] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -135,20 +139,41 @@ export default function FloatingAssistant() {
     if (open && messages.length === 0) setMessages([makeWelcome(pathname)]);
   }, [open, messages.length, pathname]);
 
-  // Open/close triggers: topbar "Ask Xyro" button (custom event), Ctrl/⌘+J, Esc.
+  // reveal the launcher on mount unless the user rocketed it away earlier
   useEffect(() => {
-    const onToggle = () => setOpen(o => !o);
+    setMinimized(localStorage.getItem('xyro_minimized') === '1');
+  }, []);
+
+  const summon = useCallback(() => {
+    localStorage.removeItem('xyro_minimized');
+    setMinimized(false);
+    setOpen(o => !o);
+  }, []);
+
+  const rocketAway = () => {
+    if (launching) return;
+    setLaunching(true);
+    setTimeout(() => {
+      localStorage.setItem('xyro_minimized', '1');
+      setMinimized(true);
+      setLaunching(false);
+    }, 780); // matches the xyro-rocket animation length
+  };
+
+  // Open/close triggers: topbar "Ask Xyro" button (custom event), Ctrl/⌘+J, Esc.
+  // Summoning also brings the floating launcher back if it was rocketed away.
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); setOpen(o => !o); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); summon(); }
       if (e.key === 'Escape') setOpen(false);
     };
-    window.addEventListener('xyrenis:xyro-toggle', onToggle);
+    window.addEventListener('xyrenis:xyro-toggle', summon);
     window.addEventListener('keydown', onKey);
     return () => {
-      window.removeEventListener('xyrenis:xyro-toggle', onToggle);
+      window.removeEventListener('xyrenis:xyro-toggle', summon);
       window.removeEventListener('keydown', onKey);
     };
-  }, []);
+  }, [summon]);
 
   // focus the composer when the panel opens
   useEffect(() => {
@@ -361,6 +386,34 @@ export default function FloatingAssistant() {
 
   return (
     <div className="no-print">
+      {/* Floating Xyro launcher — the mascot stays visible bottom-right and
+          opens the docked panel. No auto-popup: it never speaks uninvited.
+          Hover reveals a minimize chip; minimizing blasts him off like a
+          rocket, and he returns only when summoned via "Ask Xyro" / Ctrl+J. */}
+      {!open && (!minimized || launching) && (
+        <div className={`fixed bottom-5 right-5 z-[54] group ${launching ? 'xyro-rocket-launch' : ''}`}>
+          {launching && <span className="xyro-rocket-trail" />}
+          <button
+            onClick={() => { if (!launching) setOpen(true); }}
+            title="Xyro"
+            aria-label="Open Xyro AI assistant (Ctrl+J)"
+            className="xyro-launcher-float block w-14 h-14 rounded-full bg-[var(--color-x-surface)] ring-1 ring-[var(--color-x-border)] shadow-[0_6px_20px_-6px_rgb(15_23_42/0.25)] overflow-hidden hover:scale-105 hover:shadow-[0_8px_24px_-6px_rgb(30_64_175/0.35)] transition-all cursor-pointer"
+          >
+            <Image src="/xyro.webp" alt="Xyro" width={56} height={56} className="w-14 h-14 object-cover" />
+          </button>
+          {!launching && (
+            <button
+              onClick={rocketAway}
+              title="Minimize Xyro"
+              aria-label="Minimize Xyro (bring back with Ask Xyro or Ctrl+J)"
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--color-x-surface)] ring-1 ring-[var(--color-x-border)] shadow-sm text-[var(--color-x-text-muted)] hover:text-[var(--color-x-text)] hover:bg-[var(--color-x-bg)] hidden group-hover:flex items-center justify-center cursor-pointer"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Docked assistant panel — integrated tool, not a floating widget */}
       {open && (
         <div
