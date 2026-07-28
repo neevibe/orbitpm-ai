@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { BIAL_EMPLOYEES } from "./employee-data";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -109,6 +110,19 @@ export function parseINR(input: string | number | null | undefined): number | nu
  * so each listed owner matches when all of its words appear in the user's
  * full name, or when it equals the user's email prefix.
  */
+// First names shared by 2+ employees are ambiguous: a bare "Neeraj" owner row
+// cannot be attributed to either Neeraj (reported: Neeraj Prakash saw Neeraj
+// Manoria's Digital Experience projects under My Work). Built once from the
+// org roster.
+const AMBIGUOUS_FIRST_NAMES: Set<string> = (() => {
+  const counts = new Map<string, number>();
+  for (const e of BIAL_EMPLOYEES) {
+    const first = e.name.trim().toLowerCase().split(/\s+/)[0];
+    if (first) counts.set(first, (counts.get(first) || 0) + 1);
+  }
+  return new Set([...counts].filter(([, n]) => n > 1).map(([f]) => f));
+})();
+
 export function isProjectOwner(
   owner: string | null | undefined,
   fullName: string | null | undefined,
@@ -126,7 +140,14 @@ export function isProjectOwner(
     .some(token => {
       if (emailPrefix && token === emailPrefix) return true;
       if (nameWords.length === 0) return false;
-      return token.split(/\s+/).every(w => nameWords.includes(w));
+      const tokenWords = token.split(/\s+/);
+      if (tokenWords.length === 1) {
+        // A lone first name only matches when it's THIS user's first name AND
+        // no one else in the org shares it — otherwise the row is ambiguous
+        // and belongs to nobody until an admin writes the full name.
+        return tokenWords[0] === nameWords[0] && !AMBIGUOUS_FIRST_NAMES.has(tokenWords[0]);
+      }
+      return tokenWords.every(w => nameWords.includes(w));
     });
 }
 
