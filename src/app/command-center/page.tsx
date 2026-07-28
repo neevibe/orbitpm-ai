@@ -411,9 +411,13 @@ export default function CommandCenter() {
 
 
 
-      {/* Widget grid — two rows of three equal-height (310px) cards */}
-      <div className="grid grid-cols-12 gap-4 items-stretch">
-        <div className="col-span-12 lg:col-span-4">
+      {/* Main workspace — asymmetric enterprise layout: analytical charts fill
+          the 8-col main column; the 4-col right rail carries the action surfaces
+          (recommendations, blockers, priorities). Dense-flow lets the full-width
+          Department chart drop below the two half-width charts. */}
+      <div className="grid grid-cols-12 gap-4 items-start">
+        <div className="col-span-12 lg:col-span-8 grid grid-cols-1 lg:grid-cols-2 grid-flow-dense gap-4 items-stretch content-start">
+        <div className="min-w-0">
           {/* Project Status Distribution */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
@@ -456,9 +460,9 @@ export default function CommandCenter() {
             </div>
           </div>
         </div>
-        <div className="col-span-12 lg:col-span-4">
-          {/* Department Breakdown */}
-          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+        <div className="min-w-0 lg:col-span-2">
+          {/* Department Breakdown — full main-column width: long bars + readable labels */}
+          <div className="x-card p-5 h-[340px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-[var(--color-x-text-muted)]" /> Department Breakdown</h3>
               {/* Legend: stacked series were previously tooltip-only */}
@@ -523,7 +527,7 @@ export default function CommandCenter() {
             </div>
           </div>
         </div>
-        <div className="col-span-12 lg:col-span-4">
+        <div className="min-w-0">
           {/* Portfolio Health */}
           <div className="x-card p-5 h-[310px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
@@ -601,8 +605,12 @@ export default function CommandCenter() {
             </div>
           </div>
         </div>
-        <div className="col-span-12 lg:col-span-4">
-          <div className="x-card p-5 h-[310px] flex flex-col">
+        </div>
+
+        {/* Right rail — the action column */}
+        <div className="col-span-12 lg:col-span-4 space-y-4">
+        <div>
+          <div className="x-card p-5 flex flex-col max-h-[340px]">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-6 rounded-md bg-[var(--color-x-accent)] flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
@@ -654,7 +662,7 @@ export default function CommandCenter() {
             </div>
           </div>
         </div>
-        <div className="col-span-12 lg:col-span-4">
+        <div>
           {/* Stuck Projects */}
           {stuckProjects.length === 0 && (
             <div className="x-card p-5 h-[310px] flex flex-col">
@@ -670,7 +678,7 @@ export default function CommandCenter() {
             </div>
           )}
           {stuckProjects.length > 0 && (
-            <div className="x-card p-5 h-[310px] flex flex-col">
+            <div className="x-card p-5 flex flex-col max-h-[340px]">
               <div className="flex items-center gap-2 mb-3">
                 <Flame className="w-4 h-4 text-[var(--color-x-danger)]" />
                 <h3 className="text-[13px] font-semibold text-[var(--color-x-text)]">Stuck Projects</h3>
@@ -730,9 +738,9 @@ export default function CommandCenter() {
             </div>
           )}
         </div>
-        <div className="col-span-12 lg:col-span-4">
+        <div>
           {/* Priority Breakdown */}
-          <div className="x-card p-5 h-[310px] flex flex-col justify-between">
+          <div className="x-card p-5 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[13px] font-semibold text-[var(--color-x-text)] flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-[var(--color-x-text-muted)]" /> Priority Mix</h3>
             </div>
@@ -769,6 +777,7 @@ export default function CommandCenter() {
               })}
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -832,12 +841,11 @@ export default function CommandCenter() {
         </div>
       )}
 
-      {/* Recent Activity — real audit-trail events incl. delivered Teams alerts */}
-      <ActivityFeed />
-
-      {/* Milestones / Quick Actions — 8/4 split so both cards fill their height */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        <div className="x-card p-5 lg:col-span-8">
+      {/* Bottom band continues the 8/4 split: Milestones + Activity under the
+          main column, Quick Actions under the rail */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <div className="lg:col-span-8 space-y-4">
+        <div className="x-card p-5">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-blue-500" /> Upcoming Milestones</h3>
           <div className="space-y-2">
             {filteredProjects
@@ -858,9 +866,13 @@ export default function CommandCenter() {
             ))}
           </div>
         </div>
+
+        {/* Recent Activity — real audit-trail events incl. delivered Teams alerts */}
+        <ActivityFeed />
+        </div>
         <div className="x-card p-5 lg:col-span-4 bg-gradient-to-br from-blue-50/60 to-sky-50/40 border-blue-100">
           <h3 className="text-[13px] font-bold text-[var(--color-x-text)] mb-3 flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-500" /> Quick Actions</h3>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { label: 'New Project', icon: FolderKanban, color: 'text-blue-500', href: '/projects' },
               { label: 'Log Risk', icon: AlertTriangle, color: 'text-red-500', href: '/risks' },
