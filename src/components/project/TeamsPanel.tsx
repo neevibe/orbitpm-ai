@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MessageSquare, Plus, Trash2, ExternalLink, X } from 'lucide-react';
 import { authedFetch } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import { toast } from '@/components/ui/Toaster';
 import { formatDate } from '@/lib/utils';
 
@@ -23,6 +24,7 @@ type TeamsLink = {
 };
 
 export default function TeamsPanel({ projectCode, canEdit }: { projectCode: string; canEdit: boolean }) {
+  const { isDemoMode } = useAuth();
   const [links, setLinks] = useState<TeamsLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [configured, setConfigured] = useState(true);
@@ -32,6 +34,16 @@ export default function TeamsPanel({ projectCode, canEdit }: { projectCode: stri
   const [saving, setSaving] = useState(false);
 
   const reload = useCallback(async () => {
+    // Demo mode: show a couple of sample linked conversations, no API call.
+    if (isDemoMode) {
+      setConfigured(true);
+      setLinks([
+        { id: 'demo-1', project_code: projectCode, task_id: null, title: 'Weekly delivery sync', deep_link_url: 'https://teams.microsoft.com/l/channel/demo', created_by_name: 'Priya Nair', created_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+        { id: 'demo-2', project_code: projectCode, task_id: null, title: 'Stakeholder updates', deep_link_url: 'https://teams.microsoft.com/l/channel/demo2', created_by_name: 'Daniel Okafor', created_at: new Date(Date.now() - 9 * 86400000).toISOString() },
+      ]);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await authedFetch(`/api/teams-links?project=${encodeURIComponent(projectCode)}`);
       const j = await res.json();
@@ -43,7 +55,7 @@ export default function TeamsPanel({ projectCode, canEdit }: { projectCode: stri
     } finally {
       setLoading(false);
     }
-  }, [projectCode]);
+  }, [projectCode, isDemoMode]);
 
   useEffect(() => { reload(); }, [reload]);
 

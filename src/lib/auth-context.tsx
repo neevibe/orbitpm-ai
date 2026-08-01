@@ -61,6 +61,8 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  /** Activate demo mode synchronously (used by "Try Live Demo"). */
+  enterDemo: () => void;
 }
 
 const PERM_RANK: Record<Permission, number> = { view: 0, edit: 1, modify: 2, admin: 3 };
@@ -117,14 +119,21 @@ function deriveUserType(user: User | null): UserType {
   return isInternalEmail(user.email) ? 'internal' : 'external';
 }
 
-const DEMO_USER = {
+// The demo account is a super-admin so a prospect can walk through EVERY
+// surface (including Admin) without hitting a permission wall. It never
+// touches Supabase — all data is the local demo dataset.
+export const DEMO_USER = {
   id: 'demo-user',
-  email: 'demo@xyrenis.com',
-  user_metadata: { full_name: 'Demo User', role: 'user' },
-  app_metadata: {},
+  email: 'priya.nair@meridian-demo.com',
+  user_metadata: { full_name: 'Priya Nair', role: 'super_admin', department: null },
+  app_metadata: { role: 'super_admin', permission: 'admin' },
   aud: 'authenticated',
   created_at: new Date().toISOString(),
 } as unknown as User;
+
+/** The name the demo user "signs in" as — matches an owner in the demo data
+ *  so My Work / "my projects only" is populated, not empty. */
+export const DEMO_USER_NAME = 'Priya Nair';
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
@@ -145,6 +154,7 @@ const AuthContext = createContext<AuthContextValue>({
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signOut: async () => {},
+  enterDemo: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -303,6 +313,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPasswordRecovery(null);
   };
 
+  // Activate demo mode without a page reload. The login flow only set a
+  // sessionStorage flag and navigated — but the provider had already mounted
+  // and read "no session", so the route guard bounced back to /login. Setting
+  // the user + demo flag here makes the guard pass immediately.
+  const enterDemo = () => {
+    if (typeof window !== 'undefined') sessionStorage.setItem(DEMO_SESSION_KEY, 'true');
+    setUser(DEMO_USER);
+    setIsDemoMode(true);
+    setLoading(false);
+  };
+
   const signOut = async () => {
     if (isDemoMode) {
       if (typeof window !== 'undefined') sessionStorage.removeItem(DEMO_SESSION_KEY);
@@ -351,7 +372,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         permission, userType, isAdmin, isSuperAdmin, canView,
         passwordRecovery, clearPasswordRecovery,
         canEditDepartment, canModifyDepartment,
-        signIn, signUp, signOut,
+        signIn, signUp, signOut, enterDemo,
       }}
     >
       {children}

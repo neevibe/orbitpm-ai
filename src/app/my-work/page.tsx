@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useData } from '@/lib/data-context';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, DEMO_USER_NAME } from '@/lib/auth-context';
 import { isProjectOwner } from '@/lib/utils';
 import { UserCircle2, FolderKanban, Rocket, CalendarClock, ListTodo, ArrowUpRight, ArrowDownRight, CheckCircle2, LayoutGrid, Lock, Table2, BookOpen } from 'lucide-react';
 import { usePersonalWorkspace, PersonalProjects, CustomTables, WorkDiary, NotConfiguredNotice } from '@/components/personal/PersonalWorkspace';
@@ -41,7 +41,7 @@ export default function MyWorkPage() {
   const workspace = usePersonalWorkspace(!isDemoMode && !!user);
 
   const fullName = isDemoMode
-    ? 'Demo User'
+    ? DEMO_USER_NAME
     : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
   const email = user?.email || '';
 

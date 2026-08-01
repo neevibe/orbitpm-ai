@@ -3,6 +3,19 @@
 import { useEffect, useState } from 'react';
 import { Activity, FolderPlus, Pencil, Archive, RotateCcw, Trash2, GitBranch, AlertTriangle, Send } from 'lucide-react';
 import { authedFetch } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
+
+// Sample audit trail shown in demo mode (no real API call).
+const DEMO_ACTIVITY: FeedEvent[] = [
+  { id: 'a1', at: new Date(Date.now() - 45 * 60000).toISOString(), actor: 'Sofia Almeida', action: 'risk.create', entityId: 'MER-TEC-04', entityName: 'Zero-Trust Security Programme', alertTitle: '' },
+  { id: 'a2', at: new Date(Date.now() - 2 * 3600000).toISOString(), actor: 'System', action: 'teams.alert_sent', entityId: 'MER-CX-02', entityName: 'Mobile App Relaunch', alertTitle: 'Project delayed' },
+  { id: 'a3', at: new Date(Date.now() - 3 * 3600000).toISOString(), actor: 'Wei Chen', action: 'project.update', entityId: 'MER-TEC-05', entityName: 'Enterprise Data Lakehouse', alertTitle: '' },
+  { id: 'a4', at: new Date(Date.now() - 5 * 3600000).toISOString(), actor: 'Priya Nair', action: 'project.update', entityId: 'MER-TEC-01', entityName: 'ERP Modernisation Programme', alertTitle: '' },
+  { id: 'a5', at: new Date(Date.now() - 26 * 3600000).toISOString(), actor: 'Wei Chen', action: 'project.archive', entityId: 'MER-TEC-03', entityName: 'API Gateway Rollout', alertTitle: '' },
+  { id: 'a6', at: new Date(Date.now() - 28 * 3600000).toISOString(), actor: 'Marcus Bennett', action: 'project.create', entityId: 'MER-COM-02', entityName: 'Retail Media Network Launch', alertTitle: '' },
+  { id: 'a7', at: new Date(Date.now() - 50 * 3600000).toISOString(), actor: 'Elena Popova', action: 'risk.create', entityId: 'MER-FIN-02', entityName: 'Procurement Digitisation', alertTitle: '' },
+  { id: 'a8', at: new Date(Date.now() - 52 * 3600000).toISOString(), actor: 'James Sullivan', action: 'project.update', entityId: 'MER-OPS-01', entityName: 'Warehouse Automation', alertTitle: '' },
+];
 
 /**
  * Recent Activity (dashboard) — real events from the audit trail, including
@@ -55,10 +68,14 @@ function relTime(iso: string): string {
 }
 
 export default function ActivityFeed() {
+  const { isDemoMode } = useAuth();
   const [events, setEvents] = useState<FeedEvent[] | null>(null);
   const [configured, setConfigured] = useState(true);
 
   useEffect(() => {
+    // Demo mode never calls the (authenticated) audit API — it would 401.
+    // Show a believable sample activity trail instead.
+    if (isDemoMode) { setEvents(DEMO_ACTIVITY); return; }
     (async () => {
       try {
         const res = await authedFetch('/api/activity?limit=12');
@@ -71,7 +88,7 @@ export default function ActivityFeed() {
         setEvents([]);
       }
     })();
-  }, []);
+  }, [isDemoMode]);
 
   return (
     <div className="x-card p-5">
