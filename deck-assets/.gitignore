@@ -1,0 +1,7 @@
+build/node_modules/
+build/package-lock.json
+build/package.json
+shots/
+framed/
+icons/
+*.pdf
