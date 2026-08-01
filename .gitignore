@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .gstack/
+
+# Ephemeral review-agent scripts (auto-deleted after each run)
+QA_AGENT/tmp-*.mjs

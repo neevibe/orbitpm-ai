@@ -15,7 +15,8 @@ import {
   type Department,
   type ClassifiedDependency,
 } from './mock-data';
-import { DEMO_PROJECTS, DEMO_RISKS } from './demo-data';
+import { DEMO_PROJECTS, DEMO_RISKS, DEMO_NOTIFICATIONS, DEMO_DEPARTMENTS } from './demo-data';
+import { DEMO_USER_NAME } from './auth-context';
 
 /**
  * POST a project/risk mutation to the server, attaching the caller's Supabase
@@ -163,7 +164,7 @@ function normalizeDeptName(d: string | null | undefined): string {
 export function DataProvider({ children }: { children: ReactNode }) {
   const { canModifyDepartment, user, isDemoMode } = useAuth();
   const currentUserName = isDemoMode
-    ? 'Demo User'
+    ? DEMO_USER_NAME
     : (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'A user';
 
   const collectDependentDepartments = useCallback((project: Project | undefined): string[] => {
@@ -182,7 +183,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     (isDemoMode ? DEMO_PROJECTS : initialProjects).map(normalizeProjectStatus),
   );
   const [risks, setRisks] = useState<Risk[]>(isDemoMode ? DEMO_RISKS : initialRisks);
-  const [notifications, setNotifications] = useState<Notification[]>(isDemoMode ? [] : initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>(isDemoMode ? DEMO_NOTIFICATIONS : initialNotifications);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [liveStatus, setLiveStatus] = useState<'live' | 'cached' | 'error'>('cached');
   const [scope, setScope] = useState<{ admin: boolean; department: string | null; shared: number } | null>(null);
@@ -271,6 +272,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     'Duty Free': '#f97316',
     'CBB': '#ec4899',
     'BASL': '#06b6d4',
+    // demo-mode sample departments (harmless in production — these names never
+    // appear in real data)
+    ...Object.fromEntries(DEMO_DEPARTMENTS.map(d => [d.name, d.color])),
   };
 
   // Merge any custom departments added by user

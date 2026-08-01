@@ -177,7 +177,7 @@ function OutlookTile(props: MsProps) {
   );
 }
 
-function ChannelAlertsTile() {
+function ChannelAlertsTile({ demo }: { demo: boolean }) {
   const [state, setState] = useState<{ configured: boolean; tableReady: boolean; masked: string } | null>(null);
   const [url, setUrl] = useState('');
   const [editing, setEditing] = useState(false);
@@ -185,16 +185,18 @@ function ChannelAlertsTile() {
   const [showHow, setShowHow] = useState(false);
 
   const reload = useCallback(async () => {
+    if (demo) { setState({ configured: true, tableReady: true, masked: 'meridian.webhook.office.com/…a1b2c3' }); return; }
     try {
       const res = await authedFetch('/api/integrations/teams-alerts');
       if (res.ok) setState(await res.json());
     } catch (e) {
       console.error('[teams-alerts]', e);
     }
-  }, []);
+  }, [demo]);
   useEffect(() => { reload(); }, [reload]);
 
   const call = async (payload: Record<string, string>, okText: string) => {
+    if (demo) { toast({ kind: 'info', text: 'This is a demo environment — channel alerts are simulated.' }); return; }
     setBusy(true);
     try {
       const res = await authedFetch('/api/integrations/teams-alerts', {
@@ -293,19 +295,24 @@ function ChannelAlertsTile() {
 }
 
 export default function IntegrationsPage() {
-  const { isSuperAdmin, loading: authLoading } = useAuth();
+  const { isSuperAdmin, loading: authLoading, isDemoMode } = useAuth();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<MsStatus | null>(null);
   const [busy, setBusy] = useState(false);
 
   const reload = useCallback(async () => {
+    // Demo mode: present the integrations as connected, no API call.
+    if (isDemoMode) {
+      setStatus({ configured: true, tableReady: true, connected: true, account: 'priya.nair@meridian-demo.com', redirectUri: '' });
+      return;
+    }
     try {
       const res = await authedFetch('/api/integrations/teams');
       if (res.ok) setStatus(await res.json());
     } catch (e) {
       console.error('[integrations/teams]', e);
     }
-  }, []);
+  }, [isDemoMode]);
 
   useEffect(() => {
     reload();
@@ -321,6 +328,7 @@ export default function IntegrationsPage() {
   }, [reload]);
 
   const connect = async () => {
+    if (isDemoMode) { toast({ kind: 'info', text: 'This is a demo — Microsoft is shown as already connected.' }); return; }
     setBusy(true);
     try {
       const res = await authedFetch('/api/integrations/teams', {
@@ -338,6 +346,7 @@ export default function IntegrationsPage() {
   };
 
   const disconnect = async () => {
+    if (isDemoMode) { toast({ kind: 'info', text: 'This is a demo environment — the connection is simulated.' }); return; }
     if (!confirm('Disconnect your Microsoft account? Teams and Outlook features will stop working for you until you reconnect.')) return;
     setBusy(true);
     try {
@@ -392,7 +401,7 @@ export default function IntegrationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
         {showTeams && <TeamsTile {...msProps} />}
         {showOutlook && <OutlookTile {...msProps} />}
-        {showAlerts && <ChannelAlertsTile />}
+        {showAlerts && <ChannelAlertsTile demo={isDemoMode} />}
         {filtered.map(app => (
           <div key={app.id} className="x-card p-5 flex flex-col h-full transition-all opacity-80">
             <div className="flex items-start justify-between mb-4">

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { DEMO_SESSION_KEY } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -16,7 +15,7 @@ function isInternalEmail(email: string) {
 const REMEMBER_EMAIL_KEY = 'xyrenis_remember_email';
 
 export default function LoginPage() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, enterDemo } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<'signin' | 'signup' | 'forgot'>('signin');
 
@@ -94,8 +93,9 @@ export default function LoginPage() {
 
   const handleDemoLogin = () => {
     // Demo mode bypasses Supabase entirely — no real credentials needed.
-    // A flag in sessionStorage activates masked fake data throughout the app.
-    sessionStorage.setItem(DEMO_SESSION_KEY, 'true');
+    // enterDemo() activates demo mode in the auth context synchronously so the
+    // route guard sees a logged-in user and doesn't bounce us back to /login.
+    enterDemo();
     router.replace('/command-center');
   };
 
