@@ -222,16 +222,22 @@ export async function POST(request: NextRequest) {
       if (updates.owner !== undefined) dbUpdates.owner_name = updates.owner;
       if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
 
-      // Target date: check the lock before writing. If the project has a locked
-      // baseline, only admin-level JWTs may change it; anyone else gets a 403.
+      // Target date: only 403 when the date is *actually changing* — the modal always
+      // re-submits the current value as a required field, so an unchanged date must
+      // never block a non-admin from saving other fields (name, status, priority, etc.).
+      const govUpdates: any = {};
       if (updates.targetDate !== undefined) {
         const { data: currentProj } = await db
           .from('projects')
-          .select('baseline_date, target_date_locked')
+          .select('baseline_date, target_date_locked, target_date')
           .eq('project_code', project.id)
           .single();
 
-        if (currentProj?.target_date_locked) {
+        const incomingDate = updates.targetDate ? String(updates.targetDate).substring(0, 10) : null;
+        const existingDate  = currentProj?.target_date ? String(currentProj.target_date).substring(0, 10) : null;
+        const dateActuallyChanged = incomingDate !== existingDate;
+
+        if (currentProj?.target_date_locked && dateActuallyChanged) {
           const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
           const adminUser = await isAdminToken(token);
           if (!adminUser) {
@@ -240,12 +246,14 @@ export async function POST(request: NextRequest) {
               { status: 403 }
             );
           }
-        } else if (!currentProj?.baseline_date && updates.targetDate) {
-          // First time a target date is being set → baseline it now.
-          // Stored in govUpdates below so it degrades gracefully.
         }
 
         dbUpdates.target_date = updates.targetDate || null;
+        // Set baseline on first target date assignment — reuses the fetch above, no extra round-trip.
+        if (!currentProj?.baseline_date && updates.targetDate) {
+          govUpdates.baseline_date = updates.targetDate;
+          govUpdates.target_date_locked = true;
+        }
       }
 
       if (updates.objective !== undefined) dbUpdates.business_objective = updates.objective;
@@ -264,22 +272,6 @@ export async function POST(request: NextRequest) {
       if (updates.totalBudget !== undefined) v2Updates.total_budget = updates.totalBudget;
       if (updates.utilizedBudget !== undefined) v2Updates.utilized_budget = updates.utilizedBudget;
       if (updates.classifiedDependencies !== undefined) v2Updates.classified_dependencies = updates.classifiedDependencies;
-
-      // Governance: set baseline when first assigning a target date to a project that had none.
-      const govUpdates: any = {};
-      if (updates.targetDate && dbUpdates.target_date) {
-        // Re-fetch to check if baseline is still unset (separate query above may have resolved it).
-        const { data: check } = await db
-          .from('projects')
-          .select('baseline_date')
-          .eq('project_code', project.id)
-          .single()
-          .then(r => r);
-        if (!check?.baseline_date) {
-          govUpdates.baseline_date = updates.targetDate;
-          govUpdates.target_date_locked = true;
-        }
-      }
 
       const fullUpdates = { ...dbUpdates, ...v2Updates, ...govUpdates };
       if (Object.keys(fullUpdates).length > 0) {

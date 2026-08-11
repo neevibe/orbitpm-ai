@@ -17,20 +17,21 @@ import {
 import { DEMO_PROJECTS, DEMO_RISKS } from './demo-data';
 
 /**
- * POST a project/risk mutation to the server, attaching the caller's Supabase
- * access token so the persistent audit trail can attribute the change to the
- * real signed-in user (not a hardcoded name). Fire-and-forget; never throws.
+ * POST a project/risk mutation to the server. Returns the raw Response so callers
+ * can inspect status codes (e.g. 403 for lock violations) and surface them to the
+ * user. Resolves to null on network error (never throws).
  */
-async function persistProjectMutation(body: Record<string, unknown>) {
+async function persistProjectMutation(body: Record<string, unknown>): Promise<Response | null> {
   try {
     const token = await getAccessToken();
-    await fetch('/api/projects', {
+    return await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
       body: JSON.stringify(body),
     });
   } catch (err) {
     console.error('Error persisting mutation:', err);
+    return null;
   }
 }
 
@@ -377,10 +378,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [projects, logAudit, notify, canModifyDepartment]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
+    // Capture the current project before the optimistic state update so we can
+    // build audit/API bodies and roll back notifications if the server rejects.
+    let capturedProj: Project | null = null;
+    let capturedChanges: Record<string, { old: any; new: any }> = {};
     let updatedProj: Project | null = null;
+
     setProjects(prev => prev.map(p => {
       if (p.id !== id) return p;
-      // Block edits to projects outside the user's department (super admins exempt).
       if (!canModifyDepartment(p.department)) {
         notify('Permission denied', `You can only edit projects in your own department.`, 'warning');
         return p;
@@ -399,14 +404,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (updates.status === 'Completed' && p.status !== 'Completed') {
         notify('Project Completed', `${p.name} has been completed! 🎉`, 'success');
       }
-      
-      if (isSupabaseConfigured()) {
-        persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } });
-      }
-
+      capturedProj = p;
+      capturedChanges = changes;
       updatedProj = { ...p, ...updates };
       return updatedProj;
     }));
+
+    // API call is outside the state updater so we can handle the response.
+    if (capturedProj && isSupabaseConfigured()) {
+      const proj = capturedProj as Project;
+      persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: proj.name, changes: capturedChanges } })
+        .then(res => {
+          if (!res || res.ok) return;
+          res.json().catch(() => null).then((body: any) => {
+            if (res.status === 403) {
+              notify('Save blocked', body?.error || 'You do not have permission to make this change.', 'warning');
+            } else {
+              notify('Save failed', 'Changes could not be saved to the server. Please refresh and try again.', 'warning');
+            }
+          });
+        });
+    }
 
     if (updatedProj) {
       fetch('/api/sync-local-excel', {
