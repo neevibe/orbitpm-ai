@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured, getAccessToken, authedFetch } from './supabase';
 import { useAuth } from './auth-context';
-import { generateProjectId, daysUntil, normalizeProjectStatus } from './utils';
+import { generateProjectId, daysUntil, normalizeProjectStatus, canBeDelayed, formatDate } from './utils';
 import { toast } from '@/components/ui/Toaster';
 import {
   projects as initialProjects,
@@ -219,9 +219,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const res = await authedFetch('/api/projects');
         if (!res.ok) throw new Error(res.status === 401 ? 'Session expired (401)' : `API request failed (${res.status})`);
         const data = await res.json();
-        // Server data is authoritative — its stored status (incl. "Delayed") is
-        // shown as-is; the seed-only hygiene transform must not run here.
-        if (data.projects && data.projects.length > 0) setProjects(data.projects as Project[]);
+        // Enforce the Delayed rule on read: any "Delayed" project whose Target
+        // Date is still in the future is shown as In Progress (incl. legacy data).
+        if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
         if (data.scope) setScope(data.scope);
         if (data.orgStats) setOrgStats(data.orgStats);
@@ -440,8 +440,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return '';
     }
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
-    // Honour the status the user chose (e.g. "Delayed") verbatim — never demote it.
-    const newProject: Project = { ...project, id, archived: false } as Project;
+    // Enforce the Delayed rule: a new project can't be "Delayed" unless its
+    // Target Date has already passed (else it's stored as In Progress).
+    const newProject: Project = normalizeProjectStatus({ ...project, id, archived: false } as Project);
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
@@ -468,11 +469,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
         notify('Permission denied', `You can only edit projects in your own department.`, 'warning');
         return p;
       }
+      // Enforce the Delayed rule at write time so the DB, audit, and display all
+      // agree: a project can only be "Delayed" once its Target Date has passed.
+      // If someone (e.g. via the quick-edit panel) sets Delayed too early, keep
+      // it In Progress and say why — the check uses the effective target date.
+      const effective: Partial<Project> = { ...updates };
+      if (effective.status === 'Delayed') {
+        const nextTarget = effective.targetDate !== undefined ? effective.targetDate : p.targetDate;
+        if (!canBeDelayed(nextTarget)) {
+          effective.status = 'In Progress';
+          notify('Kept as In Progress', `${p.name} can only be marked Delayed after its Target Date (${formatDate(nextTarget)}) has passed.`, 'warning');
+        }
+      }
       const changes: Record<string, { old: any; new: any }> = {};
-      Object.keys(updates).forEach(key => {
+      Object.keys(effective).forEach(key => {
         const k = key as keyof Project;
-        if (!valuesEqual(p[k], updates[k])) {
-          changes[key] = { old: p[k], new: updates[k] };
+        if (!valuesEqual(p[k], effective[k])) {
+          changes[key] = { old: p[k], new: effective[k] };
         }
       });
       // Nothing genuinely changed (e.g. re-saving the modal without edits) — do
@@ -480,20 +493,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // server/Excel for a no-op save.
       if (Object.keys(changes).length === 0) return p;
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: p.name, changes });
-      if (updates.status === 'Delayed' && p.status !== 'Delayed') {
+      if (effective.status === 'Delayed' && p.status !== 'Delayed') {
         notify('Project Delayed', `${p.name} has been marked as Delayed`, 'warning');
       }
-      if (updates.status === 'Completed' && p.status !== 'Completed') {
+      if (effective.status === 'Completed' && p.status !== 'Completed') {
         notify('Project Completed', `${p.name} has been completed! 🎉`, 'success');
       }
-      
+
       if (isSupabaseConfigured()) {
-        persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
+        persistProjectMutation({ action: 'update', project: { id }, updates: effective, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
       }
 
-      // Persist the edit exactly as made — a deliberate "Delayed" (or any status)
-      // must stick, even when the target date is still in the future.
-      updatedProj = { ...p, ...updates };
+      updatedProj = { ...p, ...effective };
       return updatedProj;
     }));
 

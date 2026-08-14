@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Save, Trash2, Wand2, Lock, IndianRupee, AlertCircle } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { generateProjectId, parseINR, formatINRCompact } from '@/lib/utils';
+import { generateProjectId, parseINR, formatINRCompact, formatDate, canBeDelayed } from '@/lib/utils';
 import {
   TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions, departmentDisplayName,
 } from '@/lib/org-structure';
@@ -53,7 +53,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     subdivision: '',
     owner: '', status: 'Not Started' as Project['status'], progress: 0,
     priority: 'Medium' as Project['priority'],
-    startDate: '', targetDate: '',
+    startDate: '', targetDate: '', revisedDate: '',
     risks: '', objective: '', notes: '',
     projectDependencies: '', supportTeam: '', kpi: '',
     totalBudget: '', utilizedBudget: '',
@@ -74,7 +74,8 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
         subdivision: editProject.subdivision || '',
         owner: editProject.owner, status: editProject.status, progress: editProject.progress,
         priority: editProject.priority, startDate: editProject.startDate || '',
-        targetDate: editProject.targetDate || '', risks: editProject.risks || '',
+        targetDate: editProject.targetDate || '', revisedDate: editProject.revisedDate || '',
+        risks: editProject.risks || '',
         objective: editProject.objective || '', notes: editProject.notes || '',
         projectDependencies: editProject.projectDependencies || '',
         supportTeam: editProject.supportTeam || '',
@@ -114,6 +115,13 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   const subdivisions = getSubdivisions(form.department);
   const subdivisionRequired = hasSubdivisions(form.department);
 
+  // Target Date is confirmed at creation and locked afterwards — only Super
+  // Admins may still edit it. Everyone else records slips in the Revised Date.
+  const targetDateLocked = !!editProject && !isSuperAdmin;
+  // "Delayed" is only valid once the Target Date has passed (Revised Date does
+  // not count). Flag a future-dated Delayed selection so we can block the save.
+  const delayedNotAllowed = form.status === 'Delayed' && !canBeDelayed(form.targetDate);
+
   // Project Owner options = employees mapped to the selected department. The
   // current owner is always kept selectable (so editing a legacy project whose
   // owner isn't in the roster — or a multi-name owner — never loses the value).
@@ -133,10 +141,11 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     if (!form.startDate) e.push('Start Date');
     if (!form.targetDate) e.push('End Date');
     if (!form.status) e.push('Status');
+    if (delayedNotAllowed) e.push('Status: “Delayed” is only allowed once the Target Date has passed');
     return e;
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (readOnly) return; // defense-in-depth: block writes outside the user's department
     if (!canModifyDepartment(form.department)) return;
@@ -148,12 +157,25 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     }
     setErrors([]);
 
+    // Nudge: for non-admins the Target Date becomes uneditable after creation,
+    // so make the user confirm it before it is locked in. (Admins can edit it
+    // later, so they don't need this warning.)
+    if (!editProject && !isSuperAdmin) {
+      const ok = await confirm({
+        title: 'Confirm the Target Date',
+        message: `The Target Date (${formatDate(form.targetDate || null)}) is locked once the project is created — you won't be able to edit it later. Any change to the timeline is recorded in the Revised Date field instead. Is this Target Date correct?`,
+        confirmText: 'Yes, create project',
+      });
+      if (!ok) return;
+    }
+
     const payload: Partial<Project> = {
       ...form,
       id: editProject ? editProject.id : (form.id || autoId),
       subdivision: form.subdivision || null,
       startDate: form.startDate || null,
       targetDate: form.targetDate || null,
+      revisedDate: form.revisedDate || null,
       totalBudget: parseINR(form.totalBudget),
       utilizedBudget: parseINR(form.utilizedBudget),
       classifiedDependencies: deps,
@@ -260,9 +282,12 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
           <div className="grid grid-cols-3 gap-3">
             <div><label className={labelCls}>Status *</label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} required className={inputCls}>
+              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} required className={`${inputCls} ${delayedNotAllowed ? 'border-red-300 focus:border-red-400 focus:ring-red-50' : ''}`}>
                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-              </select></div>
+              </select>
+              {delayedNotAllowed && (
+                <p className="text-[10px] text-red-500 mt-1">Only allowed once the Target Date ({formatDate(form.targetDate || null)}) has passed.</p>
+              )}</div>
             <div><label className={labelCls}>Priority / Criticality *</label>
               <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as any }))} required className={inputCls}>
                 {priorityOptions.map(p => <option key={p} value={p}>{p}</option>)}
@@ -271,11 +296,22 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
               <input type="number" min={0} max={100} value={form.progress} onChange={e => setForm(f => ({ ...f, progress: Number(e.target.value) }))} className={inputCls} /></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div><label className={labelCls}>Start Date *</label>
               <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} required className={inputCls} /></div>
             <div><label className={labelCls}>Target Date *</label>
-              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} required className={inputCls} /></div>
+              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} required disabled={targetDateLocked}
+                className={`${inputCls} ${targetDateLocked ? 'disabled:bg-[#f8fafc] disabled:text-[#64748b] cursor-not-allowed' : ''}`} />
+              {targetDateLocked
+                ? <p className="text-[10px] text-[#94a3b8] mt-1">Locked after creation — use Revised Date to reschedule.</p>
+                : editProject && isSuperAdmin
+                  ? <p className="text-[10px] text-[#94a3b8] mt-1">Admin: editable. Others reschedule via Revised Date.</p>
+                  : <p className="text-[10px] text-amber-600 mt-1">Confirm carefully — locked after creation.</p>}
+            </div>
+            <div><label className={labelCls}>Revised Date</label>
+              <input type="date" value={form.revisedDate} min={form.targetDate || undefined} onChange={e => setForm(f => ({ ...f, revisedDate: e.target.value }))} className={inputCls} />
+              <p className="text-[10px] text-[#94a3b8] mt-1">Rescheduled deadline. Doesn’t change the Delayed rule.</p>
+            </div>
           </div>
 
           {/* Financial management (INR) */}

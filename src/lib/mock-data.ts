@@ -81,7 +81,12 @@ export interface Project {
   progress: number;
   priority: 'Critical' | 'High' | 'Medium' | 'Low';
   startDate: string | null;
+  /** Confirmed deadline. Locked after creation (admins excepted); drives the
+   *  "Delayed" rule. Timeline slips are recorded in `revisedDate` instead. */
   targetDate: string | null;
+  /** v2: user-editable revised deadline. Does NOT affect the Delayed rule
+   *  (that stays keyed on the original targetDate) — it records the new plan. */
+  revisedDate?: string | null;
   risks: string;
   objective: string;
   kpi?: string;

@@ -6,7 +6,7 @@ import { Calendar, CheckCircle2, Edit3, ListTodo, Plus, Save, Trash2, User, X } 
 import { useData } from '@/lib/data-context';
 import { useToast } from '@/components/ui';
 import { BIAL_EMPLOYEES } from '@/lib/employee-data';
-import { daysUntil, formatDate } from '@/lib/utils';
+import { daysUntil, formatDate, canBeDelayed } from '@/lib/utils';
 import { authedFetch } from '@/lib/supabase';
 import DepartmentLabel from '@/components/DepartmentLabel';
 import type { Project } from '@/lib/mock-data';
@@ -135,7 +135,7 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
                 <p className={`text-[12px] font-bold ${days < 0 ? 'text-red-700' : 'text-amber-700'}`}>
                   {days < 0 ? `Overdue by ${Math.abs(days)} days` : `${days} days until deadline`}
                 </p>
-                <p className="text-[11px] text-[var(--color-x-text-muted)]">Target: {formatDate(live.targetDate)}</p>
+                <p className="text-[11px] text-[var(--color-x-text-muted)]">Target: {formatDate(live.targetDate)}{live.revisedDate ? ` · Revised: ${formatDate(live.revisedDate)}` : ''}</p>
               </div>
             </div>
           )}
@@ -144,9 +144,16 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
           <div>
             <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase tracking-wider">Status</label>
             {isEditing ? (
-              <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as Project['status'] }))} className="x-input w-full">
-                {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-              </select>
+              <>
+                <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as Project['status'] }))} className="x-input w-full">
+                  {STATUS_OPTIONS.map(s => (
+                    <option key={s} disabled={s === 'Delayed' && !canBeDelayed(live.targetDate)}>{s}</option>
+                  ))}
+                </select>
+                {editForm.status === 'Delayed' && !canBeDelayed(live.targetDate) && (
+                  <p className="text-[10px] text-red-500 mt-1">“Delayed” only applies once the Target Date ({formatDate(live.targetDate)}) has passed.</p>
+                )}
+              </>
             ) : <p className="text-[13px] font-semibold text-[var(--color-x-text)]">{live.status}</p>}
           </div>
           <div>

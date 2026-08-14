@@ -291,10 +291,13 @@ export default function ProjectDetailPage() {
           <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.startDate) || '—'}</p>
         </div>
 
-        {/* Target Date */}
+        {/* Target Date (+ Revised Date when the timeline has been rescheduled) */}
         <div className="x-card p-4 hover:border-blue-200 transition-colors">
           <div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-amber-500" /><span className="text-[11px] text-[var(--color-x-text-muted)] font-bold uppercase tracking-wider">Target Date</span></div>
           <p className="text-[13px] font-bold text-[var(--color-x-text)] truncate">{formatDate(project.targetDate) || '—'}</p>
+          {project.revisedDate && (
+            <p className="text-[11px] font-semibold text-amber-600 truncate mt-1" title="Rescheduled deadline">Revised: {formatDate(project.revisedDate)}</p>
+          )}
         </div>
 
         {/* Open Risks (computed) */}

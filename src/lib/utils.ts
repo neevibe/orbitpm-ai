@@ -187,23 +187,27 @@ export function isProjectOwner(
 }
 
 /**
- * Data-hygiene transform for the BUNDLED static / demo seed only.
+ * A project may only be "Delayed" once its (original) Target Date has actually
+ * passed. Allowed when there is no target date, or the target date is today or
+ * in the past; disallowed while the target date is still in the future.
  *
- * The shipped seed carries stale "Delayed" flags from old imports whose target
- * dates were later moved out; for that unmaintained, read-only data we demote a
- * "Delayed" status to "In Progress" when the target date is still in the future.
- *
- * This must NOT run on live server data or on user edits: "Delayed" is a
- * deliberate status a manager may assign to a project that is behind schedule
- * even when its final target date is still ahead (e.g. Commercial Development
- * projects with far-future target dates). Silently overriding it there made
- * saving a project as "Delayed" impossible — the status reverted on every save.
+ * The Revised Date deliberately does NOT enter this check — Delayed stays keyed
+ * on the confirmed Target Date.
+ */
+export function canBeDelayed(targetDate?: string | null): boolean {
+  const du = daysUntil(targetDate);
+  return du === null || du <= 0;
+}
+
+/**
+ * Enforce the Delayed rule on read/write: a "Delayed" status whose Target Date
+ * is still in the future is shown/stored as "In Progress" instead. Applied to
+ * live data, user edits, and the bundled seed so the register, database, audit,
+ * and activity feed all agree that Delayed means "past its Target Date".
  */
 export function normalizeProjectStatus<T extends { status: string; targetDate?: string | null }>(p: T): T {
   if (p.status !== 'Delayed') return p;
-  const du = daysUntil(p.targetDate);
-  if (du !== null && du > 0) return { ...p, status: 'In Progress' };
-  return p;
+  return canBeDelayed(p.targetDate) ? p : { ...p, status: 'In Progress' };
 }
 
 export function daysUntil(dateStr: string | null | undefined): number | null {
