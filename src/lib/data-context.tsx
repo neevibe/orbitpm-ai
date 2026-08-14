@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured, getAccessToken, authedFetch } from './supabase';
 import { useAuth } from './auth-context';
-import { generateProjectId, daysUntil, normalizeProjectStatus, canBeDelayed, formatDate } from './utils';
+import { generateProjectId, daysUntil, normalizeProjectStatus, reconcileStatusProgress, canBeDelayed, formatDate } from './utils';
 import { toast } from '@/components/ui/Toaster';
 import {
   projects as initialProjects,
@@ -442,7 +442,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
     // Enforce the Delayed rule: a new project can't be "Delayed" unless its
     // Target Date has already passed (else it's stored as In Progress).
-    const newProject: Project = normalizeProjectStatus({ ...project, id, archived: false } as Project);
+    const newProject: Project = reconcileStatusProgress(normalizeProjectStatus({ ...project, id, archived: false } as Project));
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
@@ -481,6 +481,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
           notify('Kept as In Progress', `${p.name} can only be marked Delayed after its Target Date (${formatDate(nextTarget)}) has passed.`, 'warning');
         }
       }
+      // Couple "Completed" status and 100% progress, reacting only to the field
+      // the user actually changed (so un-completing by lowering the status never
+      // gets undone): marking Completed fills progress to 100; setting progress
+      // to 100 marks Completed.
+      if (effective.status === 'Completed') effective.progress = 100;
+      else if (effective.progress === 100) effective.status = 'Completed';
       const changes: Record<string, { old: any; new: any }> = {};
       Object.keys(effective).forEach(key => {
         const k = key as keyof Project;

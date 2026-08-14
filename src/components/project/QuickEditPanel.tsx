@@ -145,7 +145,7 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
             <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase tracking-wider">Status</label>
             {isEditing ? (
               <>
-                <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as Project['status'] }))} className="x-input w-full">
+                <select value={editForm.status} onChange={e => { const v = e.target.value as Project['status']; setEditForm(f => ({ ...f, status: v, progress: v === 'Completed' ? 100 : f.progress })); }} className="x-input w-full">
                   {STATUS_OPTIONS.map(s => (
                     <option key={s} disabled={s === 'Delayed' && !canBeDelayed(live.targetDate)}>{s}</option>
                   ))}
@@ -168,8 +168,10 @@ export default function QuickEditPanel({ project, onClose }: { project: Project 
             <label className="block text-[11px] font-bold text-[var(--color-x-text-muted)] mb-1 uppercase tracking-wider">Progress</label>
             {isEditing ? (
               <div className="flex items-center gap-3">
-                <input type="range" min="0" max="100" value={editForm.progress ?? 0} onChange={e => setEditForm(f => ({ ...f, progress: Number(e.target.value) }))} className="flex-1 accent-blue-600" />
-                <span className="text-[14px] font-bold text-[var(--color-x-text)] w-10 text-right">{editForm.progress}%</span>
+                <input type="range" min="0" max="100" value={editForm.status === 'Completed' ? 100 : (editForm.progress ?? 0)} disabled={editForm.status === 'Completed'}
+                  onChange={e => { const v = Number(e.target.value); setEditForm(f => ({ ...f, progress: v, status: v === 100 ? 'Completed' : f.status })); }}
+                  className="flex-1 accent-blue-600 disabled:opacity-60" />
+                <span className="text-[14px] font-bold text-[var(--color-x-text)] w-10 text-right">{editForm.status === 'Completed' ? 100 : editForm.progress}%</span>
               </div>
             ) : (
               <div className="flex items-center gap-3">

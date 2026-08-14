@@ -210,6 +210,18 @@ export function normalizeProjectStatus<T extends { status: string; targetDate?: 
   return canBeDelayed(p.targetDate) ? p : { ...p, status: 'In Progress' };
 }
 
+/**
+ * Keep "Completed" status and 100% progress in lockstep — each implies the
+ * other. A Completed project is forced to 100%; a project at 100% is marked
+ * Completed. Applied on read, on create, and on edit so the invariant holds
+ * across the register, database, audit, and dashboards.
+ */
+export function reconcileStatusProgress<T extends { status: string; progress: number }>(p: T): T {
+  if (p.status === 'Completed' && p.progress !== 100) return { ...p, progress: 100 };
+  if (p.progress === 100 && p.status !== 'Completed') return { ...p, status: 'Completed' };
+  return p;
+}
+
 export function daysUntil(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
   try {

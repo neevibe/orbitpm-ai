@@ -282,7 +282,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
           <div className="grid grid-cols-3 gap-3">
             <div><label className={labelCls}>Status *</label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} required className={`${inputCls} ${delayedNotAllowed ? 'border-red-300 focus:border-red-400 focus:ring-red-50' : ''}`}>
+              <select value={form.status} onChange={e => { const v = e.target.value as Project['status']; setForm(f => ({ ...f, status: v, progress: v === 'Completed' ? 100 : f.progress })); }} required className={`${inputCls} ${delayedNotAllowed ? 'border-red-300 focus:border-red-400 focus:ring-red-50' : ''}`}>
                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {delayedNotAllowed && (
@@ -293,7 +293,10 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
                 {priorityOptions.map(p => <option key={p} value={p}>{p}</option>)}
               </select></div>
             <div><label className={labelCls}>Progress %</label>
-              <input type="number" min={0} max={100} value={form.progress} onChange={e => setForm(f => ({ ...f, progress: Number(e.target.value) }))} className={inputCls} /></div>
+              <input type="number" min={0} max={100} value={form.status === 'Completed' ? 100 : form.progress} disabled={form.status === 'Completed'}
+                onChange={e => { const v = Number(e.target.value); setForm(f => ({ ...f, progress: v, status: v === 100 ? 'Completed' : f.status })); }}
+                className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`} />
+              {form.status === 'Completed' && <p className="text-[10px] text-[#94a3b8] mt-1">100% — set by Completed status.</p>}</div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
