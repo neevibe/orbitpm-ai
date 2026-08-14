@@ -27,7 +27,7 @@ const statusOptions = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'] as const;
 
 export default function ProjectModal({ isOpen, onClose, editProject, defaultDepartment, defaultSubdivision }: Props) {
-  const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
+  const { addProject, updateProject, archiveProject, purgeProject, departments, projects, archivedProjects } = useData();
   const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
   const confirm = useConfirm();
@@ -39,7 +39,14 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     return TOP_LEVEL_DEPARTMENTS.filter(d => canModifyDepartment(d));
   }, [isSuperAdmin, canModifyDepartment]);
 
-  const allProjectIds = useMemo(() => projects.map(p => p.id), [projects]);
+  // The auto-generated ID must not collide with ANY existing project_code —
+  // including ARCHIVED projects, which `projects` (active only) omits. Reusing
+  // an archived code makes the DB insert fail the unique constraint, so the new
+  // project shows optimistically then vanishes on reload. Pool both lists.
+  const allProjectIds = useMemo(
+    () => Array.from(new Set([...projects, ...archivedProjects].map(p => p.id))),
+    [projects, archivedProjects],
+  );
 
   const makeEmpty = (dept?: string) => ({
     id: '', name: '', department: dept || (isSuperAdmin ? deptNames[0] : userDepartment) || deptNames[0] || '',
