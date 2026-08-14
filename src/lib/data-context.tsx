@@ -161,6 +161,26 @@ function normalizeDeptName(d: string | null | undefined): string {
   return d;
 }
 
+// Treat null / undefined / '' / [] as the same "no value" so an edit that leaves
+// an empty field empty is not recorded as a change.
+function isEmptyValue(v: unknown): boolean {
+  return v == null || v === '' || (Array.isArray(v) && v.length === 0);
+}
+
+// Value-equality for audit diffing. A plain `!==` treats the fresh arrays the
+// edit modal always rebuilds (classifiedDependencies, tasks) as changed even
+// when their contents are identical, which logged phantom "updated" entries in
+// the audit trail / activity feed. Compare by value: reference, empty-equivalent,
+// then structural (deep) equality for objects and arrays.
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (isEmptyValue(a) && isEmptyValue(b)) return true;
+  if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
+    try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
+  }
+  return false;
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const { canModifyDepartment, user, isDemoMode } = useAuth();
   const currentUserName = isDemoMode
@@ -451,10 +471,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const changes: Record<string, { old: any; new: any }> = {};
       Object.keys(updates).forEach(key => {
         const k = key as keyof Project;
-        if (p[k] !== updates[k]) {
+        if (!valuesEqual(p[k], updates[k])) {
           changes[key] = { old: p[k], new: updates[k] };
         }
       });
+      // Nothing genuinely changed (e.g. re-saving the modal without edits) — do
+      // not log a phantom "updated" event, fire a status alert, or write to the
+      // server/Excel for a no-op save.
+      if (Object.keys(changes).length === 0) return p;
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: p.name, changes });
       if (updates.status === 'Delayed' && p.status !== 'Delayed') {
         notify('Project Delayed', `${p.name} has been marked as Delayed`, 'warning');
