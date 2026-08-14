@@ -45,7 +45,7 @@ const notConfigured = () => NextResponse.json({ error: 'Database is not configur
 // whole statement. This detects that specific failure so we can transparently
 // retry with the v2 fields stripped — existing edits never break, and the v2
 // fields begin persisting automatically the moment the columns are added.
-const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'classified_dependencies', 'tasks', 'revised_date'];
+const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'classified_dependencies', 'tasks', 'revised_date', 'date_revisions'];
 function isMissingV2Column(error: { message?: string } | null): boolean {
   if (!error?.message) return false;
   const m = error.message.toLowerCase();
@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
       startDate: p.start_date || null,
       targetDate: p.target_date || null,
       revisedDate: p.revised_date ?? null,
+      dateRevisions: p.date_revisions ?? [],
       objective: p.business_objective || '',
       kpi: p.kpi || '',
       projectDependencies: p.dependencies || '',
@@ -283,6 +284,7 @@ export async function POST(request: NextRequest) {
         classified_dependencies: project.classifiedDependencies ?? null,
         tasks: project.tasks ?? null,
         revised_date: project.revisedDate ?? null,
+        date_revisions: project.dateRevisions ?? [],
       };
       let { error } = await db.from('projects').insert(v2Row);
       if (error && isMissingV2Column(error)) {
@@ -317,6 +319,7 @@ export async function POST(request: NextRequest) {
       if (updates.classifiedDependencies !== undefined) v2Updates.classified_dependencies = updates.classifiedDependencies;
       if (updates.tasks !== undefined) v2Updates.tasks = updates.tasks;
       if (updates.revisedDate !== undefined) v2Updates.revised_date = updates.revisedDate || null;
+      if (updates.dateRevisions !== undefined) v2Updates.date_revisions = updates.dateRevisions;
 
       const fullUpdates = { ...dbUpdates, ...v2Updates };
       if (Object.keys(fullUpdates).length > 0) {
