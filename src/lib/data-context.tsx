@@ -199,7 +199,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const res = await authedFetch('/api/projects');
         if (!res.ok) throw new Error(res.status === 401 ? 'Session expired (401)' : `API request failed (${res.status})`);
         const data = await res.json();
-        if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
+        // Server data is authoritative — its stored status (incl. "Delayed") is
+        // shown as-is; the seed-only hygiene transform must not run here.
+        if (data.projects && data.projects.length > 0) setProjects(data.projects as Project[]);
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
         if (data.scope) setScope(data.scope);
         if (data.orgStats) setOrgStats(data.orgStats);
@@ -418,7 +420,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return '';
     }
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
-    const newProject: Project = normalizeProjectStatus({ ...project, id, archived: false } as Project);
+    // Honour the status the user chose (e.g. "Delayed") verbatim — never demote it.
+    const newProject: Project = { ...project, id, archived: false } as Project;
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
@@ -464,7 +467,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
       }
 
-      updatedProj = normalizeProjectStatus({ ...p, ...updates });
+      // Persist the edit exactly as made — a deliberate "Delayed" (or any status)
+      // must stick, even when the target date is still in the future.
+      updatedProj = { ...p, ...updates };
       return updatedProj;
     }));
 

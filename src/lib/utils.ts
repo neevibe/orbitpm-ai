@@ -187,10 +187,17 @@ export function isProjectOwner(
 }
 
 /**
- * A project whose target date is still in the future is not late — show it as
- * In Progress even if its stored status says "Delayed" (stale imports and
- * moved-out target dates left projects wrongly flagged). "Delayed" only
- * displays when the target date is today, past, or missing.
+ * Data-hygiene transform for the BUNDLED static / demo seed only.
+ *
+ * The shipped seed carries stale "Delayed" flags from old imports whose target
+ * dates were later moved out; for that unmaintained, read-only data we demote a
+ * "Delayed" status to "In Progress" when the target date is still in the future.
+ *
+ * This must NOT run on live server data or on user edits: "Delayed" is a
+ * deliberate status a manager may assign to a project that is behind schedule
+ * even when its final target date is still ahead (e.g. Commercial Development
+ * projects with far-future target dates). Silently overriding it there made
+ * saving a project as "Delayed" impossible — the status reverted on every save.
  */
 export function normalizeProjectStatus<T extends { status: string; targetDate?: string | null }>(p: T): T {
   if (p.status !== 'Delayed') return p;
