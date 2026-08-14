@@ -385,10 +385,10 @@ export default function ProjectsPage() {
       </aside>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-x-bg)]">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[var(--color-x-bg)]">
 
         {/* Top Bar */}
-        <div className="bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] px-6 py-3 flex items-center gap-2 flex-shrink-0 z-10 shadow-sm">
+        <div className="bg-[var(--color-x-surface)] border-b border-[var(--color-x-border)] px-6 py-3 flex flex-wrap items-center gap-2 flex-shrink-0 z-10 shadow-sm">
           {/* Search */}
           <div className="relative" style={{ width: 200, flexShrink: 0 }}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-x-text-muted)]" />
@@ -658,7 +658,7 @@ export default function ProjectsPage() {
                                 </div>
                               </div>
                             )}
-                            <table className="x-table w-full table-fixed min-w-[1040px]">
+                            <table className="x-table w-full table-fixed min-w-[940px]">
                               <thead>
                                 <tr>
                                   <th className="w-32 pl-5">ID</th>
@@ -666,7 +666,6 @@ export default function ProjectsPage() {
                                   <th className="w-36">Owner</th>
                                   <th className="w-28">Status</th>
                                   <th className="w-24">Priority</th>
-                                  <th className="w-28">Revised Date</th>
                                   <th className="w-36">Progress</th>
                                   <th className="w-24 text-right pr-5"></th>
                                 </tr>
@@ -697,9 +696,6 @@ export default function ProjectsPage() {
                                     </td>
                                     <td>
                                       <PriorityBadge priority={p.priority} />
-                                    </td>
-                                    <td className="text-[11px] text-[var(--color-x-text-secondary)] whitespace-nowrap" title={`Target Date: ${formatDate(p.targetDate)}`}>
-                                      {p.revisedDate ? formatDate(p.revisedDate) : <span className="text-[var(--color-x-text-muted)]">—</span>}
                                     </td>
                                     <td>
                                       <div className="flex items-center gap-2">
