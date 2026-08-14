@@ -70,6 +70,19 @@ export interface ClassifiedDependency {
   priority?: 'High' | 'Medium' | 'Low';
 }
 
+/** One entry in a project's date-revision audit trail. */
+export interface DateRevision {
+  /** The deadline in effect before this revision (prior revised date, or the
+   *  original target date for the first revision). */
+  previousTargetDate: string | null;
+  /** The new deadline recorded by this revision. */
+  revisedDate: string | null;
+  /** ISO timestamp of when the revision was made. */
+  changedAt: string;
+  /** Display name of the user who made the revision. */
+  changedBy: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -81,7 +94,15 @@ export interface Project {
   progress: number;
   priority: 'Critical' | 'High' | 'Medium' | 'Low';
   startDate: string | null;
+  /** Confirmed deadline. Locked after creation (admins excepted); drives the
+   *  "Delayed" rule. Timeline slips are recorded in `revisedDate` instead. */
   targetDate: string | null;
+  /** v2: current revised deadline, set ONLY through the date-revision process
+   *  (see dateRevisions). Read-only elsewhere; does NOT affect the Delayed rule
+   *  (that stays keyed on the original targetDate). */
+  revisedDate?: string | null;
+  /** Full audit trail of every date revision, oldest first. */
+  dateRevisions?: DateRevision[];
   risks: string;
   objective: string;
   kpi?: string;

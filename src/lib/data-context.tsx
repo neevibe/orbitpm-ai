@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured, getAccessToken, authedFetch } from './supabase';
 import { useAuth } from './auth-context';
-import { generateProjectId, daysUntil, normalizeProjectStatus } from './utils';
+import { generateProjectId, daysUntil, normalizeProjectStatus, reconcileStatusProgress, canBeDelayed, formatDate } from './utils';
 import { toast } from '@/components/ui/Toaster';
 import {
   projects as initialProjects,
@@ -161,6 +161,26 @@ function normalizeDeptName(d: string | null | undefined): string {
   return d;
 }
 
+// Treat null / undefined / '' / [] as the same "no value" so an edit that leaves
+// an empty field empty is not recorded as a change.
+function isEmptyValue(v: unknown): boolean {
+  return v == null || v === '' || (Array.isArray(v) && v.length === 0);
+}
+
+// Value-equality for audit diffing. A plain `!==` treats the fresh arrays the
+// edit modal always rebuilds (classifiedDependencies, tasks) as changed even
+// when their contents are identical, which logged phantom "updated" entries in
+// the audit trail / activity feed. Compare by value: reference, empty-equivalent,
+// then structural (deep) equality for objects and arrays.
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (isEmptyValue(a) && isEmptyValue(b)) return true;
+  if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
+    try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
+  }
+  return false;
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const { canModifyDepartment, user, isDemoMode } = useAuth();
   const currentUserName = isDemoMode
@@ -199,6 +219,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const res = await authedFetch('/api/projects');
         if (!res.ok) throw new Error(res.status === 401 ? 'Session expired (401)' : `API request failed (${res.status})`);
         const data = await res.json();
+        // Enforce the Delayed rule on read: any "Delayed" project whose Target
+        // Date is still in the future is shown as In Progress (incl. legacy data).
         if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
         if (data.scope) setScope(data.scope);
@@ -418,7 +440,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return '';
     }
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
-    const newProject: Project = normalizeProjectStatus({ ...project, id, archived: false } as Project);
+    // Enforce the Delayed rule: a new project can't be "Delayed" unless its
+    // Target Date has already passed (else it's stored as In Progress).
+    const newProject: Project = reconcileStatusProgress(normalizeProjectStatus({ ...project, id, archived: false } as Project));
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
     notify('Project Created', `${newProject.name} has been added to ${newProject.department}`, 'success');
@@ -445,26 +469,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
         notify('Permission denied', `You can only edit projects in your own department.`, 'warning');
         return p;
       }
+      // Enforce the Delayed rule at write time so the DB, audit, and display all
+      // agree: a project can only be "Delayed" once its Target Date has passed.
+      // If someone (e.g. via the quick-edit panel) sets Delayed too early, keep
+      // it In Progress and say why — the check uses the effective target date.
+      const effective: Partial<Project> = { ...updates };
+      if (effective.status === 'Delayed') {
+        const nextTarget = effective.targetDate !== undefined ? effective.targetDate : p.targetDate;
+        if (!canBeDelayed(nextTarget)) {
+          effective.status = 'In Progress';
+          notify('Kept as In Progress', `${p.name} can only be marked Delayed after its Target Date (${formatDate(nextTarget)}) has passed.`, 'warning');
+        }
+      }
+      // Couple "Completed" status and 100% progress, reacting only to the field
+      // the user actually changed (so un-completing by lowering the status never
+      // gets undone): marking Completed fills progress to 100; setting progress
+      // to 100 marks Completed.
+      if (effective.status === 'Completed') effective.progress = 100;
+      else if (effective.progress === 100) effective.status = 'Completed';
       const changes: Record<string, { old: any; new: any }> = {};
-      Object.keys(updates).forEach(key => {
+      Object.keys(effective).forEach(key => {
         const k = key as keyof Project;
-        if (p[k] !== updates[k]) {
-          changes[key] = { old: p[k], new: updates[k] };
+        if (!valuesEqual(p[k], effective[k])) {
+          changes[key] = { old: p[k], new: effective[k] };
         }
       });
+      // Nothing genuinely changed (e.g. re-saving the modal without edits) — do
+      // not log a phantom "updated" event, fire a status alert, or write to the
+      // server/Excel for a no-op save.
+      if (Object.keys(changes).length === 0) return p;
       logAudit({ action: 'update', entityType: 'project', entityId: id, entityName: p.name, changes });
-      if (updates.status === 'Delayed' && p.status !== 'Delayed') {
+      if (effective.status === 'Delayed' && p.status !== 'Delayed') {
         notify('Project Delayed', `${p.name} has been marked as Delayed`, 'warning');
       }
-      if (updates.status === 'Completed' && p.status !== 'Completed') {
+      if (effective.status === 'Completed' && p.status !== 'Completed') {
         notify('Project Completed', `${p.name} has been completed! 🎉`, 'success');
       }
-      
+
       if (isSupabaseConfigured()) {
-        persistProjectMutation({ action: 'update', project: { id }, updates, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
+        persistProjectMutation({ action: 'update', project: { id }, updates: effective, audit: { entityName: p.name, changes } }, saveFailed(`The edit to "${p.name}"`));
       }
 
-      updatedProj = normalizeProjectStatus({ ...p, ...updates });
+      updatedProj = { ...p, ...effective };
       return updatedProj;
     }));
 

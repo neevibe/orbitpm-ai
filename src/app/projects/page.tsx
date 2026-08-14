@@ -658,7 +658,7 @@ export default function ProjectsPage() {
                                 </div>
                               </div>
                             )}
-                            <table className="x-table w-full table-fixed min-w-[940px]">
+                            <table className="x-table w-full table-fixed min-w-[1040px]">
                               <thead>
                                 <tr>
                                   <th className="w-32 pl-5">ID</th>
@@ -666,6 +666,7 @@ export default function ProjectsPage() {
                                   <th className="w-36">Owner</th>
                                   <th className="w-28">Status</th>
                                   <th className="w-24">Priority</th>
+                                  <th className="w-28">Revised Date</th>
                                   <th className="w-36">Progress</th>
                                   <th className="w-24 text-right pr-5"></th>
                                 </tr>
@@ -696,6 +697,9 @@ export default function ProjectsPage() {
                                     </td>
                                     <td>
                                       <PriorityBadge priority={p.priority} />
+                                    </td>
+                                    <td className="text-[11px] text-[var(--color-x-text-secondary)] whitespace-nowrap" title={`Target Date: ${formatDate(p.targetDate)}`}>
+                                      {p.revisedDate ? formatDate(p.revisedDate) : <span className="text-[var(--color-x-text-muted)]">—</span>}
                                     </td>
                                     <td>
                                       <div className="flex items-center gap-2">

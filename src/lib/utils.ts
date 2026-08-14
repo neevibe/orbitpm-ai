@@ -187,15 +187,38 @@ export function isProjectOwner(
 }
 
 /**
- * A project whose target date is still in the future is not late — show it as
- * In Progress even if its stored status says "Delayed" (stale imports and
- * moved-out target dates left projects wrongly flagged). "Delayed" only
- * displays when the target date is today, past, or missing.
+ * A project may only be "Delayed" once its (original) Target Date has actually
+ * passed. Allowed when there is no target date, or the target date is today or
+ * in the past; disallowed while the target date is still in the future.
+ *
+ * The Revised Date deliberately does NOT enter this check — Delayed stays keyed
+ * on the confirmed Target Date.
+ */
+export function canBeDelayed(targetDate?: string | null): boolean {
+  const du = daysUntil(targetDate);
+  return du === null || du <= 0;
+}
+
+/**
+ * Enforce the Delayed rule on read/write: a "Delayed" status whose Target Date
+ * is still in the future is shown/stored as "In Progress" instead. Applied to
+ * live data, user edits, and the bundled seed so the register, database, audit,
+ * and activity feed all agree that Delayed means "past its Target Date".
  */
 export function normalizeProjectStatus<T extends { status: string; targetDate?: string | null }>(p: T): T {
   if (p.status !== 'Delayed') return p;
-  const du = daysUntil(p.targetDate);
-  if (du !== null && du > 0) return { ...p, status: 'In Progress' };
+  return canBeDelayed(p.targetDate) ? p : { ...p, status: 'In Progress' };
+}
+
+/**
+ * Keep "Completed" status and 100% progress in lockstep — each implies the
+ * other. A Completed project is forced to 100%; a project at 100% is marked
+ * Completed. Applied on read, on create, and on edit so the invariant holds
+ * across the register, database, audit, and dashboards.
+ */
+export function reconcileStatusProgress<T extends { status: string; progress: number }>(p: T): T {
+  if (p.status === 'Completed' && p.progress !== 100) return { ...p, progress: 100 };
+  if (p.progress === 100 && p.status !== 'Completed') return { ...p, status: 'Completed' };
   return p;
 }
 

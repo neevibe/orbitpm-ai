@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { X, Save, Trash2, Wand2, Lock, IndianRupee, AlertCircle } from 'lucide-react';
+import { X, Save, Trash2, Wand2, Lock, IndianRupee, AlertCircle, History, CalendarClock } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
-import { generateProjectId, parseINR, formatINRCompact } from '@/lib/utils';
+import { generateProjectId, parseINR, formatINRCompact, formatDate, canBeDelayed } from '@/lib/utils';
 import {
   TOP_LEVEL_DEPARTMENTS, getSubdivisions, hasSubdivisions, departmentDisplayName,
 } from '@/lib/org-structure';
@@ -13,7 +13,7 @@ import { useModalA11y } from '@/lib/useModalA11y';
 import { useConfirm } from '@/components/ui';
 import NotesLog from '@/components/NotesLog';
 import DependencyBuilder from '@/components/modals/DependencyBuilder';
-import type { Project, ClassifiedDependency } from '@/lib/mock-data';
+import type { Project, ClassifiedDependency, DateRevision } from '@/lib/mock-data';
 
 interface Props {
   isOpen: boolean;
@@ -27,8 +27,11 @@ const statusOptions = ['Not Started', 'In Progress', 'Completed', 'Delayed', 'On
 const priorityOptions = ['Critical', 'High', 'Medium', 'Low'] as const;
 
 export default function ProjectModal({ isOpen, onClose, editProject, defaultDepartment, defaultSubdivision }: Props) {
-  const { addProject, updateProject, archiveProject, purgeProject, departments, projects } = useData();
-  const { isSuperAdmin, department: userDepartment, canModifyDepartment } = useAuth();
+  const { addProject, updateProject, archiveProject, purgeProject, departments, projects, archivedProjects } = useData();
+  const { isSuperAdmin, department: userDepartment, canModifyDepartment, user, isDemoMode } = useAuth();
+  const revisionAuthor = isDemoMode
+    ? 'Demo User'
+    : ((user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'A user');
   const dialogRef = useModalA11y<HTMLDivElement>(isOpen, onClose);
   const confirm = useConfirm();
 
@@ -39,14 +42,21 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     return TOP_LEVEL_DEPARTMENTS.filter(d => canModifyDepartment(d));
   }, [isSuperAdmin, canModifyDepartment]);
 
-  const allProjectIds = useMemo(() => projects.map(p => p.id), [projects]);
+  // The auto-generated ID must not collide with ANY existing project_code —
+  // including ARCHIVED projects, which `projects` (active only) omits. Reusing
+  // an archived code makes the DB insert fail the unique constraint, so the new
+  // project shows optimistically then vanishes on reload. Pool both lists.
+  const allProjectIds = useMemo(
+    () => Array.from(new Set([...projects, ...archivedProjects].map(p => p.id))),
+    [projects, archivedProjects],
+  );
 
   const makeEmpty = (dept?: string) => ({
     id: '', name: '', department: dept || (isSuperAdmin ? deptNames[0] : userDepartment) || deptNames[0] || '',
     subdivision: '',
     owner: '', status: 'Not Started' as Project['status'], progress: 0,
     priority: 'Medium' as Project['priority'],
-    startDate: '', targetDate: '',
+    startDate: '', targetDate: '', revisedDate: '',
     risks: '', objective: '', notes: '',
     projectDependencies: '', supportTeam: '', kpi: '',
     totalBudget: '', utilizedBudget: '',
@@ -56,18 +66,26 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   const [deps, setDeps] = useState<ClassifiedDependency[]>([]);
   const [autoId, setAutoId] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
+  // Date-revision process state: the recorded history, plus the inline entry form.
+  const [revisions, setRevisions] = useState<DateRevision[]>([]);
+  const [revising, setRevising] = useState(false);
+  const [newRevisedDate, setNewRevisedDate] = useState('');
 
   // Sync form when modal opens / edit project changes
   useEffect(() => {
     if (!isOpen) return;
     setErrors([]);
+    setRevising(false);
+    setNewRevisedDate('');
+    setRevisions(editProject?.dateRevisions || []);
     if (editProject) {
       setForm({
         id: editProject.id, name: editProject.name, department: editProject.department,
         subdivision: editProject.subdivision || '',
         owner: editProject.owner, status: editProject.status, progress: editProject.progress,
         priority: editProject.priority, startDate: editProject.startDate || '',
-        targetDate: editProject.targetDate || '', risks: editProject.risks || '',
+        targetDate: editProject.targetDate || '', revisedDate: editProject.revisedDate || '',
+        risks: editProject.risks || '',
         objective: editProject.objective || '', notes: editProject.notes || '',
         projectDependencies: editProject.projectDependencies || '',
         supportTeam: editProject.supportTeam || '',
@@ -107,6 +125,13 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
   const subdivisions = getSubdivisions(form.department);
   const subdivisionRequired = hasSubdivisions(form.department);
 
+  // Target Date is confirmed at creation and locked afterwards — only Super
+  // Admins may still edit it. Everyone else records slips in the Revised Date.
+  const targetDateLocked = !!editProject && !isSuperAdmin;
+  // "Delayed" is only valid once the Target Date has passed (Revised Date does
+  // not count). Flag a future-dated Delayed selection so we can block the save.
+  const delayedNotAllowed = form.status === 'Delayed' && !canBeDelayed(form.targetDate);
+
   // Project Owner options = employees mapped to the selected department. The
   // current owner is always kept selectable (so editing a legacy project whose
   // owner isn't in the roster — or a multi-name owner — never loses the value).
@@ -126,10 +151,27 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     if (!form.startDate) e.push('Start Date');
     if (!form.targetDate) e.push('End Date');
     if (!form.status) e.push('Status');
+    if (delayedNotAllowed) e.push('Status: “Delayed” is only allowed once the Target Date has passed');
     return e;
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  // Record a date revision through the controlled process: append an audit
+  // entry (previous → new, when, who) and update the current revised date.
+  const recordRevision = () => {
+    if (!newRevisedDate) return;
+    const entry: DateRevision = {
+      previousTargetDate: form.revisedDate || form.targetDate || null,
+      revisedDate: newRevisedDate,
+      changedAt: new Date().toISOString(),
+      changedBy: revisionAuthor,
+    };
+    setRevisions(prev => [...prev, entry]);
+    setForm(f => ({ ...f, revisedDate: newRevisedDate }));
+    setRevising(false);
+    setNewRevisedDate('');
+  };
+
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (readOnly) return; // defense-in-depth: block writes outside the user's department
     if (!canModifyDepartment(form.department)) return;
@@ -141,12 +183,23 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     }
     setErrors([]);
 
+    // Confirmation before every save — verify the details, especially the
+    // Target Date (which is locked after creation for non-admins).
+    const ok = await confirm({
+      title: 'Please verify before saving',
+      message: 'Please verify all details, especially the Target Date, before saving.',
+      confirmText: editProject ? 'Save changes' : 'Create project',
+    });
+    if (!ok) return;
+
     const payload: Partial<Project> = {
       ...form,
       id: editProject ? editProject.id : (form.id || autoId),
       subdivision: form.subdivision || null,
       startDate: form.startDate || null,
       targetDate: form.targetDate || null,
+      revisedDate: form.revisedDate || null,
+      dateRevisions: revisions,
       totalBudget: parseINR(form.totalBudget),
       utilizedBudget: parseINR(form.utilizedBudget),
       classifiedDependencies: deps,
@@ -253,23 +306,87 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
 
           <div className="grid grid-cols-3 gap-3">
             <div><label className={labelCls}>Status *</label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} required className={inputCls}>
+              <select value={form.status} onChange={e => { const v = e.target.value as Project['status']; setForm(f => ({ ...f, status: v, progress: v === 'Completed' ? 100 : f.progress })); }} required className={`${inputCls} ${delayedNotAllowed ? 'border-red-300 focus:border-red-400 focus:ring-red-50' : ''}`}>
                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-              </select></div>
+              </select>
+              {delayedNotAllowed && (
+                <p className="text-[10px] text-red-500 mt-1">Only allowed once the Target Date ({formatDate(form.targetDate || null)}) has passed.</p>
+              )}</div>
             <div><label className={labelCls}>Priority / Criticality *</label>
               <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as any }))} required className={inputCls}>
                 {priorityOptions.map(p => <option key={p} value={p}>{p}</option>)}
               </select></div>
             <div><label className={labelCls}>Progress %</label>
-              <input type="number" min={0} max={100} value={form.progress} onChange={e => setForm(f => ({ ...f, progress: Number(e.target.value) }))} className={inputCls} /></div>
+              <input type="number" min={0} max={100} value={form.status === 'Completed' ? 100 : form.progress} disabled={form.status === 'Completed'}
+                onChange={e => { const v = Number(e.target.value); setForm(f => ({ ...f, progress: v, status: v === 100 ? 'Completed' : f.status })); }}
+                className={`${inputCls} disabled:bg-[#f8fafc] disabled:text-[#64748b]`} />
+              {form.status === 'Completed' && <p className="text-[10px] text-[#94a3b8] mt-1">100% — set by Completed status.</p>}</div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>Start Date *</label>
               <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} required className={inputCls} /></div>
             <div><label className={labelCls}>Target Date *</label>
-              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} required className={inputCls} /></div>
+              <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} required disabled={targetDateLocked}
+                className={`${inputCls} ${targetDateLocked ? 'disabled:bg-[#f8fafc] disabled:text-[#64748b] cursor-not-allowed' : ''}`} />
+              {targetDateLocked
+                ? <p className="text-[10px] text-[#94a3b8] mt-1">Locked after creation — reschedule via a date revision.</p>
+                : editProject && isSuperAdmin
+                  ? <p className="text-[10px] text-[#94a3b8] mt-1">Admin: editable. Others reschedule via a date revision.</p>
+                  : <p className="text-[10px] text-amber-600 mt-1">Confirm carefully — locked after creation.</p>}
+            </div>
           </div>
+
+          {/* Revised Date — governed by the revision process, never edited directly */}
+          {editProject && (
+            <div className="border-t border-[#f1f5f9] pt-4">
+              <label className={`${labelCls} flex items-center gap-1.5`}><CalendarClock className="w-3.5 h-3.5" /> Revised Date</label>
+              <p className="text-[11px] text-[#64748b] leading-relaxed mb-2.5">
+                The Target Date can’t be edited directly. To reschedule, record a <strong>date revision</strong> below — every revision is tracked (previous date, new date, when, and who) in the history.
+              </p>
+
+              {!readOnly && (
+                revising ? (
+                  <div className="flex flex-wrap items-end gap-2 mb-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-blue-500 mb-1 uppercase tracking-wider">New revised date</label>
+                      <input type="date" value={newRevisedDate} min={form.targetDate || undefined} onChange={e => setNewRevisedDate(e.target.value)}
+                        className="bg-white border border-blue-200 rounded-lg px-2.5 py-1.5 text-[12px] text-[#1e293b] outline-none focus:border-blue-400" />
+                    </div>
+                    <button type="button" disabled={!newRevisedDate} onClick={recordRevision}
+                      className="btn-primary text-[12px] disabled:opacity-50">Record revision</button>
+                    <button type="button" onClick={() => { setRevising(false); setNewRevisedDate(''); }}
+                      className="btn-secondary text-[12px]">Cancel</button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => { setRevising(true); setNewRevisedDate(''); }}
+                    className="btn-secondary text-[12px] mb-3">
+                    <CalendarClock className="w-3.5 h-3.5" /> Revise Date
+                  </button>
+                )
+              )}
+
+              {revisions.length > 0 ? (
+                <div className="rounded-xl border border-[#e2e8f0] overflow-hidden">
+                  <div className="px-3 py-2 bg-[#f8fafc] text-[10px] font-semibold uppercase tracking-wider text-[#64748b] flex items-center gap-1.5">
+                    <History className="w-3 h-3" /> Date Revision History
+                  </div>
+                  <ul className="divide-y divide-[#f1f5f9] max-h-40 overflow-y-auto">
+                    {revisions.slice().reverse().map((r, i) => (
+                      <li key={i} className="px-3 py-2 text-[12px] text-[#334155] flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="text-[#94a3b8] line-through">{formatDate(r.previousTargetDate)}</span>
+                        <span className="text-[#94a3b8]">→</span>
+                        <span className="font-semibold text-[#1e293b]">{formatDate(r.revisedDate)}</span>
+                        <span className="text-[10px] text-[#94a3b8] ml-auto">{formatDate((r.changedAt || '').slice(0, 10))} · {r.changedBy}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-[11px] text-[#94a3b8]">No date revisions recorded yet.</p>
+              )}
+            </div>
+          )}
 
           {/* Financial management (INR) */}
           <div className="border-t border-[#f1f5f9] pt-4">
