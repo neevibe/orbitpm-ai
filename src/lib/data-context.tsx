@@ -200,7 +200,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const [projects, setProjects] = useState<Project[]>(
-    (isDemoMode ? DEMO_PROJECTS : initialProjects).map(normalizeProjectStatus),
+    (isDemoMode ? DEMO_PROJECTS : initialProjects).map(p => reconcileStatusProgress(normalizeProjectStatus(p))),
   );
   const [risks, setRisks] = useState<Risk[]>(isDemoMode ? DEMO_RISKS : initialRisks);
   const [notifications, setNotifications] = useState<Notification[]>(isDemoMode ? DEMO_NOTIFICATIONS : initialNotifications);
@@ -221,7 +221,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         // Enforce the Delayed rule on read: any "Delayed" project whose Target
         // Date is still in the future is shown as In Progress (incl. legacy data).
-        if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(normalizeProjectStatus));
+        // Enforce both invariants on read so stored/legacy data is consistent:
+        // Delayed only when past its target date, and Completed ⇔ 100% progress.
+        if (data.projects && data.projects.length > 0) setProjects((data.projects as Project[]).map(p => reconcileStatusProgress(normalizeProjectStatus(p))));
         if (data.risks && data.risks.length > 0) setRisks(data.risks);
         if (data.scope) setScope(data.scope);
         if (data.orgStats) setOrgStats(data.orgStats);
