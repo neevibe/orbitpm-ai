@@ -38,7 +38,8 @@ same Supabase data but **does not change the live site**.
 ## ⚠️ Important constraints
 - **One shared Supabase DB** backs both prod and preview. So the destructive
   hierarchy changes (rename dept, move CBB projects) are **NOT applied** — they
-  live as `supabase/migrations/0004_v2_hierarchy.sql` (do-not-run) and as a
+  live as `supabase/manual/0004_v2_hierarchy.sql` (quarantined out of the
+  auto-applied migrations folder — see `supabase/manual/README.md`) and as a
   display layer in the preview.
 - New-field **persistence** needs the additive, zero-risk
   `0003_v2_fields.sql` (nullable columns). Until it's run, the preview shows the
@@ -47,6 +48,6 @@ same Supabase data but **does not change the live site**.
 ## To go live (after your approval)
 1. Run `0003_v2_fields.sql` (additive columns — safe).
 2. Wire `/api/projects` to read/write the new columns (small change, ready to add).
-3. Run `0004_v2_hierarchy.sql` (the dept rename + CBB move) and reconcile the
+3. Run `supabase/manual/0004_v2_hierarchy.sql` (the dept rename + CBB move) and reconcile the
    config per the notes in that file.
 4. `vercel --prod`.
