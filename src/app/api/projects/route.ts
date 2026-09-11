@@ -47,10 +47,46 @@ const notConfigured = () => NextResponse.json({ error: 'Database is not configur
 // retry with the v2 fields stripped — existing edits never break, and the v2
 // fields begin persisting automatically the moment the columns are added.
 const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'expected_annual_revenue', 'completed_at', 'classified_dependencies', 'tasks', 'revised_date', 'date_revisions'];
-function isMissingV2Column(error: { message?: string } | null): boolean {
-  if (!error?.message) return false;
-  const m = error.message.toLowerCase();
-  return V2_COLUMNS.some(c => m.includes(c)) && (m.includes('does not exist') || m.includes('column') || m.includes('schema cache'));
+
+/** Pull the offending column name out of a missing-column error. PostgREST
+ *  reports PGRST204 ("Could not find the 'x' column ... in the schema cache");
+ *  Postgres reports 42703 ('column "x" ... does not exist'). */
+function missingColumnName(error: { message?: string } | null): string | null {
+  if (!error?.message) return null;
+  const m = error.message.match(/'([a-z0-9_]+)' column/i)
+         || error.message.match(/column "([a-z0-9_]+)"/i)
+         || error.message.match(/column ([a-z0-9_]+) of relation/i);
+  const col = m?.[1]?.toLowerCase();
+  return col && V2_COLUMNS.includes(col) ? col : null;
+}
+
+/**
+ * Write a row, dropping only the v2 columns the live schema is missing.
+ *
+ * The previous behaviour retried with a hardcoded "core fields only" row, so a
+ * single absent column silently discarded EVERY v2 field in the same write —
+ * which is why budgets entered at create time never persisted while `tasks` was
+ * un-migrated. Now each missing column is removed individually and the rest of
+ * the write still lands. Returns the columns that were skipped so the caller
+ * can log them: silent data loss is what caused this.
+ */
+async function writeDroppingMissingColumns<T extends Record<string, unknown>>(
+  attempt: (row: T) => Promise<{ error: { message?: string } | null }>,
+  row: T,
+): Promise<{ error: { message?: string } | null; dropped: string[] }> {
+  const current: Record<string, unknown> = { ...row };
+  const dropped: string[] = [];
+  // Bounded by the number of v2 columns — each pass removes exactly one.
+  for (let i = 0; i <= V2_COLUMNS.length; i++) {
+    if (Object.keys(current).length === 0) return { error: null, dropped };
+    const { error } = await attempt(current as T);
+    if (!error) return { error: null, dropped };
+    const col = missingColumnName(error);
+    if (!col || !(col in current)) return { error, dropped };
+    delete current[col];
+    dropped.push(col);
+  }
+  return { error: { message: 'too many missing columns' }, dropped };
 }
 
 export async function GET(request: NextRequest) {
@@ -295,9 +331,12 @@ export async function POST(request: NextRequest) {
         revised_date: project.revisedDate ?? null,
         date_revisions: project.dateRevisions ?? [],
       };
-      let { error } = await db.from('projects').insert(v2Row);
-      if (error && isMissingV2Column(error)) {
-        ({ error } = await db.from('projects').insert(baseRow));
+      const { error, dropped } = await writeDroppingMissingColumns(
+        async row => await db.from('projects').insert(row),
+        v2Row,
+      );
+      if (dropped.length) {
+        console.warn('[projects API] create: columns absent from the live schema, not saved:', dropped.join(', '));
       }
       if (error) throw error;
     }
@@ -335,16 +374,17 @@ export async function POST(request: NextRequest) {
       const fullUpdates = { ...dbUpdates, ...v2Updates };
       if (Object.keys(fullUpdates).length > 0) {
         console.log('[projects API] updating project_code:', project.id, 'columns:', Object.keys(fullUpdates));
-        let { error } = await db.from('projects').update(fullUpdates).eq('project_code', project.id);
+        const { error, dropped } = await writeDroppingMissingColumns(
+          async row => await db.from('projects').update(row).eq('project_code', project.id),
+          fullUpdates,
+        );
+        if (dropped.length) {
+          console.warn('[projects API] update: columns absent from the live schema, not saved:', dropped.join(', '), 'project_code:', project.id);
+        }
         if (error) {
-          console.error('[projects API] update error:', error.code, error.message, 'project_code:', project.id);
+          console.error('[projects API] update error:', error.message, 'project_code:', project.id);
+          throw error;
         }
-        // If the v2 columns don't exist yet, retry with only the core fields so
-        // the edit still saves (subdivision/financials persist once migrated).
-        if (error && isMissingV2Column(error) && Object.keys(dbUpdates).length > 0) {
-          ({ error } = await db.from('projects').update(dbUpdates).eq('project_code', project.id));
-        }
-        if (error && !isMissingV2Column(error)) throw error;
       }
     }
     else if (action === 'archive') {
