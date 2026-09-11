@@ -808,6 +808,10 @@ export default function CommandCenter() {
             {filteredProjects.map(p => (
               <div
                 key={p.id}
+                /* Machine-readable identity so QA can assert one card per
+                   project — a dependency mirror reuses its parent's id, so a
+                   repeat here is the double-count made visible. */
+                data-project-code={p.id}
                 onClick={() => openPanel(p)}
                 className="p-4 bg-white border border-[var(--color-x-border)] hover:border-blue-300 hover:shadow-md rounded-xl transition-all cursor-pointer group flex flex-col justify-between"
               >

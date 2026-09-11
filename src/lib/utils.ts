@@ -274,16 +274,6 @@ export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
-/** Canonical lowercase department key — matches the server's normalizeDept so
- *  a claim of "Digital" compares equal to register rows under "Digital & Data". */
-export function deptKey(d: string | null | undefined): string {
-  if (!d) return '';
-  const s = d.toLowerCase().trim();
-  if (s.startsWith('digital')) return 'digital & data';
-  if (s.startsWith('advertis')) return 'advertising & marketing';
-  if (s.startsWith('duty') || s === 'dutyfree') return 'duty free';
-  if (s.startsWith('commercial')) return 'commercial development';
-  if (s.startsWith('oper')) return 'operations';
-  if (s === 'basl' || s === 'cbb' || s === 'ccb' || s.startsWith('amen')) return 'basl';
-  return s;
-}
+/** Canonical lowercase department key — re-exported from the single source of
+ *  truth so the server, the permission check and the UI cannot drift apart. */
+export { deptKey, sameDept, deptDisplayName } from './dept-key';

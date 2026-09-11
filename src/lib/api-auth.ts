@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type User } from '@supabase/supabase-js';
+import { deptKey } from './dept-key';
 
 /**
  * Server-side request authentication for API routes (Phase 0).
@@ -89,17 +90,7 @@ export async function requireAdmin(request: NextRequest | Request): Promise<Auth
  * "Digital & Data" (claims come from the admin UI's short names, project rows
  * from the workbook's long names).
  */
-export function normalizeDept(d: string | null | undefined): string {
-  if (!d) return '';
-  const s = d.toLowerCase().trim();
-  if (s.startsWith('digital')) return 'digital & data';
-  if (s.startsWith('advertis')) return 'advertising & marketing';
-  if (s.startsWith('duty') || s === 'dutyfree') return 'duty free';
-  if (s.startsWith('commercial')) return 'commercial development';
-  if (s.startsWith('oper')) return 'operations';
-  if (s === 'basl' || s === 'cbb' || s === 'ccb' || s.startsWith('amen')) return 'basl';
-  return s;
-}
+export { deptKey as normalizeDept };
 
 type DepLike = { kind?: string; department?: string | null } | null;
 
@@ -107,6 +98,6 @@ type DepLike = { kind?: string; department?: string | null } | null;
 export function dependsOnDepartment(classifiedDependencies: unknown, dept: string): boolean {
   if (!dept || !Array.isArray(classifiedDependencies)) return false;
   return (classifiedDependencies as DepLike[]).some(
-    d => d && d.kind === 'internal' && normalizeDept(d.department) === dept,
+    d => d && d.kind === 'internal' && deptKey(d.department) === dept,
   );
 }

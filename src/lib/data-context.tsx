@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured, getAccessToken, authedFetch } from './s
 import { useAuth } from './auth-context';
 import { generateProjectId, daysUntil, normalizeProjectStatus, reconcileStatusProgress, canBeDelayed, isPastTargetDate, formatDate } from './utils';
 import { isoDay } from './delay-analytics';
+import { deptDisplayName } from './dept-key';
 import { toast } from '@/components/ui/Toaster';
 import {
   projects as initialProjects,
@@ -152,18 +153,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // PROVIDER
 // ============================================
 
-function normalizeDeptName(d: string | null | undefined): string {
-  if (!d) return '';
-  const s = d.toLowerCase().trim();
-  if (s.startsWith('digital')) return 'Digital & Data';
-  if (s.startsWith('advertis')) return 'Advertising & Marketing';
-  if (s.startsWith('duty') || s === 'dutyfree') return 'Duty Free';
-  if (s.startsWith('commercial')) return 'Commercial Development';
-  if (s.startsWith('oper')) return 'Operations';
-  if (s === 'basl') return 'BASL';
-  if (s === 'cbb' || s === 'ccb' || s.startsWith('amen')) return 'BASL';
-  return d;
-}
+const normalizeDeptName = deptDisplayName;
 
 // Treat null / undefined / '' / [] as the same "no value" so an edit that leaves
 // an empty field empty is not recorded as a change.

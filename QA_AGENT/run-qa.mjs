@@ -38,6 +38,11 @@ let server = null;
 let base = process.env.QA_BASE_URL || '';
 if (!base) {
   base = 'http://localhost:3000';
+  // Build FIRST. This suite used to drive whatever happened to be in .next, so
+  // an edited source file could report green without ever being executed —
+  // the most dangerous kind of passing test.
+  console.log('Building (so the suite tests the current source)…');
+  execSync('npx next build', { cwd: ROOT, stdio: 'ignore' });
   console.log('Starting production server (npm run start)…');
   server = spawn('npm', ['run', 'start'], { cwd: ROOT, stdio: 'ignore', detached: true });
   let up = false;
@@ -91,6 +96,46 @@ try {
   check('Command Center shows 6 KPI cells', kpis === 6, `found ${kpis}`);
   const charts = await page.locator('svg.recharts-surface').count();
   check('Command Center charts render', charts >= 2, `found ${charts} chart SVGs`);
+
+  // Register integrity: the sidebar count comes from `kpi` (canonical rows) and
+  // the KPI card from the page's own project list. When the context served the
+  // mirrored list as `projects`, cross-department dependency mirrors — read-only
+  // shadows of a project that is already counted — inflated the card, so the same
+  // screen showed 203 against the sidebar's 200. One project, one count.
+  const sidebarCount = await page.locator('text=/^\\d+ projects$/').first().textContent().catch(() => null);
+  const kpiTotal = await page.locator('button.x-kpi-cell').first().textContent().catch(() => null);
+  const sidebarN = sidebarCount ? parseInt(sidebarCount.replace(/\D/g, ''), 10) : NaN;
+  const kpiN = kpiTotal ? parseInt((kpiTotal.match(/\d[\d,]*/) || [''])[0].replace(/,/g, ''), 10) : NaN;
+  check(
+    'Sidebar and KPI project totals agree (mirrors not double-counted)',
+    Number.isFinite(sidebarN) && Number.isFinite(kpiN) && sidebarN === kpiN,
+    Number.isFinite(sidebarN) && Number.isFinite(kpiN)
+      ? (sidebarN === kpiN ? `both ${kpiN}` : `sidebar ${sidebarN} vs KPI ${kpiN}`)
+      : `could not read counts (sidebar=${sidebarCount}, kpi=${kpiTotal})`,
+  );
+
+  // A dependency mirror shares its parent's id. Two entries with the same id in
+  // one counted list is the double-count, restated as an invariant.
+  // The project cards live behind an active KPI filter, so select one first.
+  // NOT the first cell — that is "Total Projects", whose filterType is 'all'
+  // and which CLEARS the filter instead of setting one. Use the second.
+  await page.locator('button.x-kpi-cell').nth(1).click().catch(() => {});
+  await page.waitForSelector('[data-project-code]', { timeout: 8000 }).catch(() => {});
+  const codeAudit = await page.evaluate(() => {
+    const codes = [...document.querySelectorAll('[data-project-code]')].map(e => e.getAttribute('data-project-code'));
+    const seen = new Set(); const dupes = new Set();
+    codes.forEach(c => { if (seen.has(c)) dupes.add(c); seen.add(c); });
+    return { total: codes.length, dupes: dupes.size };
+  }).catch(() => ({ total: 0, dupes: 0 }));
+  // Guard against a vacuous pass: if the selector matches nothing the check is
+  // meaningless, so treat "found none" as a failure rather than silent green.
+  check(
+    'No duplicate project codes in the counted view',
+    codeAudit.total > 0 && codeAudit.dupes === 0,
+    codeAudit.total === 0
+      ? 'no [data-project-code] elements found — check is not instrumented'
+      : codeAudit.dupes ? `${codeAudit.dupes} duplicated of ${codeAudit.total}` : `${codeAudit.total} unique`,
+  );
   const truncated = await page.locator('svg .recharts-yAxis text', { hasText: '…' }).count();
   check('Department names not truncated', truncated === 0, truncated ? `${truncated} truncated labels` : '');
   const pastMilestones = await page.evaluate(() => {
@@ -217,6 +262,60 @@ try {
 } finally {
   await browser.close();
   if (server) { try { process.kill(-server.pid); } catch { /* already gone */ } }
+}
+
+
+// ---------- department scoping & register-integrity (pure logic) ----------
+// These run OUTSIDE the browser on purpose. The browser suite signs in as the
+// demo account, which is permission:'admin' — and admins short-circuit every
+// department check (`if (isAdmin) return true`). So no browser test can ever
+// exercise department scoping, which is exactly how the "can't edit projects in
+// my own department" bug reached production.
+console.log('\n→ Department scoping (pure logic)');
+{
+  const outDir = join(ROOT, 'QA_AGENT/.tmp');
+  try {
+    // dept-key.ts is dependency-free so it compiles and imports standalone.
+    execSync(
+      `npx tsc ${join(ROOT, 'src/lib/dept-key.ts')} --outDir ${outDir} --module es2020 --target es2020 --moduleResolution bundler`,
+      { cwd: ROOT, stdio: 'pipe' },
+    );
+    const { deptKey, sameDept, deptDisplayName } = await import(join(outDir, 'dept-key.js'));
+
+    // Auth claims carry the admin UI's SHORT names; project rows carry the
+    // workbook's LONG names. A user must be able to edit their own department.
+    const mustMatch = [
+      ['Digital', 'Digital & Data'],
+      ['Commercial', 'Commercial Development'],
+      ['Advertising', 'Advertising & Marketing'],
+      ['Duty Free', 'DutyFree'],
+      ['Operations', 'operations'],
+      ['CBB', 'BASL'],
+      ['Amenities', 'BASL'],
+    ];
+    for (const [claim, row] of mustMatch) {
+      check(`Claim "${claim}" can edit a "${row}" project`, sameDept(claim, row),
+        sameDept(claim, row) ? '' : `deptKey mismatch: ${deptKey(claim)} vs ${deptKey(row)}`);
+    }
+
+    // ...and must NOT leak into someone else's department.
+    const mustDiffer = [
+      ['Operations', 'Digital & Data'],
+      ['Duty Free', 'Commercial Development'],
+      ['Digital', 'Advertising & Marketing'],
+    ];
+    for (const [claim, row] of mustDiffer) {
+      check(`Claim "${claim}" cannot edit a "${row}" project`, !sameDept(claim, row));
+    }
+
+    // The display variant must agree with the comparison key, or the UI groups
+    // rows under a heading the permission check disagrees with.
+    const displayAgrees = ['Digital', 'CBB', 'Advertising', 'Duty Free', 'Commercial']
+      .every(d => deptKey(deptDisplayName(d)) === deptKey(d));
+    check('Display name and comparison key agree', displayAgrees);
+  } catch (e) {
+    check('Department scoping checks ran', false, String(e.message || e).slice(0, 160));
+  }
 }
 
 // ---------- report ----------
