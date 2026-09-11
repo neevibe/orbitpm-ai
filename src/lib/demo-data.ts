@@ -80,6 +80,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Raise self-service resolution from 48% to 70%.',
     notes: 'Beta targeted Q3. Depends on API Gateway (MER-TEC-03).', risks: 'UX research recruitment delayed 2 weeks.',
     totalBudget: 18000000, utilizedBudget: 8100000, financials: { budget: 18000000, spent: 8100000 },
+    expectedAnnualRevenue: 65000000,
     classifiedDependencies: [
       { id: 'd1', kind: 'internal', department: 'Technology', description: 'API Gateway endpoints', status: 'In Progress', owners: ['Wei Chen'] },
     ],
@@ -112,6 +113,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Cut reporting cycle from 6 weeks to 5 days.',
     notes: 'Data pipeline live; regulatory submission due June.', risks: 'Regulatory scope may expand.',
     totalBudget: 6500000, utilizedBudget: 4810000, financials: { budget: 6500000, spent: 4810000 },
+    expectedAnnualRevenue: 12000000,
     tasks: [
       task('t1', 'Data pipeline', 'Wei Chen', 'Completed', { progress: 100 }),
       task('t2', 'Regulatory templates', 'Hiroshi Tanaka', 'In Progress', { progress: 65 }),
@@ -152,6 +154,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Lift repeat-purchase rate 15%.',
     notes: 'Tier structure finalised; soft launch July.', risks: 'Partner API timelines uncertain.',
     totalBudget: 23000000, utilizedBudget: 12650000, financials: { budget: 23000000, spent: 12650000 },
+    expectedAnnualRevenue: 90000000,
     classifiedDependencies: [
       { id: 'd1', kind: 'external', department: 'Payments Partner', description: 'Rewards settlement API', status: 'In Progress', owners: ['Ana Ribeiro'] },
     ],
@@ -196,6 +199,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'App-store rating from 3.6 to 4.5.',
     notes: 'App-store policy review added a 3-week delay.', risks: 'Privacy manifest changes may need more dev cycles.',
     totalBudget: 16000000, utilizedBudget: 5120000, financials: { budget: 16000000, spent: 5120000 },
+    expectedAnnualRevenue: 42000000,
     tasks: [
       task('t1', 'Design system', 'Leila Haddad', 'Completed', { progress: 100 }),
       task('t2', 'Offline sync engine', 'Noah Kim', 'In Progress', { progress: 40 }),
@@ -210,6 +214,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Raise throughput 35%; cut pick errors to < 0.2%.',
     notes: 'Robotics vendor selected; site retrofit in progress.', risks: 'Facility retrofit dependency on landlord approvals.',
     totalBudget: 31000000, utilizedBudget: 14880000, financials: { budget: 31000000, spent: 14880000 },
+    expectedAnnualRevenue: 55000000,
     classifiedDependencies: [
       { id: 'd1', kind: 'internal', department: 'Operations', description: 'Facilities retrofit', status: 'In Progress', owners: ['James Sullivan'] },
     ],
@@ -227,6 +232,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Cut energy consumption 18%.',
     notes: 'Delivered; 19% energy reduction achieved.', risks: 'None.',
     totalBudget: 5400000, utilizedBudget: 5100000, financials: { budget: 5400000, spent: 5100000 },
+    expectedAnnualRevenue: 31000000,
     tasks: [ task('t1', 'IoT rollout', 'Oliver Grant', 'Completed', { progress: 100 }) ],
   },
   {
@@ -263,6 +269,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Weekly CX index with drill-down by journey.',
     notes: 'Sentiment model retraining slipped 3 weeks.', risks: 'Data quality from legacy survey tool.',
     totalBudget: 4100000, utilizedBudget: 1640000, financials: { budget: 4100000, spent: 1640000 },
+    expectedAnnualRevenue: 18000000,
     tasks: [
       task('t1', 'Signal ingestion', 'Wei Chen', 'Completed', { progress: 100 }),
       task('t2', 'Sentiment model', 'Leila Haddad', 'In Progress', { progress: 45 }),
@@ -286,6 +293,7 @@ export const DEMO_PROJECTS: Project[] = [
     kpi: 'Cut quote turnaround from 4 days to same-day.',
     notes: 'Quoting module live; analytics in build.', risks: 'CRM data hygiene.',
     totalBudget: 8900000, utilizedBudget: 5162000, financials: { budget: 8900000, spent: 5162000 },
+    expectedAnnualRevenue: 38000000,
     tasks: [
       task('t1', 'Quoting module', 'Marcus Bennett', 'Completed', { progress: 100 }),
       task('t2', 'Pipeline analytics', 'Oliver Grant', 'In Progress', { progress: 45 }),

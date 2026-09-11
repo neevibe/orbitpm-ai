@@ -4,6 +4,7 @@ import { recordAudit, actorFromToken } from '@/lib/audit';
 import { requireUser, serverPermission, serverDepartment, normalizeDept, dependsOnDepartment } from '@/lib/api-auth';
 import { sendTeamsAlert } from '@/lib/teams-alerts';
 import { appOrigin } from '@/lib/ms-oauth';
+import { normalizeProjectStatus, reconcileStatusProgress } from '@/lib/utils';
 
 // Maps the mutation action to a persistent audit action + module.
 const AUDIT_MAP: Record<string, { action: string; module: string; entityType: string }> = {
@@ -45,7 +46,7 @@ const notConfigured = () => NextResponse.json({ error: 'Database is not configur
 // whole statement. This detects that specific failure so we can transparently
 // retry with the v2 fields stripped — existing edits never break, and the v2
 // fields begin persisting automatically the moment the columns are added.
-const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'classified_dependencies', 'tasks', 'revised_date', 'date_revisions'];
+const V2_COLUMNS = ['subdivision', 'total_budget', 'utilized_budget', 'expected_annual_revenue', 'completed_at', 'classified_dependencies', 'tasks', 'revised_date', 'date_revisions'];
 function isMissingV2Column(error: { message?: string } | null): boolean {
   if (!error?.message) return false;
   const m = error.message.toLowerCase();
@@ -93,14 +94,20 @@ export async function GET(request: NextRequest) {
       risks: '',
       archived: p.archived || false,
       archivedAt: p.archived_at || null,
+      completedAt: p.completed_at || null,
       // v2 fields — present only after migration 0003 runs; `?? null` keeps the
       // mapping safe (and the row simply omits them while the columns are absent).
       subdivision: p.subdivision ?? null,
       totalBudget: p.total_budget ?? null,
       utilizedBudget: p.utilized_budget ?? null,
+      expectedAnnualRevenue: p.expected_annual_revenue ?? null,
       classifiedDependencies: p.classified_dependencies ?? null,
       tasks: p.tasks ?? null
-    }));
+    }))
+      // Apply the Delayed rule server-side too, so orgStats (which every user
+      // sees, including outside their department scope) reports the same
+      // delayed count as the client register rather than raw stored status.
+      .map(p => normalizeProjectStatus(reconcileStatusProgress(p)));
 
     // Fetch risks
     const { data: dbRisks, error: risksErr } = await db.from('risks').select('*');
@@ -281,6 +288,8 @@ export async function POST(request: NextRequest) {
         subdivision: project.subdivision ?? null,
         total_budget: project.totalBudget ?? null,
         utilized_budget: project.utilizedBudget ?? null,
+        expected_annual_revenue: project.expectedAnnualRevenue ?? null,
+        completed_at: project.completedAt ?? null,
         classified_dependencies: project.classifiedDependencies ?? null,
         tasks: project.tasks ?? null,
         revised_date: project.revisedDate ?? null,
@@ -316,6 +325,8 @@ export async function POST(request: NextRequest) {
       if (updates.subdivision !== undefined) v2Updates.subdivision = updates.subdivision || null;
       if (updates.totalBudget !== undefined) v2Updates.total_budget = updates.totalBudget;
       if (updates.utilizedBudget !== undefined) v2Updates.utilized_budget = updates.utilizedBudget;
+      if (updates.expectedAnnualRevenue !== undefined) v2Updates.expected_annual_revenue = updates.expectedAnnualRevenue;
+      if (updates.completedAt !== undefined) v2Updates.completed_at = updates.completedAt || null;
       if (updates.classifiedDependencies !== undefined) v2Updates.classified_dependencies = updates.classifiedDependencies;
       if (updates.tasks !== undefined) v2Updates.tasks = updates.tasks;
       if (updates.revisedDate !== undefined) v2Updates.revised_date = updates.revisedDate || null;

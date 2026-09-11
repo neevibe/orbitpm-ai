@@ -115,6 +115,10 @@ export interface Project {
   supportTeam?: string;
   archived?: boolean;
   archivedAt?: string;
+  /** ISO day the project was marked Completed. Stamped on the transition so
+   *  delay history can tell "still late" from "finished late" — without it,
+   *  a project can enter the delayed count but never leave it. */
+  completedAt?: string | null;
   dismissedFromStuck?: boolean;
   /** True when this is a virtual cross-department mirror created from a dependency. Read-only. */
   isDependencyMirror?: boolean;
@@ -131,6 +135,10 @@ export interface Project {
   /** v2 financial tracking (INR). Balance = totalBudget − utilizedBudget (computed). */
   totalBudget?: number | null;       // Total Budget (₹)
   utilizedBudget?: number | null;    // Utilized Budget (₹)
+  /** Revenue (or quantified saving) this project is expected to generate per
+   *  year once live (₹). The single input behind delay revenue-impact: a day of
+   *  delay defers expectedAnnualRevenue/365. Null = impact not quantifiable. */
+  expectedAnnualRevenue?: number | null;
   /** v2 classified dependencies (internal/external) for analytics. */
   classifiedDependencies?: ClassifiedDependency[];
   /** User-created task list (shape mirrors components/project/KanbanBoard Task). */

@@ -15,6 +15,7 @@ import {
 import type { Project } from '@/lib/mock-data';
 import DepartmentLabel from '@/components/DepartmentLabel';
 import QuickEditPanel from '@/components/project/QuickEditPanel';
+import DelayImpactPanel from '@/components/dashboard/DelayImpactPanel';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload) return null;
@@ -325,6 +326,9 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Delay movement + revenue impact */}
+      <DelayImpactPanel projects={projects} />
 
       {/* Department Table */}
       <div className="glass-card overflow-hidden">

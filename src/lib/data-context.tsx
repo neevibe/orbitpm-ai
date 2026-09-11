@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured, getAccessToken, authedFetch } from './supabase';
 import { useAuth } from './auth-context';
-import { generateProjectId, daysUntil, normalizeProjectStatus, reconcileStatusProgress, canBeDelayed, formatDate } from './utils';
+import { generateProjectId, daysUntil, normalizeProjectStatus, reconcileStatusProgress, canBeDelayed, isPastTargetDate, formatDate } from './utils';
+import { isoDay } from './delay-analytics';
 import { toast } from '@/components/ui/Toaster';
 import {
   projects as initialProjects,
@@ -442,8 +443,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return '';
     }
     const id = project.id || generateProjectId(project.department, projects.map(p => p.id));
-    // Enforce the Delayed rule: a new project can't be "Delayed" unless its
-    // Target Date has already passed (else it's stored as In Progress).
+    // Enforce the Delayed rule both ways: a new project can't be "Delayed"
+    // unless its Target Date has already passed, and an In Progress project
+    // imported with a past Target Date is stored as Delayed.
     const newProject: Project = reconcileStatusProgress(normalizeProjectStatus({ ...project, id, archived: false } as Project));
     setProjects(prev => [...prev, newProject]);
     logAudit({ action: 'create', entityType: 'project', entityId: id, entityName: newProject.name, changes: {} });
@@ -489,6 +491,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // to 100 marks Completed.
       if (effective.status === 'Completed') effective.progress = 100;
       else if (effective.progress === 100) effective.status = 'Completed';
+      // The other half of the Delayed rule: an In Progress project whose Target
+      // Date has already passed is Delayed, whether or not the user touched the
+      // status field. Runs AFTER the Completed coupling so finishing a project
+      // late still lands on Completed, not Delayed.
+      {
+        const nextStatus = effective.status !== undefined ? effective.status : p.status;
+        const nextTarget = effective.targetDate !== undefined ? effective.targetDate : p.targetDate;
+        const nextProgress = effective.progress !== undefined ? effective.progress : p.progress;
+        if (nextStatus === 'In Progress' && (nextProgress ?? 0) < 100 && isPastTargetDate(nextTarget)) {
+          effective.status = 'Delayed';
+        }
+      }
+      // Stamp the completion day on the Completed transition (and clear it if a
+      // project is re-opened) so delay history can distinguish "finished late"
+      // from "still late" — see wasDelayedOn in lib/delay-analytics.
+      if (effective.status === 'Completed' && p.status !== 'Completed') {
+        effective.completedAt = isoDay(new Date());
+      } else if (effective.status !== undefined && effective.status !== 'Completed' && p.status === 'Completed') {
+        effective.completedAt = null;
+      }
       const changes: Record<string, { old: any; new: any }> = {};
       Object.keys(effective).forEach(key => {
         const k = key as keyof Project;

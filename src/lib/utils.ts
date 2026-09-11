@@ -200,14 +200,46 @@ export function canBeDelayed(targetDate?: string | null): boolean {
 }
 
 /**
- * Enforce the Delayed rule on read/write: a "Delayed" status whose Target Date
- * is still in the future is shown/stored as "In Progress" instead. Applied to
- * live data, user edits, and the bundled seed so the register, database, audit,
- * and activity feed all agree that Delayed means "past its Target Date".
+ * True once the Target Date is STRICTLY in the past. Deliberately stricter than
+ * `canBeDelayed` (which also allows "today"): a project due today has not yet
+ * crossed its deadline, so it is never auto-flipped to Delayed — but an owner
+ * may still mark it Delayed by hand. The two rules therefore never fight.
  */
-export function normalizeProjectStatus<T extends { status: string; targetDate?: string | null }>(p: T): T {
-  if (p.status !== 'Delayed') return p;
-  return canBeDelayed(p.targetDate) ? p : { ...p, status: 'In Progress' };
+export function isPastTargetDate(targetDate?: string | null): boolean {
+  const du = daysUntil(targetDate);
+  return du !== null && du < 0;
+}
+
+/**
+ * Enforce the Delayed rule on read/write, in BOTH directions:
+ *
+ *  - demote: a "Delayed" status whose Target Date is still in the future is
+ *    shown/stored as "In Progress" instead.
+ *  - promote: an "In Progress" project whose Target Date has already passed
+ *    (and which is not finished) is shown/stored as "Delayed".
+ *
+ * The promote half is what keeps the register honest without anyone remembering
+ * to re-flag a slipped project. Applied to live data, user edits, and the
+ * bundled seed so the register, database, audit, and activity feed all agree
+ * that Delayed means "past its Target Date".
+ *
+ * Scope notes, both deliberate:
+ *  - Only "In Progress" is promoted. "Not Started" and "On Hold" are left alone:
+ *    an overdue not-started project is a *planning* failure, not a delivery one,
+ *    and silently relabelling it would hide that. Those rows surface through the
+ *    Stuck list instead.
+ *  - A project already at 100% progress is never promoted — reconcileStatusProgress
+ *    settles it as Completed, so the two rules compose in either order.
+ *  - The Revised Date never enters the check; Delayed stays keyed on Target Date.
+ */
+export function normalizeProjectStatus<T extends { status: string; targetDate?: string | null; progress?: number }>(p: T): T {
+  if (p.status === 'Delayed') {
+    return canBeDelayed(p.targetDate) ? p : { ...p, status: 'In Progress' };
+  }
+  if (p.status === 'In Progress' && (p.progress ?? 0) < 100 && isPastTargetDate(p.targetDate)) {
+    return { ...p, status: 'Delayed' };
+  }
+  return p;
 }
 
 /**

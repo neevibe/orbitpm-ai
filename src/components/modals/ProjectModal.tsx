@@ -59,7 +59,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
     startDate: '', targetDate: '', revisedDate: '',
     risks: '', objective: '', notes: '',
     projectDependencies: '', supportTeam: '', kpi: '',
-    totalBudget: '', utilizedBudget: '',
+    totalBudget: '', utilizedBudget: '', expectedAnnualRevenue: '',
   });
 
   const [form, setForm] = useState(makeEmpty());
@@ -92,6 +92,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
         kpi: editProject.kpi || '',
         totalBudget: editProject.totalBudget != null ? String(editProject.totalBudget) : '',
         utilizedBudget: editProject.utilizedBudget != null ? String(editProject.utilizedBudget) : '',
+        expectedAnnualRevenue: editProject.expectedAnnualRevenue != null ? String(editProject.expectedAnnualRevenue) : '',
       });
       setDeps(editProject.classifiedDependencies || []);
       setAutoId('');
@@ -202,6 +203,7 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
       dateRevisions: revisions,
       totalBudget: parseINR(form.totalBudget),
       utilizedBudget: parseINR(form.utilizedBudget),
+      expectedAnnualRevenue: parseINR(form.expectedAnnualRevenue),
       classifiedDependencies: deps,
     };
     if (editProject) {
@@ -412,6 +414,21 @@ export default function ProjectModal({ isOpen, onClose, editProject, defaultDepa
                   {formatINRCompact((parseINR(form.totalBudget) || 0) - (parseINR(form.utilizedBudget) || 0))}
                 </div>
                 <p className="text-[10px] text-[#94a3b8] mt-1">Auto: Total − Utilized</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-3">
+              <div className="col-span-2">
+                <label className={labelCls}>Expected Annual Revenue / Saving</label>
+                <input type="text" inputMode="decimal" value={form.expectedAnnualRevenue} onChange={e => setForm(f => ({ ...f, expectedAnnualRevenue: e.target.value }))}
+                  placeholder="e.g. 5 Cr — revenue this project generates per year once live" className={inputCls} />
+                <p className="text-[10px] text-[#94a3b8] mt-1">{formatINRCompact(parseINR(form.expectedAnnualRevenue))}</p>
+              </div>
+              <div>
+                <label className={labelCls}>Cost of 1 Month&rsquo;s Delay</label>
+                <div className={`${inputCls} bg-[#f8fafc] text-[#1e293b] font-semibold flex items-center`}>
+                  {parseINR(form.expectedAnnualRevenue) ? formatINRCompact((parseINR(form.expectedAnnualRevenue) || 0) / 12) : '—'}
+                </div>
+                <p className="text-[10px] text-[#94a3b8] mt-1">Revenue deferred per month late</p>
               </div>
             </div>
           </div>
