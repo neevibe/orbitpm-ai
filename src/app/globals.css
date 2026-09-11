@@ -583,7 +583,7 @@ body {
   header,
   .no-print,
   .no-print *,
-  button:not(.x-metric):not(.x-kpi-cell),
+  button:not(.x-metric):not(.x-kpi-cell):not(.x-rail-item):not(.x-meter-key button),
   .x-btn,
   .fixed {
     display: none !important;
@@ -596,6 +596,21 @@ body {
     width: 100% !important;
     transform: none !important; /* selected-state scale would overflow its cell */
   }
+
+  /* v4: the metric rail and the meter key are also buttons carrying DATA, not
+     chrome. The blanket button rule above erased five of the six portfolio
+     figures from the PDF — the same failure the comment there warns about. */
+  button.x-rail-item { display: flex !important; }
+  .x-meter-key button { display: flex !important; }
+
+  /* The page masthead is a <header>, but the blanket `header` rule exists to
+     hide the app TOPBAR. Keep the page's own title and date in the export. */
+  main header { display: flex !important; }
+  main header .no-print { display: none !important; }
+
+  /* Bands: keep the rhythm but never split a band across a page. */
+  .x-brief, .x-attn tbody tr { break-inside: avoid !important; }
+  .x-meter > i { print-color-adjust: exact !important; }
 
   /* Reset offsets that made room for the (now hidden) sidebar and topbar */
   main {
@@ -819,4 +834,186 @@ body {
   .xyro-ping, .xyro-hi { animation: none !important; }
   /* reduced motion: skip the rocket theatrics, just disappear */
   .xyro-rocket-launch, .xyro-rocket-trail { animation-duration: 0.01ms !important; }
+}
+
+/* ================================================
+   COMMAND CENTER v4 — "Quiet Authority"
+   ------------------------------------------------
+   v3 gave the product correct tokens and then spent them on eleven boxes of
+   equal weight. v4 keeps every token and changes the COMPOSITION: whitespace
+   and hairlines carry structure, a surface is spent only where the surface is
+   the interaction, and exactly one element per band is allowed to be loud.
+   ================================================ */
+
+:root {
+  /* Vertical rhythm. Sections breathe at --space-8; content inside a section
+     at --space-4. Arbitrary margins are a review finding. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+
+  /* One measure for the reading column of a briefing paragraph. */
+  --measure: 68ch;
+}
+
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+/* Bands, not boxes. Each direct child is a section of the page separated by
+   rhythm rather than by a border. */
+.x-bands { display: flex; flex-direction: column; gap: var(--space-8); }
+/* A flex item defaults to min-width:auto, which lets an inner overflow-x:auto
+   scroller push the whole page sideways instead of scrolling inside itself.
+   Every band must be allowed to shrink below its content width. */
+.x-bands > * { min-width: 0; }
+
+/* A section heading: small, quiet, structural. It names the band; it never
+   competes with the data inside it. */
+.x-band-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--space-4); flex-wrap: wrap;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-x-border);
+  margin-bottom: var(--space-5);
+}
+.x-band-title {
+  font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+  color: var(--color-x-text);
+}
+.x-band-note { font-size: 12px; color: var(--color-x-text-muted); }
+
+/* ── Metric rail ─────────────────────────────────────────────────────────── */
+/* Replaces six equally-weighted cards. One lead figure carries the band; the
+   rest are a quiet row of supporting numbers separated by hairlines, not by
+   six competing borders and six colored icon chips. */
+.x-rail { display: grid; gap: 0; align-items: stretch; }
+.x-rail-item {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-3) var(--space-5);
+  border-left: 1px solid var(--color-x-border);
+  text-align: left; background: none; cursor: pointer;
+  transition: background var(--duration) var(--ease);
+  min-width: 0;
+}
+.x-rail-item:first-child { border-left: 0; padding-left: 0; }
+.x-rail-item:hover { background: var(--color-x-bg); }
+.x-rail-item[aria-pressed="true"] { background: var(--color-x-accent-light); }
+.x-rail-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--color-x-text-muted); white-space: nowrap;
+}
+.x-rail-value {
+  font-size: 24px; font-weight: 650; letter-spacing: -0.025em; line-height: 1.1;
+  color: var(--color-x-text); font-variant-numeric: tabular-nums;
+}
+.x-rail-lead .x-rail-value { font-size: 40px; font-weight: 700; letter-spacing: -0.035em; }
+.x-rail-note { font-size: 11.5px; color: var(--color-x-text-muted); font-variant-numeric: tabular-nums; }
+
+/* ── Portfolio meter ─────────────────────────────────────────────────────── */
+/* A single horizontal part-to-whole bar. It reads faster than a donut at this
+   category count, direct-labels every segment, and costs a fraction of the
+   vertical space. */
+.x-meter {
+  display: flex; width: 100%; height: 10px; border-radius: 5px;
+  overflow: hidden; background: var(--color-x-bg);
+  /* 2px surface gap between adjacent fills keeps segments legible without
+     relying on hue difference alone. */
+  gap: 2px;
+}
+.x-meter > i { display: block; height: 100%; transition: flex-basis var(--duration) var(--ease); }
+.x-meter-key { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-5); margin-top: var(--space-3); }
+.x-meter-key button {
+  display: flex; align-items: center; gap: var(--space-2);
+  background: none; cursor: pointer; padding: 2px 0; min-width: 0;
+  border-bottom: 1px solid transparent; transition: border-color var(--duration) var(--ease);
+}
+.x-meter-key button:hover { border-bottom-color: var(--color-x-border-hover); }
+.x-meter-key button[aria-pressed="true"] { border-bottom-color: var(--color-x-text); }
+.x-meter-sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.x-meter-name { font-size: 12px; color: var(--color-x-text-secondary); }
+.x-meter-num { font-size: 12px; font-weight: 650; color: var(--color-x-text); font-variant-numeric: tabular-nums; }
+
+/* ── Attention list ──────────────────────────────────────────────────────── */
+/* The delay register. Severity is carried by a left stripe AND a written
+   number of days, never by color alone. */
+.x-attn { width: 100%; border-collapse: collapse; }
+.x-attn thead th {
+  text-align: left; font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--color-x-text-muted);
+  padding: 0 var(--space-4) var(--space-2); white-space: nowrap;
+}
+.x-attn thead th.num { text-align: right; }
+.x-attn tbody tr {
+  cursor: pointer;
+  transition: background var(--duration) var(--ease);
+  border-top: 1px solid var(--color-x-border);
+}
+.x-attn tbody tr:hover { background: var(--color-x-bg); }
+.x-attn tbody td { padding: var(--space-3) var(--space-4); vertical-align: middle; font-size: 13px; }
+.x-attn tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.x-attn tbody td:first-child { padding-left: var(--space-1); padding-right: var(--space-2); }
+.x-attn thead th:first-child { padding-left: var(--space-1); }
+.x-sev {
+  display: inline-block; width: 3px; height: 22px; border-radius: 2px;
+  background: var(--color-x-danger); flex: none;
+}
+.x-sev.sev-2 { opacity: 0.6; }
+.x-sev.sev-3 { opacity: 0.32; }
+
+/* Micro progress bar used inside dense rows. */
+/* The track must be visible against the row, or a low percentage reads as a
+   stray dash rather than as "nearly empty". */
+.x-microbar { width: 64px; height: 5px; border-radius: 3px; background: var(--color-x-border); overflow: hidden; display: inline-block; flex: none; }
+.x-microbar > i { display: block; height: 100%; background: var(--color-x-text-secondary); border-radius: 3px; }
+[data-theme="dark"] .x-microbar { background: var(--color-x-surface-raised); }
+
+/* ── Briefing ────────────────────────────────────────────────────────────── */
+/* The one place on the page allowed a tinted surface: the single thing the
+   reader should act on first. */
+.x-brief {
+  display: grid; gap: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid var(--color-x-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-x-surface);
+}
+.x-brief-lead {
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.35;
+  color: var(--color-x-text); text-wrap: balance; max-width: var(--measure);
+}
+.x-brief-body { font-size: 13px; line-height: 1.6; color: var(--color-x-text-secondary); max-width: var(--measure); }
+.x-brief-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Inline "facts" list used under the briefing lead. */
+.x-facts { display: flex; flex-wrap: wrap; gap: var(--space-6); min-width: 0; }
+/* Same flexbox trap as .x-bands: a fact whose supporting line is long refuses
+   to shrink below its text and pushes the page sideways at phone width. */
+.x-facts > * { min-width: 0; max-width: 100%; }
+.x-brief { min-width: 0; }
+/* .x-brief is a grid, and grid items carry the same min-width:auto default as
+   flex items — the culprit is the item, not the container. */
+.x-brief > * { min-width: 0; }
+.x-brief-body, .x-brief-lead { overflow-wrap: anywhere; }
+.x-fact-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-x-text-muted); }
+.x-fact-value { font-size: 17px; font-weight: 650; color: var(--color-x-text); font-variant-numeric: tabular-nums; letter-spacing: -0.015em; }
+
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
+.x-skel { background: var(--color-x-bg); border-radius: var(--radius-sm); position: relative; overflow: hidden; }
+.x-skel::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  transform: translateX(-100%); animation: x-shimmer 1.4s infinite;
+}
+[data-theme="dark"] .x-skel::after { background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent); }
+@keyframes x-shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .x-skel::after { animation: none; } }
+
+@media (max-width: 640px) {
+  .x-rail-item { border-left: 0; padding-left: 0; padding-right: 0; }
+  .x-bands { gap: var(--space-7); }
 }

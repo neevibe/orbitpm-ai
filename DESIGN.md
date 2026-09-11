@@ -1,8 +1,29 @@
-# Xyrenis Design System — "Trust & Authority" v3 (Enterprise Refinement)
+# Xyrenis Design System — "Quiet Authority" v4 (Command Center)
 
 Generated with the ui-ux-pro-max design engine for an enterprise B2B project
 management platform (Jira/Zoho Projects-class). All UI work must calibrate
 against this file; deviations are review findings.
+
+v4 shift (2026-09): **widget soup → bands**. v3 established the right tokens and
+then spent them on eleven boxes of equal weight, so the reader had no idea which
+number mattered and read none of them. v4 keeps every v3 token and changes the
+COMPOSITION:
+
+- **Whitespace and hairlines carry structure, not borders.** A surface
+  (`.x-card`, `.x-brief`) is spent only where the surface IS the interaction.
+  Sections are separated by `--space-8` rhythm and a single rule under the band
+  heading.
+- **One loud element per band.** The lead figure in the metric rail is 40px; the
+  other five are 24px and divided by hairlines. Six identical KPI cards with six
+  colored icon chips are banned.
+- **Decision order, not data order.** The Command Center reads: what needs a
+  decision → where the portfolio stands → what needs attention → distribution →
+  what's next. The delay register is the widest band on the page because delay
+  is what the product exists to surface.
+- **Charts earn their place.** The portfolio donut was replaced by a horizontal
+  part-to-whole meter: it reads in one pass, direct-labels every segment with a
+  real count, and costs a third of the vertical space. A chart that only
+  decorates gets deleted.
 
 v3 shift (2026-07): bright/playful → muted/analytical. Deep desaturated blue
 primary, subtle semantic tints (deep text on faint washes — never neon pills),
@@ -123,3 +144,39 @@ placeholder-as-label · text under 11px · hardcoded hex in components (charts:
 only via `chart-theme.ts`) · solid bright status pills · floating-card shadows on
 resting surfaces · consumer chat-bubble AI patterns · markdown tables in Xyro
 chat replies.
+
+
+## v4 composition layer (`src/app/globals.css`)
+
+| Class | Role |
+|-------|------|
+| `.x-bands` | Page shell. Vertical rhythm at `--space-8`; every child gets `min-width: 0`. |
+| `.x-band-head` / `.x-band-title` | Section label + hairline rule. Names the band, never competes with it. |
+| `.x-rail` / `.x-rail-lead` | Metric rail. One lead figure, the rest hairline-divided. |
+| `.x-meter` | Horizontal part-to-whole bar, 2px surface gaps between segments. |
+| `.x-attn` / `.x-sev` | Delay register. Severity = stripe opacity + written days + sort order. |
+| `.x-brief` | Executive briefing — the one tinted surface on the page. |
+| `.x-facts` / `.x-fact-value` | Supporting evidence row under the briefing lead. |
+| `.x-microbar` | Inline progress. Track uses `--color-x-border` so low values still read. |
+| `.x-skel` | Skeleton shimmer, disabled under `prefers-reduced-motion`. |
+
+### Spacing scale
+
+`--space-1..9` = 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 56 px. Arbitrary margins
+are a review finding. Section rhythm is `--space-8`; content inside a section is
+`--space-4`.
+
+### The flexbox/grid trap
+
+Both flex AND grid items default to `min-width: auto`, which lets an inner
+`overflow-x: auto` scroller push the whole page sideways instead of scrolling
+inside itself. `.x-bands > *`, `.x-brief > *` and `.x-facts > *` all set
+`min-width: 0` for this reason. Any new band container must do the same — this
+was a real 7px horizontal scroll at 420px, invisible at desktop width.
+
+### Colour in charts must be theme-aware
+
+`TRACK` in `chart-theme.ts` is a fixed light hex and glares white on the dark
+surface. Neutral remainder segments use `var(--color-x-border)` instead. Fixed
+hexes are acceptable for the semantic status/health colours (they are legible on
+both grounds) and nowhere else.

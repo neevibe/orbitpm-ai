@@ -90,12 +90,19 @@ try {
   }
 
   // ---------- command center ----------
-  await visit('/command-center', 'button.x-kpi-cell');
+  // v4 composition: the six equal KPI cards became one metric rail (a lead
+  // figure plus five hairline-divided cells), and two of the three Recharts
+  // widgets became CSS part-to-whole meters, which is why these selectors
+  // changed. The assertions test the same intent against the new markup.
+  await visit('/command-center', '.x-rail-item');
   check('Command Center loads without JS crashes', pageErrors.length === 0, pageErrors[0] || '');
-  const kpis = await page.locator('button.x-kpi-cell').count();
-  check('Command Center shows 6 KPI cells', kpis === 6, `found ${kpis}`);
+  const kpis = await page.locator('.x-rail-item').count();
+  check('Command Center shows 6 portfolio metrics', kpis === 6, `found ${kpis}`);
   const charts = await page.locator('svg.recharts-surface').count();
-  check('Command Center charts render', charts >= 2, `found ${charts} chart SVGs`);
+  const meters = await page.locator('.x-meter').count();
+  check('Command Center charts render', charts >= 1 && meters >= 2, `${charts} chart SVGs, ${meters} meters`);
+  check('Executive briefing renders a lead judgement', await page.locator('.x-brief-lead').count() === 1);
+  check('Attention register renders', await page.locator('.x-attn tbody tr').count() > 0);
 
   // Register integrity: the sidebar count comes from `kpi` (canonical rows) and
   // the KPI card from the page's own project list. When the context served the
@@ -103,7 +110,7 @@ try {
   // shadows of a project that is already counted — inflated the card, so the same
   // screen showed 203 against the sidebar's 200. One project, one count.
   const sidebarCount = await page.locator('text=/^\\d+ projects$/').first().textContent().catch(() => null);
-  const kpiTotal = await page.locator('button.x-kpi-cell').first().textContent().catch(() => null);
+  const kpiTotal = await page.locator('.x-rail-item').first().textContent().catch(() => null);
   const sidebarN = sidebarCount ? parseInt(sidebarCount.replace(/\D/g, ''), 10) : NaN;
   const kpiN = kpiTotal ? parseInt((kpiTotal.match(/\d[\d,]*/) || [''])[0].replace(/,/g, ''), 10) : NaN;
   check(
@@ -116,10 +123,8 @@ try {
 
   // A dependency mirror shares its parent's id. Two entries with the same id in
   // one counted list is the double-count, restated as an invariant.
-  // The project cards live behind an active KPI filter, so select one first.
-  // NOT the first cell — that is "Total Projects", whose filterType is 'all'
-  // and which CLEARS the filter instead of setting one. Use the second.
-  await page.locator('button.x-kpi-cell').nth(1).click().catch(() => {});
+  // The attention register is always rendered in v4 (it is no longer gated
+  // behind an active filter), so no click is needed to reach the rows.
   await page.waitForSelector('[data-project-code]', { timeout: 8000 }).catch(() => {});
   const codeAudit = await page.evaluate(() => {
     const codes = [...document.querySelectorAll('[data-project-code]')].map(e => e.getAttribute('data-project-code'));
@@ -136,16 +141,23 @@ try {
       ? 'no [data-project-code] elements found — check is not instrumented'
       : codeAudit.dupes ? `${codeAudit.dupes} duplicated of ${codeAudit.total}` : `${codeAudit.total} unique`,
   );
-  const truncated = await page.locator('svg .recharts-yAxis text', { hasText: '…' }).count();
-  check('Department names not truncated', truncated === 0, truncated ? `${truncated} truncated labels` : '');
+  // Department names moved out of a Recharts Y axis into HTML rows, so the
+  // truncation risk is now CSS ellipsis rather than SVG label clipping.
+  const deptClip = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('[aria-pressed]')]
+      .map(b => b.querySelector('span.truncate'))
+      .filter(Boolean);
+    return { total: rows.length, clipped: rows.filter(el => el.scrollWidth > el.clientWidth + 1).length };
+  }).catch(() => ({ total: 0, clipped: 0 }));
+  check('Department names not truncated', deptClip.clipped === 0,
+    deptClip.clipped ? `${deptClip.clipped} of ${deptClip.total} clipped` : `${deptClip.total} labels full`);
+  // v4 renders milestones as relative time ("in 19d" / "today"), so a past
+  // entry would surface as a negative day count rather than a stale date.
   const pastMilestones = await page.evaluate(() => {
-    const card = [...document.querySelectorAll('h3')].find(h => h.textContent.includes('Upcoming Milestones'))?.closest('.x-card');
-    if (!card) return -1;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    return [...card.querySelectorAll('span.font-mono')].filter(s => {
-      const d = new Date(s.textContent.replace(/(\d+) (\w+) (\d+)/, '$1 $2 20$3'));
-      return !isNaN(d) && d < today;
-    }).length;
+    const head = [...document.querySelectorAll('h3')].find(h => /upcoming milestones/i.test(h.textContent || ''));
+    const list = head?.parentElement?.querySelector('ul');
+    if (!list) return -1;
+    return [...list.querySelectorAll('li')].filter(li => /-\d+\s*d/.test(li.textContent || '')).length;
   });
   check('Upcoming Milestones has no past dates', pastMilestones === 0, pastMilestones > 0 ? `${pastMilestones} past entries` : '');
 
@@ -153,11 +165,11 @@ try {
   await page.emulateMedia({ media: 'print' });
   await page.waitForTimeout(500);
   const printState = await page.evaluate(() => ({
-    kpiVisible: [...document.querySelectorAll('button.x-kpi-cell, button.x-metric')].filter(b => getComputedStyle(b).display !== 'none').length,
+    kpiVisible: [...document.querySelectorAll('.x-rail-item')].filter(b => getComputedStyle(b).display !== 'none').length,
     chartBoxes: [...document.querySelectorAll('svg.recharts-surface')].filter(s => { const r = s.getBoundingClientRect(); return r.width > 10 && r.height > 10; }).length,
   }));
-  check('PDF export keeps KPI cards visible', printState.kpiVisible === 6, `${printState.kpiVisible}/6 visible in print media`);
-  check('PDF export keeps charts sized', printState.chartBoxes >= 2, `${printState.chartBoxes} charts with real size`);
+  check('PDF export keeps portfolio metrics visible', printState.kpiVisible === 6, `${printState.kpiVisible}/6 visible in print media`);
+  check('PDF export keeps charts sized', printState.chartBoxes >= 1, `${printState.chartBoxes} charts with real size`);
   await page.emulateMedia({ media: 'screen' });
 
   // ---------- Xyro AI assistant (floating mascot + docked panel) ----------
