@@ -35,7 +35,7 @@ const TABS: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
 ];
 
 export default function MyWorkPage() {
-  const { projects, updateProject } = useData();
+  const { projectsWithMirrors: projects, updateProject } = useData();
   const { user, isDemoMode } = useAuth();
   const [tab, setTab] = useState<Tab>('overview');
   const workspace = usePersonalWorkspace(!isDemoMode && !!user);

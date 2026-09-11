@@ -84,6 +84,9 @@ interface DataContextType {
   orgStats: Record<string, number> | null;
   // Data
   projects: Project[];
+  /** `projects` plus read-only cross-department dependency mirrors. Use ONLY
+   *  for views that must show a department work it depends on; never for counts. */
+  projectsWithMirrors: Project[];
   archivedProjects: Project[];
   departments: Department[];
   risks: Risk[];
@@ -890,7 +893,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       liveStatus: isDemoMode ? 'live' : liveStatus,
       scope,
       orgStats,
-      projects: projectsWithDuplicates,
+      // `projects` is the CANONICAL register: one entry per stored project.
+      // Dependency mirrors are read-only shadows of a project that already
+      // appears here (same id), so counting them inflates every portfolio
+      // figure — that is why the KPI card read 203 while the sidebar, computed
+      // from this list, read 200. Views that exist to show a department its
+      // inbound dependencies take `projectsWithMirrors` instead.
+      projects: projects.filter(p => !p.archived),
+      projectsWithMirrors: projectsWithDuplicates,
       archivedProjects: projects.filter(p => p.archived),
       departments,
       risks,

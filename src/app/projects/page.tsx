@@ -28,7 +28,7 @@ function statusDot(status: string) {
 export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { projects: activeProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject, scope } = useData();
+  const { projectsWithMirrors: activeProjects, projects: canonicalProjects, archivedProjects, departments, risks, archiveProject, restoreProject, purgeProject, updateProject, scope } = useData();
   const { user, isDemoMode, canModifyDepartment, isAdmin } = useAuth();
   const currentUserName = isDemoMode
     ? 'Demo User'
@@ -288,7 +288,7 @@ export default function ProjectsPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const res = await authedFetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects: activeProjects, risks, departments }) });
+      const res = await authedFetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projects: canonicalProjects, risks, departments }) });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);

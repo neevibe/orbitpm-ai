@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function DepartmentsPage() {
-  const { projects, departments, scope } = useData();
+  const { projectsWithMirrors: projects, departments, scope } = useData();
 
   // Departmental privacy: scoped users see only their own department here —
   // other departments' names/cards/bars must not render at all.

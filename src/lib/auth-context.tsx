@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { deptKey } from './utils';
 
 /** Tiered RBAC permission levels (low → high). */
 export type Permission = 'view' | 'edit' | 'modify' | 'admin';
@@ -345,12 +346,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = isAdmin;
   const canView = !!user;
 
+  /**
+   * Compare a project's department against the user's claim through the SAME
+   * canonicalisation the server scopes with (deptKey mirrors normalizeDept in
+   * lib/api-auth).
+   *
+   * A raw lowercase string compare was wrong here: department claims come from
+   * the admin UI's short names ("Digital", "Advertising", "Commercial") while
+   * project rows carry the workbook's long names ("Digital & Data",
+   * "Advertising & Marketing", "Commercial Development"). The server already
+   * normalises both sides, so it SERVED a user their own department's projects
+   * and the client then refused every edit to them with "Permission denied" —
+   * the two halves disagreed about what "same department" means.
+   */
+  const sameDepartment = (dept?: string | null): boolean =>
+    deptKey(dept) === deptKey(department);
+
   const canEditDepartment = (dept?: string | null): boolean => {
     if (!user) return false;
     if (isAdmin) return true;
     if (permission === 'edit' || permission === 'modify') {
       if (!dept || !department) return true; // unscoped editor
-      return dept.trim().toLowerCase() === department.trim().toLowerCase();
+      return sameDepartment(dept);
     }
     return false;
   };
@@ -360,7 +377,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isAdmin) return true;
     if (permission === 'modify') {
       if (!dept || !department) return true;
-      return dept.trim().toLowerCase() === department.trim().toLowerCase();
+      return sameDepartment(dept);
     }
     return false;
   };
