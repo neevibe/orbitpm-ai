@@ -1,10 +1,28 @@
-# Xyrenis Design System — "Quiet Authority" v4 (Command Center)
+# Xyrenis Design System — "Modular Command" v5 (Command Center)
 
 Generated with the ui-ux-pro-max design engine for an enterprise B2B project
 management platform (Jira/Zoho Projects-class). All UI work must calibrate
 against this file; deviations are review findings.
 
-v4 shift (2026-09): **widget soup → bands**. v3 established the right tokens and
+v5 shift (2026-09): **bands → modular widget grid**. v4 stripped the cards and
+produced a wireframe — restraint without craft is just absence. The modular
+widget grid IS the enterprise PM idiom (Zoho/Jira-class) and it is what an
+executive reads fluently. v5 restores that structure and spends the craft on ONE
+shell used everywhere:
+
+- **One widget shell.** `.x-widget` — titled header, hairline rule, consistent
+  padding and radius. The previous failure was never that cards existed; it was
+  that each one styled itself.
+- **Status framed open-vs-closed.** Three donuts with a centre total (Project
+  Status, Portfolio Health, Milestone Status) — the shape executives already
+  read without a key, direct-labelled with counts in the legend.
+- **Stat tiles, not paint boxes.** Colour lives in the icon plate and the delta
+  only; the figure stays ink, so six tiles do not read as a colour chart.
+- **Dense grid, not airy bands.** 12px gutters, widgets sized to content, the
+  overdue register capped at 8 rows with "View all" so the row keeps a
+  predictable height.
+
+Superseded — v4 shift (2026-09): **widget soup → bands**. v3 established the right tokens and
 then spent them on eleven boxes of equal weight, so the reader had no idea which
 number mattered and read none of them. v4 keeps every v3 token and changes the
 COMPOSITION:

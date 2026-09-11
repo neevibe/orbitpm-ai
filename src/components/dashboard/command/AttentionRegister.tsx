@@ -40,6 +40,8 @@ export default function AttentionRegister({
   emptyHint,
   renderOwner,
   rowAction,
+  maxRows,
+  onViewAll,
 }: {
   rows: AttentionRow[];
   onOpen: (p: Project) => void;
@@ -48,6 +50,9 @@ export default function AttentionRegister({
   renderOwner?: (p: Project) => ReactNode;
   /** Row-level action, revealed on hover/focus (progressive disclosure). */
   rowAction?: (p: Project) => ReactNode;
+  /** Cap the visible rows so the widget keeps a predictable height in the grid. */
+  maxRows?: number;
+  onViewAll?: () => void;
 }) {
   const [band, setBand] = useState<Band>('all');
 
@@ -58,10 +63,12 @@ export default function AttentionRegister({
     stalled: rows.filter(r => r.band === 'stalled').length,
   }), [rows]);
 
-  const shown = useMemo(
+  const matching = useMemo(
     () => (band === 'all' ? rows : rows.filter(r => r.band === band)),
     [rows, band],
   );
+  const shown = maxRows ? matching.slice(0, maxRows) : matching;
+  const hidden = matching.length - shown.length;
 
   const severity = (d: number) => (d >= 90 ? '' : d >= 30 ? ' sev-2' : ' sev-3');
 
@@ -164,6 +171,16 @@ export default function AttentionRegister({
             </tbody>
           </table>
         </div>
+      )}
+
+      {hidden > 0 && (
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="mt-3 text-[12px] font-semibold text-[var(--color-x-accent)] hover:underline cursor-pointer"
+        >
+          View all {matching.length} &rarr;
+        </button>
       )}
     </div>
   );

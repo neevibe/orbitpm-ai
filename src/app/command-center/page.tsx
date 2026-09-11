@@ -1,17 +1,18 @@
 'use client';
 
 import { useData } from '@/lib/data-context';
-import { Calendar, Download, Eye, X, Zap } from 'lucide-react';
-import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { ArrowDownRight, ArrowUpRight, Calendar, CheckCircle2, Clock, Download, Eye, FolderKanban, Rocket, Shield, X, XCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Project } from '@/lib/mock-data';
 import QuickEditPanel from '@/components/project/QuickEditPanel';
 import { STATUS_COLORS, HEALTH_COLORS, AXIS_TICK, TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, BAR } from '@/lib/chart-theme';
 import { usePresence, OwnerAvatar, ShareToTeamsButton, emailForName as ownerEmail } from '@/components/collab/TeamsCollab';
 import ActivityFeed from '@/components/collab/ActivityFeed';
-import ExecutiveBrief from '@/components/dashboard/command/ExecutiveBrief';
-import MetricRail, { type Metric } from '@/components/dashboard/command/MetricRail';
-import PortfolioMeter from '@/components/dashboard/command/PortfolioMeter';
+import Widget from '@/components/dashboard/command/Widget';
+import StatusDonut from '@/components/dashboard/command/StatusDonut';
+import TeamStatus from '@/components/dashboard/command/TeamStatus';
 import AttentionRegister, { type AttentionRow } from '@/components/dashboard/command/AttentionRegister';
 import { plural } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 }
 
 export default function CommandCenter() {
+  const router = useRouter();
   const { projects, risks, departments, liveStatus, scope, orgStats } = useData();
   const [activeFilter, setActiveFilter] = useState<{
     type: 'status' | 'priority' | 'department' | 'health' | 'kpi' | 'ai';
@@ -291,6 +293,8 @@ export default function CommandCenter() {
 
   const tooltipCommon = { contentStyle: TOOLTIP_STYLE, labelStyle: TOOLTIP_LABEL_STYLE, itemStyle: TOOLTIP_ITEM_STYLE };
 
+  // Scoped (non-admin) users see ORGANISATION-WIDE figures on the tile row
+  // (numbers only — detail widgets stay department-scoped).
   const useOrg = !!(scope && !scope.admin && orgStats);
   const thisMonth = new Date().toISOString().slice(0, 7);
   const newThisMonth = useOrg ? orgStats!.newThisMonth : activeProjects.filter(p => p.startDate?.startsWith(thisMonth)).length;
@@ -307,27 +311,72 @@ export default function CommandCenter() {
   const kHighRisks = useOrg ? orgStats!.highImpactRisks : highRisks.length;
   const kPctComplete = useOrg && k.totalProjects ? Math.round((k.completed / k.totalProjects) * 100) : pctComplete;
 
-  const setKpiFilter = (label: string, filterFn: (p: Project) => boolean) => {
-    setActiveFilter(prev =>
-      prev?.type === 'kpi' && prev.label === label ? null : { type: 'kpi', label, filterFn });
-  };
+  const toggle = (type: 'kpi' | 'status' | 'health' | 'department' | 'priority' | 'ai', label: string, filterFn: (p: Project) => boolean) =>
+    setActiveFilter(prev => (prev?.type === type && prev.label === label ? null : { type, label, filterFn }));
 
-  const metrics: Metric[] = [
-    { label: 'Projects', value: k.totalProjects, note: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new this month', tone: newThisMonth > 0 ? 'up' : 'flat' },
-    { label: 'Active', value: k.inProgress, note: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d', tone: dueSoon > 0 ? 'warn' : 'flat',
-      onSelect: () => setKpiFilter('Active', p => p.status === 'In Progress'), selected: activeFilter?.label === 'Active' },
-    { label: 'Delayed', value: k.delayed, note: k.delayed > 0 ? `${Math.round((k.delayed / (k.totalProjects || 1)) * 100)}% of portfolio` : 'all on schedule', tone: k.delayed > 0 ? 'down' : 'up',
-      onSelect: () => setKpiFilter('Delayed', p => p.status === 'Delayed'), selected: activeFilter?.label === 'Delayed' },
-    { label: 'Completed', value: k.completed, note: `${kPctComplete}% of portfolio`, tone: 'flat',
-      onSelect: () => setKpiFilter('Completed', p => p.status === 'Completed'), selected: activeFilter?.label === 'Completed' },
-    { label: 'Stalled', value: stalled, note: stalled > 0 ? 'at 0% progress' : 'none stalled', tone: stalled > 0 ? 'warn' : 'flat',
-      onSelect: () => setKpiFilter('Stalled', p => p.status === 'In Progress' && p.progress === 0), selected: activeFilter?.label === 'Stalled' },
-    { label: 'Open risks', value: kOpenRisks, note: kHighRisks > 0 ? `${kHighRisks} high impact` : 'low exposure', tone: kHighRisks > 0 ? 'down' : 'flat',
-      onSelect: () => setKpiFilter('Open risks', p => risks.some(r => r.projectId === p.id && r.status === 'Open')), selected: activeFilter?.label === 'Open risks' },
-  ];
+  const tiles = [
+    { label: 'Projects', value: k.totalProjects, icon: FolderKanban, accent: '#1e40af',
+      delta: newThisMonth > 0 ? `+${newThisMonth} this month` : 'no new', tone: newThisMonth > 0 ? 'up' : 'flat' },
+    { label: 'Active', value: k.inProgress, icon: Rocket, accent: '#4e79a7',
+      delta: dueSoon > 0 ? `${dueSoon} due in 7d` : 'none due in 7d', tone: dueSoon > 0 ? 'warn' : 'flat',
+      filterFn: (p: Project) => p.status === 'In Progress' },
+    { label: 'Completed', value: k.completed, icon: CheckCircle2, accent: '#59a14f',
+      delta: `${kPctComplete}% of portfolio`, tone: 'flat',
+      filterFn: (p: Project) => p.status === 'Completed' },
+    { label: 'Delayed', value: k.delayed, icon: XCircle, accent: '#d1615d',
+      delta: k.delayed > 0 ? `${Math.round((k.delayed / (k.totalProjects || 1)) * 100)}% of portfolio` : 'all on schedule',
+      tone: k.delayed > 0 ? 'down' : 'up',
+      filterFn: (p: Project) => p.status === 'Delayed' },
+    { label: 'Stalled', value: stalled, icon: Clock, accent: '#e8a838',
+      delta: stalled > 0 ? 'at 0% progress' : 'none stalled', tone: stalled > 0 ? 'warn' : 'flat',
+      filterFn: (p: Project) => p.status === 'In Progress' && p.progress === 0 },
+    { label: 'Open Risks', value: kOpenRisks, icon: Shield, accent: '#b45309',
+      delta: kHighRisks > 0 ? `${kHighRisks} high impact` : 'low exposure', tone: kHighRisks > 0 ? 'down' : 'flat',
+      filterFn: (p: Project) => risks.some(r => r.projectId === p.id && r.status === 'Open') },
+  ] as const;
+
+  const toneCls = (t: string) =>
+    t === 'up' ? 'text-[var(--color-x-success)]'
+    : t === 'down' ? 'text-[var(--color-x-danger)]'
+    : t === 'warn' ? 'text-[var(--color-x-warning)]'
+    : 'text-[var(--color-x-text-muted)]';
+
+  // Milestone status, framed open vs closed — the Zoho-idiom framing an
+  // executive reads without a key.
+  const milestoneSlices = (() => {
+    const withDate = filteredProjects.filter(p => p.targetDate);
+    const closed = withDate.filter(p => p.status === 'Completed').length;
+    const overdue = withDate.filter(p => p.status !== 'Completed' && (daysUntil(p.targetDate) ?? 1) < 0).length;
+    const open = withDate.length - closed - overdue;
+    return [
+      { name: 'On schedule', value: open, color: STATUS_COLORS['In Progress'] },
+      { name: 'Overdue', value: overdue, color: STATUS_COLORS['Delayed'] },
+      { name: 'Closed', value: closed, color: STATUS_COLORS['Completed'] },
+    ];
+  })();
+
+  const teamRows = React.useMemo(() => {
+    const map: Record<string, { active: number; delayed: number }> = {};
+    filteredProjects.forEach(p => {
+      if (p.status === 'Completed' || !p.owner) return;
+      const e = map[p.owner] ?? { active: 0, delayed: 0 };
+      if (p.status === 'In Progress' || p.status === 'Delayed') e.active += 1;
+      if (p.status === 'Delayed') e.delayed += 1;
+      map[p.owner] = e;
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.active - a.active || b.delayed - a.delayed)
+      .slice(0, 6);
+  }, [filteredProjects]);
+
+  const upcoming = filteredProjects
+    .filter(p => { const d = daysUntil(p.targetDate); return d !== null && d >= 0 && p.status !== 'Completed'; })
+    .sort((a, b) => (daysUntil(a.targetDate) ?? 0) - (daysUntil(b.targetDate) ?? 0))
+    .slice(0, 6);
 
   return (
-    <div className="x-page x-bands">
+    <div className="x-page space-y-4">
       {/* ── Masthead ─────────────────────────────────────────────────────── */}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -338,40 +387,38 @@ export default function CommandCenter() {
             {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <div className="flex items-center gap-4 no-print">
+        <div className="flex items-center gap-3 no-print">
           {scope && liveStatus === 'live' && (
             <span
-              title={scope.admin
-                ? 'Admin view — every department is visible'
+              title={scope.admin ? 'Admin view — every department is visible'
                 : 'Departmental privacy is on: you see your department plus projects that depend on it'}
-              className="hidden md:flex items-center gap-1.5 text-[11.5px] text-[var(--color-x-text-muted)]"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-x-surface)] border border-[var(--color-x-border)] text-[11px] font-medium text-[var(--color-x-text-secondary)]"
             >
-              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+              <Eye className="w-3 h-3" aria-hidden="true" />
               {scope.admin ? 'All departments' : `${scope.department || 'No department'}${scope.shared ? ` +${scope.shared} shared` : ''}`}
             </span>
           )}
           {liveStatus === 'live' ? (
-            <span className="flex items-center gap-1.5 text-[11.5px] text-[var(--color-x-text-muted)]" title="Data is live from the server">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-[var(--color-x-text-muted)]" title="Data is live from the server">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-success)]" aria-hidden="true" /> Live
             </span>
           ) : liveStatus === 'error' ? (
-            <span className="flex items-center gap-1.5 text-[11.5px] font-medium text-[var(--color-x-danger)]" title="The server refresh failed — these numbers are an offline copy.">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-[var(--color-x-danger)]" title="The server refresh failed — these numbers are an offline copy.">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-danger)]" aria-hidden="true" /> Offline copy
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-[11.5px] text-[var(--color-x-text-muted)]">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-[var(--color-x-text-muted)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-x-warning)] animate-pulse" aria-hidden="true" /> Loading
             </span>
           )}
-          <button onClick={() => window.print()} className="x-btn x-btn-ghost text-[12px] px-2.5 py-1.5 inline-flex items-center gap-1.5" title="Export this view as PDF">
-            <Download className="w-3.5 h-3.5" aria-hidden="true" /> Export
+          <button onClick={() => window.print()} className="x-btn x-btn-secondary text-[12px] px-3 py-1.5 inline-flex items-center gap-1.5">
+            <Download className="w-3.5 h-3.5" aria-hidden="true" /> Export PDF
           </button>
         </div>
       </header>
 
-      {/* ── Active filter ────────────────────────────────────────────────── */}
       {activeFilter && (
-        <div className="flex items-center gap-3 -mt-4 no-print">
+        <div className="flex items-center gap-3 no-print">
           <span className="text-[12.5px] text-[var(--color-x-text-secondary)]">
             Filtered to <strong className="text-[var(--color-x-text)]">{activeFilter.label}</strong>
             <span className="text-[var(--color-x-text-muted)]"> — {plural(filteredProjects.length, 'project')} of {activeProjects.length}</span>
@@ -382,185 +429,193 @@ export default function CommandCenter() {
         </div>
       )}
 
-      {/* ── 1. What needs a decision ─────────────────────────────────────── */}
-      <ExecutiveBrief
-        signals={briefSignals}
-        topProjects={attentionRows.slice(0, 3).map(r => r.project)}
-        actions={attentionRows.length > 0 ? [
-          { label: `Review ${plural(attentionRows.length, 'project')}`, primary: true,
-            onClick: () => document.getElementById('attention')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
-        ] : []}
-      />
+      {/* ── Row 1 — stat tiles ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        {tiles.map(t => {
+          const selected = activeFilter?.type === 'kpi' && activeFilter.label === t.label;
+          return (
+            <button
+              key={t.label}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => ('filterFn' in t && t.filterFn) ? toggle('kpi', t.label, t.filterFn) : setActiveFilter(null)}
+              className="x-tile"
+            >
+              <span className="x-tile-plate" style={{ background: `color-mix(in srgb, ${t.accent} 12%, transparent)` }}>
+                <t.icon className="w-[17px] h-[17px]" style={{ color: t.accent }} aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="x-tile-value block">{t.value}</span>
+                <span className="x-tile-label block">{t.label}</span>
+                <span className={`x-tile-delta ${toneCls(t.tone)}`}>
+                  {t.tone === 'up' && <ArrowUpRight className="w-3 h-3" aria-hidden="true" />}
+                  {t.tone === 'down' && <ArrowDownRight className="w-3 h-3" aria-hidden="true" />}
+                  {t.delta}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* ── 2. Where the portfolio stands ────────────────────────────────── */}
-      <section aria-labelledby="band-portfolio">
-        <div className="x-band-head">
-          <h2 id="band-portfolio" className="x-band-title">Portfolio</h2>
-          {useOrg && <span className="x-band-note">Organisation-wide figures</span>}
-        </div>
-        <MetricRail metrics={metrics} />
-        <div className="mt-8">
-          <PortfolioMeter
-            total={healthData.reduce((a, d) => a + d.value, 0)}
-            segments={healthData.map(d => ({
-              name: d.name,
-              value: d.value,
-              color: d.color,
-              selected: activeFilter?.type === 'health' && activeFilter.label === d.name,
-              onSelect: () => setActiveFilter(prev =>
-                prev?.type === 'health' && prev.label === d.name
-                  ? null
-                  : { type: 'health', label: d.name, filterFn: healthFilters[d.name as keyof typeof healthFilters] }),
+      {/* ── Row 2 — the three status donuts ──────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Widget title="Project Status" subtitle="Active portfolio">
+          <StatusDonut
+            centreValue={localKpi.totalProjects}
+            centreLabel="Projects"
+            slices={statusDistributionData.map(d => ({
+              name: d.name, value: d.count, color: d.color,
+              selected: activeFilter?.type === 'status' && activeFilter.label === d.name,
+              onSelect: () => toggle('status', d.name, p => p.status === d.name),
             }))}
           />
-        </div>
-      </section>
+        </Widget>
 
-      {/* ── 3. What needs attention ──────────────────────────────────────── */}
-      <section id="attention" aria-labelledby="band-attention">
-        <div className="x-band-head">
-          <h2 id="band-attention" className="x-band-title">Needs attention</h2>
-          <span className="x-band-note">Ranked by overrun, then risk exposure</span>
-        </div>
-        <AttentionRegister
-          rows={attentionRows}
-          onOpen={openPanel}
-          emptyHint="Nothing is overdue, at risk or stalled in this view."
-          renderOwner={p => (
-            <span className="inline-flex items-center gap-2 min-w-0">
-              <OwnerAvatar name={p.owner} presence={presence[ownerEmail(p.owner)]} />
-              <span className="truncate">{p.owner || '—'}</span>
-            </span>
-          )}
-          rowAction={p => (
-            <ShareToTeamsButton
-              compact
-              url={`${typeof window !== 'undefined' ? window.location.origin : ''}/projects/${p.id}`}
-              text={`"${p.name}" (${p.id}) needs attention — owner ${p.owner}. Can we unblock this?`}
+        <Widget title="Portfolio Health" subtitle="Risk-adjusted">
+          <StatusDonut
+            centreValue={healthData.reduce((a, d) => a + d.value, 0)}
+            centreLabel="Tracked"
+            slices={healthData.map(d => ({
+              name: d.name, value: d.value, color: d.color,
+              selected: activeFilter?.type === 'health' && activeFilter.label === d.name,
+              onSelect: () => toggle('health', d.name, healthFilters[d.name as keyof typeof healthFilters]),
+            }))}
+          />
+        </Widget>
+
+        <Widget title="Milestone Status" subtitle="Projects with a target date">
+          <StatusDonut
+            centreValue={milestoneSlices.reduce((a, d) => a + d.value, 0)}
+            centreLabel="Milestones"
+            slices={milestoneSlices}
+          />
+        </Widget>
+      </div>
+
+      {/* ── Row 3 — overdue register + team load ─────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 items-start">
+        <Widget
+          className="xl:col-span-2"
+          title="Overdue Work Items"
+          subtitle="Ranked by overrun, then risk exposure"
+          action={<span className="text-[11px] font-semibold text-[var(--color-x-danger)] tabular-nums">{attentionRows.filter(r => r.band === 'delayed').length} overdue</span>}
+          bodyClass="flush"
+        >
+          <div className="px-4 pt-3 pb-4">
+            <AttentionRegister
+              rows={attentionRows}
+              maxRows={8}
+              onViewAll={() => router.push('/projects?stuck=true')}
+              onOpen={openPanel}
+              emptyHint="Nothing is overdue, at risk or stalled in this view."
+              renderOwner={p => (
+                <span className="inline-flex items-center gap-2 min-w-0">
+                  <OwnerAvatar name={p.owner} presence={presence[ownerEmail(p.owner)]} />
+                  <span className="truncate">{p.owner || '—'}</span>
+                </span>
+              )}
+              rowAction={p => (
+                <ShareToTeamsButton
+                  compact
+                  url={`${typeof window !== 'undefined' ? window.location.origin : ''}/projects/${p.id}`}
+                  text={`"${p.name}" (${p.id}) needs attention — owner ${p.owner}. Can we unblock this?`}
+                />
+              )}
             />
-          )}
-        />
-      </section>
+          </div>
+        </Widget>
 
-      {/* ── 4. Distribution ──────────────────────────────────────────────── */}
-      <section aria-labelledby="band-dist">
-        <div className="x-band-head">
-          <h2 id="band-dist" className="x-band-title">Distribution</h2>
-          <span className="x-band-note">Select a bar to filter the page</span>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className="min-w-0">
-            <h3 className="x-fact-label mb-3">By status</h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={statusDistributionData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={AXIS_TICK} interval={0} />
-                <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} allowDecimals={false} width={28} />
-                <Tooltip {...tooltipCommon} cursor={false} />
-                <Bar dataKey="count" radius={BAR.radius} barSize={BAR.size}>
-                  {statusDistributionData.map((entry, index) => {
-                    const isSelected = activeFilter?.type === 'status' && activeFilter.label === entry.name;
-                    const isDimmed = activeFilter?.type === 'status' && !isSelected;
-                    return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        cursor="pointer"
-                        opacity={isDimmed ? 0.3 : 1}
-                        onClick={() => setActiveFilter(isSelected ? null : {
-                          type: 'status', label: entry.name, filterFn: (p) => p.status === entry.name,
-                        })}
-                      />
-                    );
-                  })}
-                </Bar>
+        <Widget title="Team Load" subtitle="Active work per owner">
+          <TeamStatus
+            rows={teamRows.map(r => ({ ...r, presence: presence[ownerEmail(r.name)] }))}
+            onSelect={name => toggle('priority', name, p => p.owner === name)}
+          />
+        </Widget>
+      </div>
+
+      {/* ── Row 4 — department + milestones ──────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 items-start">
+        <Widget className="xl:col-span-2" title="Department Breakdown" subtitle="Select a department to filter">
+          <div className="h-[248px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={deptChartData.filter(d => d.total > 0)} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+                <XAxis type="number" axisLine={false} tickLine={false} tick={AXIS_TICK} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={AXIS_TICK} width={132} />
+                <Tooltip {...tooltipCommon} cursor={{ fill: 'var(--color-x-bg)' }} />
+                <Bar dataKey="active" stackId="a" fill={STATUS_COLORS['In Progress']} barSize={BAR.sizeSlim} name="Active" />
+                <Bar dataKey="done" stackId="a" fill={STATUS_COLORS['Completed']} name="Done" />
+                <Bar dataKey="delayed" stackId="a" fill={STATUS_COLORS['Delayed']} name="Delayed" />
+                <Bar dataKey="pending" stackId="a" fill="var(--color-x-border)" name="Pending" radius={[0, 2, 2, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 pt-3 border-t border-[var(--color-x-border)]">
+            {[['Active', STATUS_COLORS['In Progress']], ['Done', STATUS_COLORS['Completed']], ['Delayed', STATUS_COLORS['Delayed']], ['Pending', 'var(--color-x-border)']].map(([n, c]) => (
+              <span key={n} className="inline-flex items-center gap-1.5">
+                <span className="x-legend-sw" style={{ background: c }} aria-hidden="true" />
+                <span className="text-[11px] text-[var(--color-x-text-muted)]">{n}</span>
+              </span>
+            ))}
+          </div>
+        </Widget>
 
-          <div className="min-w-0">
-            <h3 className="x-fact-label mb-3">By department</h3>
-            <div className="flex flex-col gap-2.5">
-              {deptChartData.filter(d => d.total > 0).map(d => {
-                const seg = [
-                  { v: d.active, c: STATUS_COLORS['In Progress'], n: 'Active' },
-                  { v: d.done, c: STATUS_COLORS['Completed'], n: 'Done' },
-                  { v: d.delayed, c: STATUS_COLORS['Delayed'], n: 'Delayed' },
-                  // TRACK is a fixed light hex and glares white on the dark surface; the
-                  // neutral remainder has to follow the theme.
-                  { v: d.pending, c: 'var(--color-x-border)', n: 'Pending' },
-                ];
+        <Widget title="Upcoming Milestones" subtitle="Next deadlines in view">
+          {upcoming.length === 0 ? (
+            <p className="text-[12px] text-[var(--color-x-text-muted)] py-6 text-center">No upcoming deadlines in this view.</p>
+          ) : (
+            <ul className="flex flex-col">
+              {upcoming.map(p => {
+                const d = daysUntil(p.targetDate) ?? 0;
                 return (
-                  <button
-                    key={d.name}
-                    onClick={() => setActiveFilter(prev =>
-                      prev?.type === 'department' && prev.label === d.name
-                        ? null
-                        : { type: 'department', label: d.name, filterFn: (p) => p.department === d.name })}
-                    className="text-left group cursor-pointer"
-                    aria-pressed={activeFilter?.type === 'department' && activeFilter.label === d.name}
-                  >
-                    <div className="flex items-baseline justify-between gap-3 mb-1">
-                      <span className="text-[12.5px] text-[var(--color-x-text-secondary)] truncate group-hover:text-[var(--color-x-text)]">{d.name}</span>
-                      <span className="text-[12px] font-semibold text-[var(--color-x-text)] tabular-nums flex-none">
-                        {d.total}
-                        {d.delayed > 0 && <span className="ml-2 font-medium text-[var(--color-x-danger)]">{d.delayed} late</span>}
+                  <li key={p.id}>
+                    <button type="button" onClick={() => openPanel(p)} className="x-listrow px-2 -mx-2 rounded-md">
+                      <Calendar className="w-3.5 h-3.5 flex-none text-[var(--color-x-text-faint)]" aria-hidden="true" />
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-[12.5px] text-[var(--color-x-text)] truncate">{p.name.replace(/\s+/g, ' ').trim()}</span>
+                        <span className="block text-[11px] text-[var(--color-x-text-muted)] truncate">{p.owner || 'Unassigned'}</span>
                       </span>
-                    </div>
-                    <span className="x-meter" style={{ height: 8 }} role="img" aria-label={seg.map(s => `${s.n} ${s.v}`).join(', ')}>
-                      {seg.filter(s => s.v > 0).map(s => (
-                        <i key={s.n} style={{ flexBasis: `${(s.v / d.total) * 100}%`, background: s.c }} />
-                      ))}
-                    </span>
-                  </button>
+                      <span className={`flex-none text-[11.5px] font-semibold tabular-nums ${d <= 7 ? 'text-[var(--color-x-warning)]' : 'text-[var(--color-x-text-muted)]'}`}>
+                        {d === 0 ? 'today' : `in ${d}d`}
+                      </span>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
-          </div>
-        </div>
-      </section>
+            </ul>
+          )}
+        </Widget>
+      </div>
 
-      {/* ── 5. What's next ───────────────────────────────────────────────── */}
-      <section aria-labelledby="band-next" className="no-print">
-        <div className="x-band-head">
-          <h2 id="band-next" className="x-band-title">What&rsquo;s next</h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div>
-            <h3 className="x-fact-label mb-3 inline-flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" aria-hidden="true" /> Upcoming milestones</h3>
-            {(() => {
-              const upcoming = filteredProjects
-                .filter(p => { const d = daysUntil(p.targetDate); return d !== null && d >= 0 && p.status !== 'Completed'; })
-                .sort((a, b) => (daysUntil(a.targetDate) ?? 0) - (daysUntil(b.targetDate) ?? 0))
-                .slice(0, 6);
-              if (upcoming.length === 0) {
-                return <p className="text-[12.5px] text-[var(--color-x-text-muted)] py-3">No upcoming deadlines in this view.</p>;
-              }
-              return (
-                <ul className="flex flex-col">
-                  {upcoming.map((p, i) => {
-                    const d = daysUntil(p.targetDate) ?? 0;
-                    return (
-                      <li key={p.id}
-                          onClick={() => openPanel(p)}
-                          className="flex items-baseline gap-3 py-2.5 cursor-pointer hover:bg-[var(--color-x-bg)] -mx-2 px-2 rounded-md transition-colors"
-                          style={{ borderTop: i === 0 ? 'none' : '1px solid var(--color-x-border)' }}>
-                        <span className="text-[12.5px] text-[var(--color-x-text)] truncate flex-1 min-w-0">{p.name.replace(/\s+/g, ' ').trim()}</span>
-                        <span className={`text-[12px] tabular-nums flex-none ${d <= 7 ? 'font-semibold text-[var(--color-x-warning)]' : 'text-[var(--color-x-text-muted)]'}`}>
-                          {d === 0 ? 'today' : `in ${d}d`}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              );
-            })()}
-          </div>
-          <div>
-            <h3 className="x-fact-label mb-3 inline-flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" aria-hidden="true" /> Recent activity</h3>
-            <ActivityFeed />
-          </div>
-        </div>
-      </section>
+      {/* ── Row 5 — insight + activity ───────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 items-start no-print">
+        <Widget title="What needs a decision" subtitle="Ranked signals from the live register">
+          <ul className="flex flex-col">
+            {briefSignals.slice(0, 4).map(sg => (
+              <li key={sg.title}>
+                <button type="button" onClick={sg.onView} className="x-listrow px-2 -mx-2 rounded-md">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-none"
+                    style={{ background: sg.severity === 'critical' ? 'var(--color-x-danger)' : sg.severity === 'warning' ? 'var(--color-x-warning)' : 'var(--color-x-text-faint)' }}
+                    aria-hidden="true"
+                  />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[12.5px] font-medium text-[var(--color-x-text)] truncate">{sg.title}</span>
+                    <span className="block text-[11px] text-[var(--color-x-text-muted)] truncate">{sg.detail}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+            {briefSignals.length === 0 && (
+              <li className="text-[12px] text-[var(--color-x-text-muted)] py-6 text-center">Nothing requires attention.</li>
+            )}
+          </ul>
+        </Widget>
+
+        <Widget className="xl:col-span-2" title="Recent Activity" subtitle="From the audit trail">
+          <ActivityFeed />
+        </Widget>
+      </div>
 
       {/* Quick Edit Side Panel (shared component) */}
       <QuickEditPanel project={selectedProject} onClose={() => setSelectedProject(null)} />
