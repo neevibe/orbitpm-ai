@@ -40,6 +40,7 @@ Verified against `information_schema.columns` on 2026-09-11:
 | `0011_date_revisions.sql` | ✅ |
 | `0012_expected_revenue.sql` | ❌ not applied |
 | `0013_completed_at.sql` | ❌ not applied |
+| `0014_auto_delay_rule.sql` | ❌ not applied — schedules the nightly status rule |
 
 `0002`, `0006`–`0009` create their own tables and are not covered by the
 `projects` column check above.
@@ -54,8 +55,12 @@ Paste each into the Supabase SQL editor, in this order:
    commit 803d2b2, but the column is still needed for task persistence.
 2. `0012_expected_revenue.sql`
 3. `0013_completed_at.sql`
+4. `0014_auto_delay_rule.sql` — schedules the nightly job that keeps stored
+   status in step with target dates. Unlike the others this one DOES change
+   rows: it runs the rule once at the end, so overdue projects are corrected
+   immediately instead of at the next midnight.
 
-All three are `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` — additive, nullable,
+The first three are `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` — additive, nullable,
 re-runnable, and they touch no existing rows.
 
 ## Destructive SQL lives elsewhere
